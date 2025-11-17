@@ -1,0 +1,205 @@
+@model QuanLyDiemRenLuyen.Models.RegisterViewModel
+@{
+    ViewBag.Title = "Đăng ký";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Quản Lý Điểm Rèn Luyện</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .register-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            margin: 20px 0;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .register-header h2 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .register-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"],
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group .field-validation-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .validation-summary-errors {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .validation-summary-errors ul {
+            list-style: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h2>Đăng Ký Tài Khoản</h2>
+            <p>Hệ thống Quản Lý Điểm Rèn Luyện</p>
+        </div>
+
+        @Html.ValidationSummary(true, "", new { @class = "validation-summary-errors" })
+
+        @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { @class = "register-form" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.MAND)
+                @Html.TextBoxFor(m => m.MAND, new { @class = "form-control", placeholder = "Ví dụ: SV001, GV001" })
+                @Html.ValidationMessageFor(m => m.MAND, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.Email)
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "example@email.com", type = "email" })
+                @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.FullName)
+                @Html.TextBoxFor(m => m.FullName, new { @class = "form-control", placeholder = "Nguyễn Văn A" })
+                @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.RoleName)
+                @Html.DropDownListFor(m => m.RoleName, new SelectList(new[] {
+                    new { Value = "STUDENT", Text = "Sinh viên" },
+                    new { Value = "LECTURER", Text = "Giảng viên" },
+                    new { Value = "ADMIN", Text = "Quản trị viên" }
+                }, "Value", "Text"), "-- Chọn vai trò --", new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.RoleName, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.Password)
+                @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Tối thiểu 6 ký tự" })
+                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.ConfirmPassword)
+                @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control", placeholder = "Nhập lại mật khẩu" })
+                @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "field-validation-error" })
+            </div>
+
+            <button type="submit" class="btn-register">Đăng Ký</button>
+        }
+
+        <div class="login-link">
+            Đã có tài khoản? <a href="@Url.Action("Login", "Account")">Đăng nhập ngay</a>
+        </div>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/jqueryval")
+</body>
+</html>
+

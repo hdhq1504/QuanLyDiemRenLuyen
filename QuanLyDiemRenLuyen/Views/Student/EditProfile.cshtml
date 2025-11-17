@@ -1,0 +1,293 @@
+@model QuanLyDiemRenLuyen.Models.EditStudentProfileViewModel
+@{
+    ViewBag.Title = "Chỉnh Sửa Thông Tin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .edit-profile-container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    .edit-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .edit-header h1 {
+        margin: 0;
+        font-size: 28px;
+    }
+
+    .edit-card {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .form-section h2 {
+        color: #333;
+        font-size: 20px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .readonly-field {
+        background: #f8f9fa;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+    .field-validation-error {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .validation-summary-errors {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #f5c6cb;
+    }
+
+    .validation-summary-errors ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        text-decoration: none;
+        color: white;
+    }
+
+    .info-note {
+        background: #e7f3ff;
+        color: #004085;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #667eea;
+    }
+
+    @@media
+    (max-width: 768px) {
+        .edit-card {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="edit-profile-container">
+    <div class="edit-header">
+        <h1>✏️ Chỉnh Sửa Thông Tin Cá Nhân</h1>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+    {
+        <div class="validation-summary-errors">
+            <strong>Lỗi:</strong> @ViewBag.ErrorMessage
+        </div>
+    }
+
+    @Html.ValidationSummary(false, "", new { @class = "validation-summary-errors" })
+
+    <div class="edit-card">
+        <div class="info-note">
+            <strong>Lưu ý:</strong> Các thông tin như Mã sinh viên, Lớp, Khoa không thể chỉnh sửa.
+            Vui lòng liên hệ phòng Đào tạo nếu cần thay đổi.
+        </div>
+
+        @using (Html.BeginForm("EditProfile", "Student", FormMethod.Post, new { @class = "edit-form" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.MAND)
+
+            <!-- Thông tin chỉ đọc -->
+            <div class="form-section">
+                <h2>Thông Tin Học Tập (Không thể chỉnh sửa)</h2>
+
+                <div class="form-group">
+                    <label>Mã sinh viên</label>
+                    @{
+                        var studentCode = Model != null && Model.StudentCode != null ? Model.StudentCode : "";
+                    }
+                    <input type="text" value="@studentCode" class="readonly-field" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label>Lớp</label>
+                    @{
+                        var className = Model != null && Model.ClassName != null ? Model.ClassName : "";
+                    }
+                    <input type="text" value="@className" class="readonly-field" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label>Khoa</label>
+                    @{
+                        var deptName = Model != null && Model.DepartmentName != null ? Model.DepartmentName : "";
+                    }
+                    <input type="text" value="@deptName" class="readonly-field" readonly />
+                </div>
+            </div>
+
+            <!-- Thông tin cá nhân có thể chỉnh sửa -->
+            <div class="form-section">
+                <h2>Thông Tin Cá Nhân</h2>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.FullName)
+                    @Html.TextBoxFor(m => m.FullName, new { @class = "form-control", placeholder = "Nhập họ và tên" })
+                    @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "field-validation-error" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Email)
+                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", type = "email", placeholder = "Nhập email" })
+                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Phone)
+                    @Html.TextBoxFor(m => m.Phone, new { @class = "form-control", placeholder = "Nhập số điện thoại" })
+                    @Html.ValidationMessageFor(m => m.Phone, "", new { @class = "field-validation-error" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.DateOfBirth)
+                    @Html.TextBoxFor(m => m.DateOfBirth, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
+                    @Html.ValidationMessageFor(m => m.DateOfBirth, "", new { @class = "field-validation-error" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Gender)
+                    @Html.DropDownListFor(m => m.Gender,
+                    new SelectList(new[] {
+                                new { Value = "Nam", Text = "Nam" },
+                                new { Value = "Nữ", Text = "Nữ" },
+                                new { Value = "Khác", Text = "Khác" }
+                                }, "Value", "Text", Model != null ? Model.Gender : null),
+                                "-- Chọn giới tính --",
+                                new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.Gender, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.Address)
+                @Html.TextAreaFor(m => m.Address, new { @class = "form-control", placeholder = "Nhập địa chỉ", rows = 3 })
+                @Html.ValidationMessageFor(m => m.Address, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(m => m.AvatarUrl)
+                @Html.TextBoxFor(m => m.AvatarUrl, new { @class = "form-control", placeholder = "Nhập URL avatar (tùy chọn)" })
+                @Html.ValidationMessageFor(m => m.AvatarUrl, "", new { @class = "field-validation-error" })
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="@Url.Action("Profile", "Student")" class="btn btn-secondary">❌ Hủy</a>
+            <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
+        </div>
+                }
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

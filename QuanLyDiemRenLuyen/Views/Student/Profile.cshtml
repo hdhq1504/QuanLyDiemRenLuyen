@@ -1,0 +1,415 @@
+@model QuanLyDiemRenLuyen.Models.StudentProfileViewModel
+@{
+    ViewBag.Title = "Hồ Sơ Sinh Viên";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .profile-container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: white;
+        color: #667eea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .profile-info h1 {
+        margin: 0 0 10px 0;
+        font-size: 32px;
+    }
+
+    .profile-info p {
+        margin: 5px 0;
+        opacity: 0.9;
+    }
+
+    .edit-btn {
+        background: white;
+        color: #667eea;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 15px;
+        transition: all 0.3s;
+    }
+
+    .edit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .profile-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .info-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-card h2 {
+        color: #333;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+    }
+
+    .info-row {
+        display: flex;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #666;
+        width: 150px;
+        flex-shrink: 0;
+    }
+
+    .info-value {
+        color: #333;
+        flex: 1;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card h3 {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 36px;
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .term-scores {
+        grid-column: 1 / -1;
+    }
+
+    .term-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .term-table th {
+        background: #f8f9fa;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 2px solid #667eea;
+    }
+
+    .term-table td {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .term-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .classification {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .classification.excellent {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .classification.good {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .classification.average {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .classification.weak {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .success-message {
+        background: #d4edda;
+        color: #155724;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #c3e6cb;
+    }
+
+    @@media
+    (max-width: 768px) {
+        .profile-content {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-header {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="profile-container">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+    {
+        <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+    }
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            @{
+                var initial = Model != null && Model.FullName != null && Model.FullName.Length > 0
+                ? Model.FullName.Substring(0, 1).ToUpper()
+                : "S";
+            }
+            @initial
+        </div>
+        <div class="profile-info">
+            @{
+                var fullName = Model != null && Model.FullName != null ? Model.FullName : "Sinh viên";
+                var studentCode = Model != null && Model.StudentCode != null ? Model.StudentCode : "";
+                var className = Model != null && Model.ClassName != null ? Model.ClassName : "";
+            }
+            <h1>@fullName</h1>
+            <p><strong>Mã sinh viên:</strong> @studentCode</p>
+            <p><strong>Lớp:</strong> @className</p>
+            <a href="@Url.Action("EditProfile", "Student")" class="edit-btn">✏️ Chỉnh sửa thông tin</a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Điểm TB Rèn Luyện</h3>
+            @{
+                var avgScore = Model != null ? Model.AverageScore : 0;
+            }
+            <div class="stat-value">@avgScore.ToString("F1")</div>
+        </div>
+        <div class="stat-card">
+            <h3>Hoạt Động Đã Đăng Ký</h3>
+            @{
+                var totalRegistered = Model != null ? Model.TotalActivitiesRegistered : 0;
+            }
+            <div class="stat-value">@totalRegistered</div>
+        </div>
+        <div class="stat-card">
+            <h3>Hoạt Động Hoàn Thành</h3>
+            @{
+                var totalCompleted = Model != null ? Model.TotalActivitiesCompleted : 0;
+            }
+            <div class="stat-value">@totalCompleted</div>
+        </div>
+    </div>
+
+    <!-- Profile Content -->
+    <div class="profile-content">
+        <!-- Personal Information -->
+        <div class="info-card">
+            <h2>Thông Tin Cá Nhân</h2>
+            @{
+                var email = Model != null && Model.Email != null ? Model.Email : "N/A";
+                var phone = Model != null && Model.Phone != null ? Model.Phone : "N/A";
+                var dob = Model != null && Model.DateOfBirth.HasValue
+                ? Model.DateOfBirth.Value.ToString("dd/MM/yyyy")
+                : "N/A";
+                var gender = Model != null && Model.Gender != null ? Model.Gender : "N/A";
+                var address = Model != null && Model.Address != null ? Model.Address : "N/A";
+            }
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">@email</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Số điện thoại:</span>
+                <span class="info-value">@phone</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Ngày sinh:</span>
+                <span class="info-value">@dob</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Giới tính:</span>
+                <span class="info-value">@gender</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Địa chỉ:</span>
+                <span class="info-value">@address</span>
+            </div>
+        </div>
+
+        <!-- Academic Information -->
+        <div class="info-card">
+            <h2>Thông Tin Học Tập</h2>
+            @{
+                var deptName = Model != null && Model.DepartmentName != null ? Model.DepartmentName : "N/A";
+                var deptCode = Model != null && Model.DepartmentCode != null ? Model.DepartmentCode : "";
+                var classCode = Model != null && Model.ClassCode != null ? Model.ClassCode : "";
+                var createdAt = Model != null ? Model.CreatedAt.ToString("dd/MM/yyyy") : "N/A";
+                var status = Model != null && Model.IsActive ? "Đang hoạt động" : "Không hoạt động";
+            }
+            <div class="info-row">
+                <span class="info-label">Khoa:</span>
+                <span class="info-value">@deptName @(string.IsNullOrEmpty(deptCode) ? "" : "(" + deptCode + ")")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Mã lớp:</span>
+                <span class="info-value">@classCode</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Ngày tạo tài khoản:</span>
+                <span class="info-value">@createdAt</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Trạng thái:</span>
+                <span class="info-value">@status</span>
+            </div>
+        </div>
+
+        <!-- Term Scores -->
+        <div class="info-card term-scores">
+            <h2>Điểm Rèn Luyện Theo Học Kỳ</h2>
+            @if (Model != null && Model.TermScores != null && Model.TermScores.Any())
+            {
+                <table class="term-table">
+                    <thead>
+                        <tr>
+                            <th>Học kỳ</th>
+                            <th>Năm học</th>
+                            <th>Tổng điểm</th>
+                            <th>Xếp loại</th>
+                            <th>Ngày duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var term in Model.TermScores)
+                        {
+                            <tr>
+                                <td>@term.TermName</td>
+                                <td>@term.TermYear</td>
+                                <td><strong>@term.TotalScore</strong></td>
+                                <td>
+                                    @{
+                                        var classificationClass = "classification";
+                                        var classification = term.Classification;
+
+                                        if (classification != null)
+                                        {
+                                            if (classification.Contains("Xuất sắc") || classification.Contains("EXCELLENT"))
+                                            {
+                                                classificationClass += " excellent";
+                                            }
+                                            else if (classification.Contains("Tốt") || classification.Contains("GOOD"))
+                                            {
+                                                classificationClass += " good";
+                                            }
+                                            else if (classification.Contains("Khá") || classification.Contains("AVERAGE"))
+                                            {
+                                                classificationClass += " average";
+                                            }
+                                            else if (classification.Contains("Yếu") || classification.Contains("WEAK"))
+                                            {
+                                                classificationClass += " weak";
+                                            }
+                                        }
+                                    }
+                                    <span class="@classificationClass">@classification</span>
+                                </td>
+                                <td>
+                                    @{
+                                        var approvedDate = term.ApprovedAt.HasValue
+                                        ? term.ApprovedAt.Value.ToString("dd/MM/yyyy")
+                                        : "Chưa duyệt";
+                                    }
+                                    @approvedDate
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p style="color: #999; text-align: center; padding: 20px;">Chưa có điểm rèn luyện</p>
+            }
+        </div>
+    </div>
+</div>
