@@ -5,6 +5,7 @@
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -158,6 +159,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="login-container">
         <div class="login-header">
@@ -174,29 +176,38 @@
 
         @Html.ValidationSummary(true, "", new { @class = "validation-summary-errors" })
 
-        @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "login-form" }))
+        @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new
+        {
+            @class
+                = "login-form"
+        }))
         {
             @Html.AntiForgeryToken()
 
             <div class="form-group">
                 @Html.LabelFor(m => m.Email)
-                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Nhập email của bạn", type = "email" })
-                @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
-            </div>
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Nhập email của bạn", type =
+                "email" })
+            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
+        </div>
 
-            <div class="form-group">
-                @Html.LabelFor(m => m.Password)
-                @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Nhập mật khẩu" })
-                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation-error" })
-            </div>
+        <div class="form-group">
+            @Html.LabelFor(m => m.Password)
+            @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Nhập mật khẩu" })
+            @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation-error" })
+        </div>
 
-            <div class="checkbox-group">
-                @Html.CheckBoxFor(m => m.RememberMe)
-                @Html.LabelFor(m => m.RememberMe)
-            </div>
+        <div class="checkbox-group">
+            @Html.CheckBoxFor(m => m.RememberMe)
+            @Html.LabelFor(m => m.RememberMe)
+        </div>
 
-            <button type="submit" class="btn-login">Đăng Nhập</button>
-        }
+        <button type="submit" class="btn-login">Đăng Nhập</button>
+                }
+
+        <div class="register-link">
+            <a href="@Url.Action("ForgotPassword", "Account")">Quên mật khẩu?</a>
+        </div>
 
         <div class="register-link">
             Chưa có tài khoản? <a href="@Url.Action("Register", "Account")">Đăng ký ngay</a>
@@ -206,5 +217,5 @@
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/jqueryval")
 </body>
-</html>
 
+</html>

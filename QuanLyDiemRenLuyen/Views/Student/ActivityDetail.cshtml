@@ -1,0 +1,400 @@
+@model QuanLyDiemRenLuyen.Models.ActivityDetailViewModel
+@{
+    ViewBag.Title = "Chi tiết hoạt động";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .detail-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #3498db;
+        text-decoration: none;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+    .activity-detail-card {
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .activity-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    .status-badges {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .badge-success {
+        background: #27ae60;
+        color: white;
+    }
+
+    .badge-warning {
+        background: #f39c12;
+        color: white;
+    }
+
+    .badge-info {
+        background: #3498db;
+        color: white;
+    }
+
+    .badge-danger {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .badge-secondary {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .info-item {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .info-label {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 16px;
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .section {
+        margin-bottom: 30px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #3498db;
+    }
+
+    .section-content {
+        line-height: 1.8;
+        color: #555;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #229954;
+    }
+
+    .btn-danger {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c0392b;
+    }
+
+    .btn-info {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-info:hover {
+        background: #2980b9;
+    }
+
+    .btn:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+    }
+
+    .proof-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        margin-top: 20px;
+    }
+
+    .proof-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+
+    .proof-file {
+        max-width: 200px;
+        border-radius: 4px;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+</style>
+
+<div class="detail-container">
+    <a href="@Url.Action("Activities", "Student")" class="back-link">← Quay lại danh sách</a>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+    }
+
+    <div class="activity-detail-card">
+        <h1 class="activity-title">@Model.Title</h1>
+
+        <div class="status-badges">
+            @if (Model.IsRegistered)
+            {
+                if (Model.RegistrationStatus == "PENDING")
+                {
+                    <span class="badge badge-warning">Chờ duyệt</span>
+                }
+                else if (Model.RegistrationStatus == "APPROVED")
+                {
+                    <span class="badge badge-success">Đã duyệt</span>
+                }
+                else if (Model.RegistrationStatus == "CHECKED_IN")
+                {
+                    <span class="badge badge-info">Đã tham gia</span>
+                }
+                else if (Model.RegistrationStatus == "REJECTED")
+                {
+                    <span class="badge badge-danger">Bị từ chối</span>
+                }
+            }
+            <span class="badge badge-secondary">@Model.CategoryName</span>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">📅 Thời gian bắt đầu</div>
+                <div class="info-value">@Model.StartAt.ToString("dd/MM/yyyy HH:mm")</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">⏰ Thời gian kết thúc</div>
+                <div class="info-value">@Model.EndAt.ToString("dd/MM/yyyy HH:mm")</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">📍 Địa điểm</div>
+                <div class="info-value">@Model.Location</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">⭐ Điểm rèn luyện</div>
+                <div class="info-value">@(Model.Points ?? 0) điểm</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">👥 Số lượng</div>
+                <div class="info-value">@Model.CurrentParticipants/@Model.MaxParticipants người</div>
+            </div>
+            @if (Model.RegistrationDeadline.HasValue)
+            {
+                <div class="info-item">
+                    <div class="info-label">⏳ Hạn đăng ký</div>
+                    <div class="info-value">@Model.RegistrationDeadline.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+            }
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">📝 Mô tả</h2>
+            <div class="section-content">@Html.Raw(Model.Description.Replace("\n", "<br/>"))</div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Requirements))
+        {
+            <div class="section">
+                <h2 class="section-title">📋 Yêu cầu</h2>
+                <div class="section-content">@Html.Raw(Model.Requirements.Replace("\n", "<br/>"))</div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.Benefits))
+        {
+            <div class="section">
+                <h2 class="section-title">🎁 Quyền lợi</h2>
+                <div class="section-content">@Html.Raw(Model.Benefits.Replace("\n", "<br/>"))</div>
+            </div>
+        }
+
+        @if (Model.IsRegistered)
+        {
+            <div class="proof-section">
+                <h3 class="section-title">📎 Minh chứng tham gia</h3>
+                @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                {
+                    <div class="proof-info">
+                        <div>
+                            <strong>Trạng thái:</strong>
+                            @if (Model.ProofStatus == "PENDING")
+                            {
+                                <span class="badge badge-warning">Chờ duyệt</span>
+                            }
+                            else if (Model.ProofStatus == "APPROVED")
+                            {
+                                <span class="badge badge-success">Đã duyệt</span>
+                            }
+                            else if (Model.ProofStatus == "REJECTED")
+                            {
+                                <span class="badge badge-danger">Bị từ chối</span>
+                            }
+                        </div>
+                    </div>
+                    <p><strong>Đã upload:</strong> @Model.ProofUploadedAt?.ToString("dd/MM/yyyy HH:mm")</p>
+                    @if (Model.ApprovedPoints.HasValue)
+                    {
+                        <p><strong>Điểm được duyệt:</strong> @Model.ApprovedPoints điểm</p>
+                    }
+                }
+                else
+                {
+                    <p class="alert-info alert">Bạn chưa upload minh chứng tham gia</p>
+                }
+            </div>
+        }
+
+        <div class="action-buttons">
+            @if (Model.CanRegister)
+            {
+                using (Html.BeginForm("RegisterActivity", "Student", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="activityId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-primary"
+                        onclick="return confirm('Bạn có chắc muốn đăng ký hoạt động này?')">
+                        ✅ Đăng ký tham gia
+                    </button>
+                }
+            }
+
+            @if (Model.CanCancelRegistration)
+            {
+                using (Html.BeginForm("CancelRegistration", "Student", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="activityId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn hủy đăng ký?')">
+                        ❌ Hủy đăng ký
+                    </button>
+                }
+            }
+
+            @if (Model.CanUploadProof)
+            {
+                <a href="@Url.Action("UploadProof", "Student", new { id = Model.Id })" class="btn btn-info">
+                    📤 Upload minh chứng
+                </a>
+            }
+        </div>
+
+        @if (!Model.CanRegister && !Model.IsRegistered)
+        {
+            <div class="alert alert-info" style="margin-top: 20px;">
+                @if (Model.CurrentParticipants >= Model.MaxParticipants)
+                {
+                    <p>⚠️ Hoạt động đã đủ số lượng người tham gia</p>
+                }
+                else if (Model.RegistrationDeadline.HasValue && Model.RegistrationDeadline < DateTime.Now)
+                {
+                    <p>⚠️ Đã hết hạn đăng ký</p>
+                }
+                else if (Model.Status != "ACTIVE")
+                {
+                    <p>⚠️ Hoạt động không còn mở đăng ký</p>
+                }
+            </div>
+        }
+    </div>
+</div>

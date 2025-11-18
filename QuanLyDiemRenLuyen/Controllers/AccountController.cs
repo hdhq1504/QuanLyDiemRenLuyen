@@ -286,6 +286,173 @@ namespace QuanLyDiemRenLuyen.Controllers
             Session.Abandon();
             return RedirectToAction("Login", "Account");
         }
+
+        // ==================== FORGOT PASSWORD ====================
+
+        // GET: Account/ForgotPassword
+        [AllowAnonymous]
+        public ActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        // POST: Account/ForgotPassword
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public ActionResult ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                // Kiểm tra email có tồn tại không
+                string checkQuery = "SELECT MAND, FULL_NAME FROM USERS WHERE EMAIL = :Email AND IS_ACTIVE = 1";
+                var checkParams = new[] { OracleDbHelper.CreateParameter("Email", OracleDbType.Varchar2, model.Email) };
+                DataTable dt = OracleDbHelper.ExecuteQuery(checkQuery, checkParams);
+
+                if (dt.Rows.Count == 0)
+                {
+                    ModelState.AddModelError("Email", "Email không tồn tại trong hệ thống");
+                    return View(model);
+                }
+
+                string mand = dt.Rows[0]["MAND"].ToString();
+                string fullName = dt.Rows[0]["FULL_NAME"].ToString();
+
+                // Tạo mã reset password (6 ký tự)
+                string resetCode = GenerateResetCode();
+
+                // Lưu mã reset vào database PASSWORD_RESET_TOKENS
+                string insertQuery = @"INSERT INTO PASSWORD_RESET_TOKENS (ID, EMAIL, TOKEN, CREATED_AT_UTC, EXPIRES_AT_UTC, IS_USED)
+                                      VALUES (RAWTOHEX(SYS_GUID()), :Email, :Token, SYS_EXTRACT_UTC(SYSTIMESTAMP), SYS_EXTRACT_UTC(SYSTIMESTAMP) + INTERVAL '30' MINUTE, 0)";
+                var insertParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Email", OracleDbType.Varchar2, model.Email),
+                    OracleDbHelper.CreateParameter("Token", OracleDbType.Varchar2, resetCode)
+                };
+
+                OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
+
+                // Trong thực tế, bạn nên gửi email chứa mã reset
+                // Ở đây tôi sẽ hiển thị mã trực tiếp (chỉ để demo)
+                TempData["ResetCode"] = resetCode;
+                TempData["Email"] = model.Email;
+                TempData["SuccessMessage"] = $"Mã xác nhận đã được tạo: {resetCode}. Vui lòng sử dụng mã này để đặt lại mật khẩu.";
+
+                return RedirectToAction("ResetPassword");
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View(model);
+            }
+        }
+
+        // GET: Account/ResetPassword
+        [AllowAnonymous]
+        public ActionResult ResetPassword()
+        {
+            var model = new ResetPasswordViewModel();
+            if (TempData["Email"] != null)
+            {
+                model.Email = TempData["Email"].ToString();
+                ViewBag.ResetCode = TempData["ResetCode"];
+            }
+            return View(model);
+        }
+
+        // POST: Account/ResetPassword
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public ActionResult ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                // Kiểm tra mã reset
+                string checkQuery = @"SELECT ID, EMAIL, EXPIRES_AT_UTC, IS_USED
+                                     FROM PASSWORD_RESET_TOKENS
+                                     WHERE EMAIL = :Email
+                                     AND TOKEN = :Token
+                                     AND IS_USED = 0
+                                     ORDER BY CREATED_AT_UTC DESC
+                                     FETCH FIRST 1 ROWS ONLY";
+
+                var checkParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Email", OracleDbType.Varchar2, model.Email),
+                    OracleDbHelper.CreateParameter("Token", OracleDbType.Varchar2, model.ResetCode)
+                };
+
+                DataTable dt = OracleDbHelper.ExecuteQuery(checkQuery, checkParams);
+
+                if (dt.Rows.Count == 0)
+                {
+                    ModelState.AddModelError("ResetCode", "Mã xác nhận không hợp lệ");
+                    return View(model);
+                }
+
+                DataRow row = dt.Rows[0];
+                string resetId = row["ID"].ToString();
+                string email = row["EMAIL"].ToString();
+                DateTime expiresAtUtc = Convert.ToDateTime(row["EXPIRES_AT_UTC"]);
+
+                // Kiểm tra mã đã hết hạn chưa
+                if (DateTime.UtcNow > expiresAtUtc)
+                {
+                    ModelState.AddModelError("ResetCode", "Mã xác nhận đã hết hạn");
+                    return View(model);
+                }
+
+                // Tạo salt mới và hash mật khẩu mới
+                string newSalt = PasswordHelper.GenerateSalt();
+                string newPasswordHash = PasswordHelper.HashPassword(model.NewPassword, newSalt);
+
+                // Cập nhật mật khẩu
+                string updateQuery = @"UPDATE USERS
+                                      SET PASSWORD_HASH = :PasswordHash,
+                                          PASSWORD_SALT = :PasswordSalt,
+                                          UPDATED_AT = SYSTIMESTAMP
+                                      WHERE EMAIL = :Email";
+                var updateParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("PasswordHash", OracleDbType.Varchar2, newPasswordHash),
+                    OracleDbHelper.CreateParameter("PasswordSalt", OracleDbType.Varchar2, newSalt),
+                    OracleDbHelper.CreateParameter("Email", OracleDbType.Varchar2, email)
+                };
+
+                OracleDbHelper.ExecuteNonQuery(updateQuery, updateParams);
+
+                // Đánh dấu mã reset đã được sử dụng
+                string markUsedQuery = "UPDATE PASSWORD_RESET_TOKENS SET IS_USED = 1 WHERE ID = :ResetId";
+                var markUsedParams = new[] { OracleDbHelper.CreateParameter("ResetId", OracleDbType.Varchar2, resetId) };
+                OracleDbHelper.ExecuteNonQuery(markUsedQuery, markUsedParams);
+
+                TempData["SuccessMessage"] = "Đặt lại mật khẩu thành công! Vui lòng đăng nhập.";
+                return RedirectToAction("Login");
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View(model);
+            }
+        }
+
+        // Helper method để tạo mã reset
+        private string GenerateResetCode()
+        {
+            Random random = new Random();
+            return random.Next(100000, 999999).ToString();
+        }
     }
 }
 

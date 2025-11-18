@@ -1,0 +1,382 @@
+@model QuanLyDiemRenLuyen.Models.RegistrationManagementViewModel
+@{
+    ViewBag.Title = "Danh sách đăng ký";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .activity-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px 30px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .activity-header h3 {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+
+    .activity-header p {
+        opacity: 0.9;
+        font-size: 14px;
+    }
+
+    .filter-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #5a6c7d;
+    }
+
+    .form-control {
+        padding: 10px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #5a6c7d;
+        border-bottom: 2px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .badge-registered {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-checked-in {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .badge-submitted {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-approved {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-rejected {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .student-info {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 3px;
+    }
+
+    .student-meta {
+        font-size: 12px;
+        color: #7f8c8d;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 25px;
+        padding: 20px;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #5a6c7d;
+    }
+
+    .pagination a:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .pagination .active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+</style>
+
+<div class="content-header">
+    <h2><i class="fas fa-users"></i> Danh sách đăng ký</h2>
+    <p>Theo dõi sinh viên đăng ký và tham gia hoạt động</p>
+</div>
+
+<!-- Activity Header -->
+<div class="activity-header">
+    <h3><i class="fas fa-calendar-check"></i> @Model.ActivityTitle</h3>
+    <p>Tổng số đăng ký: @Model.Registrations.Count</p>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    @using (Html.BeginForm("ViewRegistrations", "Admin", FormMethod.Get))
+    {
+        <input type="hidden" name="id" value="@Model.ActivityId" />
+        <div class="filter-row">
+            <div class="form-group">
+                <label>Tìm kiếm</label>
+                <input type="text" name="search" class="form-control" placeholder="Tìm theo tên hoặc email..."
+                    value="@Model.SearchKeyword" />
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="filterStatus" class="form-control">
+                    <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                    <option value="REGISTERED" @(Model.FilterStatus == "REGISTERED" ? "selected" : "")>Đã đăng ký</option>
+                    <option value="CHECKED_IN" @(Model.FilterStatus == "CHECKED_IN" ? "selected" : "")>Đã tham gia</option>
+                    <option value="CANCELLED" @(Model.FilterStatus == "CANCELLED" ? "selected" : "")>Đã hủy</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Registrations Table -->
+<div class="card">
+    @if (Model.Registrations.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sinh viên</th>
+                    <th>Lớp</th>
+                    <th>Ngày đăng ký</th>
+                    <th>Trạng thái</th>
+                    <th>Tham gia</th>
+                    <th>Minh chứng</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var reg in Model.Registrations)
+                {
+                    <tr>
+                        <td>
+                            <div class="student-info">@reg.StudentName</div>
+                            <div class="student-meta">
+                                <i class="fas fa-id-card"></i> @reg.StudentId
+                                <br />
+                                <i class="fas fa-envelope"></i> @reg.StudentEmail
+                            </div>
+                        </td>
+                        <td>@reg.ClassName</td>
+                        <td>@reg.RegisteredAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @if (reg.Status == "REGISTERED")
+                            {
+                                <span class="badge badge-registered">Đã đăng ký</span>
+                            }
+                            else if (reg.Status == "CHECKED_IN")
+                            {
+                                <span class="badge badge-checked-in">Đã tham gia</span>
+                            }
+                            else if (reg.Status == "CANCELLED")
+                            {
+                                <span class="badge badge-cancelled">Đã hủy</span>
+                            }
+                        </td>
+                        <td>
+                            @if (reg.CheckedInAt.HasValue)
+                            {
+                                <div>@reg.CheckedInAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                            }
+                            else
+                            {
+                                <span class="student-meta">Chưa tham gia</span>
+                            }
+                        </td>
+                        <td>
+                            @if (reg.HasProof)
+                            {
+                                if (reg.ProofStatus == "SUBMITTED")
+                                {
+                                    <span class="badge badge-submitted">Chờ duyệt</span>
+                                }
+                                else if (reg.ProofStatus == "APPROVED")
+                                {
+                                    <span class="badge badge-approved">Đã duyệt</span>
+                                }
+                                else if (reg.ProofStatus == "REJECTED")
+                                {
+                                    <span class="badge badge-rejected">Từ chối</span>
+                                }
+                                @if (reg.ProofUploadedAt.HasValue)
+                                {
+                                    <div class="student-meta">@reg.ProofUploadedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="student-meta">Chưa có</span>
+                            }
+                        </td>
+                        <td>
+                            @if (reg.HasProof && !string.IsNullOrEmpty(reg.ProofFilePath))
+                            {
+                                <a href="@Url.Content("~/" + reg.ProofFilePath)" target="_blank" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-file-download"></i> Xem
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="pagination">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a
+                        href="@Url.Action("ViewRegistrations", "Admin", new { id = Model.ActivityId, filterStatus = Model.FilterStatus, search = Model.SearchKeyword, page = Model.CurrentPage - 1 })">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                }
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.CurrentPage)
+                    {
+                        <span class="active">@i</span>
+                    }
+                    else
+                    {
+                        <a
+                            href="@Url.Action("ViewRegistrations", "Admin", new { id = Model.ActivityId, filterStatus = Model.FilterStatus, search = Model.SearchKeyword, page = i })">@i</a>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a
+                        href="@Url.Action("ViewRegistrations", "Admin", new { id = Model.ActivityId, filterStatus = Model.FilterStatus, search = Model.SearchKeyword, page = Model.CurrentPage + 1 })">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align: center; padding: 60px 20px; color: #999;">
+            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px;"></i>
+            <p style="font-size: 16px;">Chưa có sinh viên nào đăng ký</p>
+        </div>
+    }
+</div>
+
+<div style="margin-top: 25px;">
+    <a href="@Url.Action("Activities", "Admin")" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách hoạt động
+    </a>
+</div>

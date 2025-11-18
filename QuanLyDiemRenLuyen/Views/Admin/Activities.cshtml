@@ -1,0 +1,393 @@
+@model QuanLyDiemRenLuyen.Models.AdminActivityListViewModel
+@{
+    ViewBag.Title = "Quản lý hoạt động";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .filter-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #5a6c7d;
+    }
+
+    .form-control {
+        padding: 10px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #5a6c7d;
+        border-bottom: 2px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .badge-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-approved {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-rejected {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .badge-open {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-closed {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    .badge-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 25px;
+        padding: 20px;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #5a6c7d;
+        transition: all 0.3s;
+    }
+
+    .pagination a:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .pagination .active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .activity-meta {
+        font-size: 12px;
+        color: #7f8c8d;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 5px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s;
+    }
+</style>
+
+<div class="content-header">
+    <h2><i class="fas fa-calendar-alt"></i> Quản lý hoạt động</h2>
+    <p>Danh sách tất cả các hoạt động trong hệ thống</p>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    @using (Html.BeginForm("Activities", "Admin", FormMethod.Get))
+    {
+        <div class="filter-row">
+            <div class="form-group">
+                <label>Tìm kiếm</label>
+                <input type="text" name="search" class="form-control" placeholder="Tìm theo tiêu đề hoặc mô tả..."
+                    value="@Model.SearchKeyword" />
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                    <option value="OPEN" @(Model.FilterStatus == "OPEN" ? "selected" : "")>Đang mở</option>
+                    <option value="CLOSED" @(Model.FilterStatus == "CLOSED" ? "selected" : "")>Đã đóng</option>
+                    <option value="CANCELLED" @(Model.FilterStatus == "CANCELLED" ? "selected" : "")>Đã hủy</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Phê duyệt</label>
+                <select name="approvalStatus" class="form-control">
+                    <option value="ALL" @(Model.FilterApprovalStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                    <option value="PENDING" @(Model.FilterApprovalStatus == "PENDING" ? "selected" : "")>Chờ duyệt</option>
+                    <option value="APPROVED" @(Model.FilterApprovalStatus == "APPROVED" ? "selected" : "")>Đã duyệt</option>
+                    <option value="REJECTED" @(Model.FilterApprovalStatus == "REJECTED" ? "selected" : "")>Từ chối</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Activities Table -->
+<div class="card">
+    @if (Model.Activities.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Hoạt động</th>
+                    <th>Thời gian</th>
+                    <th>Tiêu chí</th>
+                    <th>Điểm</th>
+                    <th>Đăng ký</th>
+                    <th>Trạng thái</th>
+                    <th>Phê duyệt</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var activity in Model.Activities)
+                {
+                    <tr>
+                        <td>
+                            <div class="activity-title">@activity.Title</div>
+                            <div class="activity-meta">
+                                <i class="fas fa-user"></i> @activity.OrganizerName
+                            </div>
+                        </td>
+                        <td>
+                            <div>@activity.StartAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="activity-meta">đến @activity.EndAt.ToString("dd/MM/yyyy HH:mm")</div>
+                        </td>
+                        <td>@activity.CriterionName</td>
+                        <td>
+                            @if (activity.Points.HasValue)
+                            {
+                                <strong>@activity.Points.Value</strong>
+                            }
+                            else
+                            {
+                                <span class="activity-meta">Chưa có</span>
+                            }
+                        </td>
+                        <td>
+                            <div>@activity.CurrentParticipants / @activity.MaxSeats</div>
+                            <div class="progress-bar">
+                                @{
+                                    var percentage = activity.MaxSeats > 0 ? (activity.CurrentParticipants * 100.0 /
+                                    activity.MaxSeats) : 0;
+                                }
+                                <div class="progress-fill" style="width: @percentage%"></div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (activity.Status == "OPEN")
+                            {
+                                <span class="badge badge-open">Đang mở</span>
+                            }
+                            else if (activity.Status == "CLOSED")
+                            {
+                                <span class="badge badge-closed">Đã đóng</span>
+                            }
+                            else if (activity.Status == "CANCELLED")
+                            {
+                                <span class="badge badge-cancelled">Đã hủy</span>
+                            }
+                        </td>
+                        <td>
+                            @if (activity.ApprovalStatus == "PENDING")
+                            {
+                                <span class="badge badge-pending">Chờ duyệt</span>
+                            }
+                            else if (activity.ApprovalStatus == "APPROVED")
+                            {
+                                <span class="badge badge-approved">Đã duyệt</span>
+                            }
+                            else if (activity.ApprovalStatus == "REJECTED")
+                            {
+                                <span class="badge badge-rejected">Từ chối</span>
+                            }
+                        </td>
+                        <td>
+                            <a href="@Url.Action("ApproveActivity", "Admin", new { id = activity.Id })"
+                                class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Xem
+                            </a>
+                            @if (activity.CurrentParticipants > 0)
+                            {
+                                <a href="@Url.Action("ViewRegistrations", "Admin", new { id = activity.Id })"
+                                    class="btn btn-success btn-sm">
+                                    <i class="fas fa-users"></i> DS
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        if (Model.TotalPages > 1)
+        {
+            <div class="pagination">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a
+                        href="@Url.Action("Activities", "Admin", new { search = Model.SearchKeyword, status = Model.FilterStatus, approvalStatus = Model.FilterApprovalStatus, page = Model.CurrentPage - 1 })">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                }
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.CurrentPage)
+                    {
+                        <span class="active">@i</span>
+                    }
+                    else
+                    {
+                        <a
+                            href="@Url.Action("Activities", "Admin", new { search = Model.SearchKeyword, status = Model.FilterStatus, approvalStatus = Model.FilterApprovalStatus, page = i })">@i</a>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a
+                        href="@Url.Action("Activities", "Admin", new { search = Model.SearchKeyword, status = Model.FilterStatus, approvalStatus = Model.FilterApprovalStatus, page = Model.CurrentPage + 1 })">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align: center; padding: 60px 20px; color: #999;">
+            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px;"></i>
+            <p style="font-size: 16px;">Không tìm thấy hoạt động nào</p>
+        </div>
+    }
+</div>

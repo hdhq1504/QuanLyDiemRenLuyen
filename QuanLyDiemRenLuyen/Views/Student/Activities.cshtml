@@ -1,0 +1,384 @@
+@model QuanLyDiemRenLuyen.Models.ActivityListViewModel
+@{
+    ViewBag.Title = "Danh sách hoạt động";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .activities-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .search-filter-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .search-filter-form {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #555;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2980b9;
+    }
+
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .activity-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    .activity-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+
+    .activity-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .activity-meta {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .badge-success {
+        background: #27ae60;
+        color: white;
+    }
+
+    .badge-warning {
+        background: #f39c12;
+        color: white;
+    }
+
+    .badge-info {
+        background: #3498db;
+        color: white;
+    }
+
+    .badge-danger {
+        background: #e74c3c;
+        color: white;
+    }
+
+    .badge-secondary {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .activity-description {
+        color: #555;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+
+    .activity-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+    }
+
+    .btn-view {
+        background: #3498db;
+        color: white;
+        padding: 8px 20px;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background 0.3s;
+    }
+
+    .btn-view:hover {
+        background: #2980b9;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #3498db;
+    }
+
+    .pagination .active {
+        background: #3498db;
+        color: white;
+        border-color: #3498db;
+    }
+
+    .no-activities {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+    }
+</style>
+
+<div class="activities-container">
+    <div class="page-header">
+        <h1>📋 Danh sách hoạt động</h1>
+        <p>Tìm kiếm và đăng ký các hoạt động rèn luyện</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+    }
+    @if (ViewBag.DebugMessage != null)
+    {
+        <div class="alert alert-info">DEBUG: @ViewBag.DebugMessage</div>
+    }
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+        @using (Html.BeginForm("Activities", "Student", FormMethod.Get))
+        {
+            <div class="search-filter-form">
+                <div class="form-group">
+                    <label for="search">Tìm kiếm</label>
+                    <input type="text" name="search" id="search" class="form-control" placeholder="Nhập tên hoạt động..."
+                        value="@Model.SearchKeyword" />
+                </div>
+                <div class="form-group">
+                    <label for="status">Trạng thái</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                        <option value="UPCOMING" @(Model.FilterStatus == "UPCOMING" ? "selected" : "")>Sắp diễn ra</option>
+                        <option value="ONGOING" @(Model.FilterStatus == "ONGOING" ? "selected" : "")>Đang diễn ra</option>
+                        <option value="COMPLETED" @(Model.FilterStatus == "COMPLETED" ? "selected" : "")>Đã kết thúc
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">🔍 Tìm kiếm</button>
+                    <a href="@Url.Action("Activities", "Student")" class="btn btn-secondary">🔄 Đặt lại</a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Activities List -->
+    @if (Model.Activities != null && Model.Activities.Count > 0)
+    {
+        foreach (var activity in Model.Activities)
+        {
+            <div class="activity-card">
+                <div class="activity-header">
+                    <div>
+                        <h3 class="activity-title">@activity.Title</h3>
+                        <div class="activity-meta">
+                            <span class="meta-item">📅 @activity.StartAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            <span class="meta-item">📍 @activity.Location</span>
+                            <span class="meta-item">⭐ @(activity.Points ?? 0) điểm</span>
+                            @if (!string.IsNullOrEmpty(activity.CategoryName))
+                            {
+                                <span class="meta-item">🏷️ @activity.CategoryName</span>
+                            }
+                        </div>
+                    </div>
+                    <div>
+                        @if (activity.IsRegistered)
+                        {
+                            if (activity.RegistrationStatus == "PENDING")
+                            {
+                                <span class="badge badge-warning">Chờ duyệt</span>
+                            }
+                            else if (activity.RegistrationStatus == "APPROVED")
+                            {
+                                <span class="badge badge-success">Đã duyệt</span>
+                            }
+                            else if (activity.RegistrationStatus == "CHECKED_IN")
+                            {
+                                <span class="badge badge-info">Đã tham gia</span>
+                            }
+                            else if (activity.RegistrationStatus == "REJECTED")
+                            {
+                                <span class="badge badge-danger">Bị từ chối</span>
+                            }
+                        }
+                        else
+                        {
+                            if (activity.Status == "ACTIVE")
+                            {
+                                if (activity.CurrentParticipants >= activity.MaxParticipants)
+                                {
+                                    <span class="badge badge-danger">Đã đủ người</span>
+                                }
+                                else if (activity.RegistrationDeadline.HasValue && activity.RegistrationDeadline < DateTime.Now)
+                                {
+                                    <span class="badge badge-secondary">Hết hạn ĐK</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-success">Có thể đăng ký</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge badge-secondary">@activity.Status</span>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <p class="activity-description">
+                    @(activity.Description.Length > 200 ? activity.Description.Substring(0, 200) + "..." : activity.Description)
+                </p>
+
+                <div class="activity-footer">
+                    <div>
+                        <small>👥 @activity.CurrentParticipants/@activity.MaxParticipants người tham gia</small>
+                    </div>
+                    <a href="@Url.Action("ActivityDetail", "Student", new { id = activity.Id })" class="btn-view">
+                        Xem chi tiết →
+                    </a>
+                </div>
+            </div>
+        }
+
+        <!-- Pagination -->
+        if (Model.TotalPages > 1)
+        {
+            <div class="pagination">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a
+                        href="@Url.Action("Activities", "Student", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = Model.CurrentPage - 1 })">
+                        ← Trước
+                    </a>
+                }
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.CurrentPage)
+                    {
+                        <span class="active">@i</span>
+                    }
+                    else
+                    {
+                        <a
+                            href="@Url.Action("Activities", "Student", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = i })">@i</a>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a
+                        href="@Url.Action("Activities", "Student", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = Model.CurrentPage + 1 })">
+                        Sau →
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="no-activities">
+            <h3>Không tìm thấy hoạt động nào</h3>
+            <p>Vui lòng thử lại với từ khóa khác hoặc thay đổi bộ lọc</p>
+        </div>
+    }
+</div>

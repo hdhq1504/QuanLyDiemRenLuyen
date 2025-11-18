@@ -202,8 +202,7 @@
         border: 1px solid #c3e6cb;
     }
 
-    @@media
-    (max-width: 768px) {
+    @@media (max-width: 768px) {
         .profile-content {
             grid-template-columns: 1fr;
         }
@@ -251,7 +250,10 @@
             <h1>@fullName</h1>
             <p><strong>Mã sinh viên:</strong> @studentCode</p>
             <p><strong>Lớp:</strong> @className</p>
-            <a href="@Url.Action("EditProfile", "Student")" class="edit-btn">✏️ Chỉnh sửa thông tin</a>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <a href="@Url.Action("EditProfile", "Student")" class="edit-btn">✏️ Chỉnh sửa thông tin</a>
+                <a href="@Url.Action("ChangePassword", "Student")" class="edit-btn">🔐 Đổi mật khẩu</a>
+            </div>
         </div>
     </div>
 

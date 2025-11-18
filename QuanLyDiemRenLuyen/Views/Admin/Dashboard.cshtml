@@ -1,0 +1,366 @@
+@model QuanLyDiemRenLuyen.Models.AdminDashboardViewModel
+@{
+    ViewBag.Title = "Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: white;
+    }
+
+    .stat-icon.blue {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-icon.green {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .stat-icon.orange {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .stat-icon.red {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .stat-icon.purple {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .stat-icon.teal {
+        background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    }
+
+    .stat-info h3 {
+        font-size: 32px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .stat-info p {
+        color: #7f8c8d;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #5a6c7d;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .badge-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-approved {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-rejected {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .badge-open {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-closed {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-sm {
+        padding: 5px 12px;
+        font-size: 13px;
+    }
+</style>
+
+<div class="content-header">
+    <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+    <p>Tổng quan hệ thống quản lý điểm rèn luyện</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-info">
+            <h3>@Model.TotalActivities</h3>
+            <p>Tổng hoạt động</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+            <h3>@Model.PendingActivities</h3>
+            <p>Chờ phê duyệt</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h3>@Model.ApprovedActivities</h3>
+            <p>Đã phê duyệt</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h3>@Model.TotalStudents</h3>
+            <p>Sinh viên</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon teal">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-info">
+            <h3>@Model.TotalRegistrations</h3>
+            <p>Lượt đăng ký</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon red">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-info">
+            <h3>@Model.PendingProofs</h3>
+            <p>Minh chứng chờ duyệt</p>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="card">
+    <h3 class="section-title">
+        <i class="fas fa-history"></i>
+        Hoạt động gần đây
+    </h3>
+    @if (Model.RecentActivities.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tiêu đề</th>
+                    <th>Ngày tạo</th>
+                    <th>Trạng thái</th>
+                    <th>Phê duyệt</th>
+                    <th>Đăng ký</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var activity in Model.RecentActivities)
+                {
+                    <tr>
+                        <td>@activity.Title</td>
+                        <td>@activity.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @if (activity.Status == "OPEN")
+                            {
+                                <span class="badge badge-open">Đang mở</span>
+                            }
+                            else if (activity.Status == "CLOSED")
+                            {
+                                <span class="badge badge-closed">Đã đóng</span>
+                            }
+                            else
+                            {
+                                <span class="badge">@activity.Status</span>
+                            }
+                        </td>
+                        <td>
+                            @if (activity.ApprovalStatus == "PENDING")
+                            {
+                                <span class="badge badge-pending">Chờ duyệt</span>
+                            }
+                            else if (activity.ApprovalStatus == "APPROVED")
+                            {
+                                <span class="badge badge-approved">Đã duyệt</span>
+                            }
+                            else if (activity.ApprovalStatus == "REJECTED")
+                            {
+                                <span class="badge badge-rejected">Từ chối</span>
+                            }
+                        </td>
+                        <td>@activity.RegistrationCount</td>
+                        <td>
+                            <a href="@Url.Action("ApproveActivity", "Admin", new { id = activity.Id })"
+                                class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Xem
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="text-align: center; color: #999; padding: 20px;">Chưa có hoạt động nào</p>
+    }
+</div>
+
+<!-- Pending Approvals -->
+<div class="card">
+    <h3 class="section-title">
+        <i class="fas fa-clock"></i>
+        Chờ phê duyệt
+    </h3>
+    @if (Model.PendingApprovals.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tiêu đề</th>
+                    <th>Người tạo</th>
+                    <th>Ngày tạo</th>
+                    <th>Loại</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.PendingApprovals)
+                {
+                    <tr>
+                        <td>@item.Title</td>
+                        <td>@item.OrganizerName</td>
+                        <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @if (item.Type == "ACTIVITY")
+                            {
+                                <span class="badge badge-open">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-pending">Minh chứng</span>
+                            }
+                        </td>
+                        <td>
+                            <a href="@Url.Action("ApproveActivity", "Admin", new { id = item.Id })"
+                                class="btn btn-primary btn-sm">
+                                <i class="fas fa-check"></i> Phê duyệt
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="text-align: center; color: #999; padding: 20px;">Không có mục nào chờ phê duyệt</p>
+    }
+</div>
