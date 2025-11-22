@@ -8,6 +8,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewBag.Title - Quản Lý Điểm Rèn Luyện</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
     <style>
@@ -18,110 +23,245 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 14px;
         }
 
-        .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            z-index: 1000;
+            overflow-y: auto;
         }
 
-        .navbar-container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        /* Sidebar Header */
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            gap: 12px;
         }
 
-        .navbar-brand {
+        .sidebar.collapsed .sidebar-header {
+            padding: 20px 10px;
+            justify-content: center;
+        }
+
+        .sidebar-logo {
             font-size: 24px;
-            font-weight: bold;
-            color: white;
-            text-decoration: none;
         }
 
-        .navbar-menu {
-            display: flex;
-            list-style: none;
-            gap: 30px;
-            align-items: center;
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            white-space: nowrap;
         }
 
-        .navbar-menu a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: opacity 0.3s;
+        .sidebar.collapsed .sidebar-title {
+            display: none;
         }
 
-        .navbar-menu a:hover {
-            opacity: 0.8;
-        }
-
-        .user-info {
+        /* User Profile */
+        .user-profile {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
-        .user-avatar-link {
-            text-decoration: none;
-            transition: transform 0.3s;
-        }
-
-        .user-avatar-link:hover {
-            transform: scale(1.1);
+        .sidebar.collapsed .user-profile {
+            padding: 20px 10px;
+            justify-content: center;
         }
 
         .user-avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: white;
-            color: #667eea;
+            background: #2563eb;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            cursor: pointer;
-            transition: box-shadow 0.3s;
+            font-weight: 700;
+            font-size: 16px;
+            flex-shrink: 0;
         }
 
-        .user-avatar:hover {
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        .user-info {
+            flex: 1;
+            min-width: 0;
         }
 
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid white;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 5px;
-            cursor: pointer;
+        .sidebar.collapsed .user-info {
+            display: none;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Navigation */
+        .sidebar-nav {
+            padding: 12px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #64748b;
+            text-decoration: none;
+            border-left: 3px solid transparent;
             font-weight: 500;
-            transition: background 0.3s;
         }
 
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .sidebar.collapsed .nav-item {
+            padding: 12px;
+            justify-content: center;
         }
 
-        .main-content {
-            max-width: 1400px;
-            margin: 0 auto;
+        .nav-item:hover {
+            background: #f8fafc;
+            color: #2563eb;
         }
 
-        .footer {
-            background: #333;
-            color: white;
+        .nav-item.active {
+            background: #dbeafe;
+            color: #2563eb;
+            border-left-color: #2563eb;
+            font-weight: 600;
+        }
+
+        .nav-item i {
+            width: 20px;
             text-align: center;
-            padding: 20px;
-            margin-top: 50px;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .nav-text {
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 12px 0;
+        }
+
+        /* Main Wrapper */
+        .main-wrapper {
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-wrapper.sidebar-collapsed {
+            margin-left: 70px;
+        }
+
+        /* Top Header */
+        .top-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .sidebar-toggle {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            color: #64748b;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .sidebar-toggle:hover {
+            background: #f8fafc;
+            color: #2563eb;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+        }
+
+        /* Footer */
+        .footer {
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            color: #64748b;
+            text-align: center;
+            padding: 24px;
+            margin-top: auto;
+        }
+
+        /* Mobile Responsive */
+        @@media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            .main-wrapper.sidebar-collapsed {
+                margin-left: 0;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -129,66 +269,110 @@
 <body>
     @if (Session["MAND"] != null)
     {
-        <nav class="navbar">
-            <div class="navbar-container">
-                <a href="@Url.Action("Home", "Home")" class="navbar-brand">
-                    📚 Quản Lý Điểm Rèn Luyện
-                </a>
-                <ul class="navbar-menu">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header">
+                <span class="sidebar-logo">📚</span>
+                <span class="sidebar-title">QLĐRL</span>
+            </div>
+
+            <!-- User Profile -->
+            <div class="user-profile">
+                <div class="user-avatar">
                     @{
-                        var roleName = Session["RoleName"] != null ? Session["RoleName"].ToString() : "";
+                        var fullName = Session["FullName"] != null ? Session["FullName"].ToString() : "User";
+                        var initial = fullName.Length > 0 ? fullName.Substring(0, 1).ToUpper() : "U";
                     }
-                    @if (roleName == "STUDENT")
-                    {
-                        <li><a href="@Url.Action("Dashboard", "Student")">Dashboard</a></li>
-                        <li><a href="@Url.Action("Profile", "Student")">Hồ sơ</a></li>
-                        <li><a href="@Url.Action("Activities", "Student")">Hoạt động</a></li>
-                        <li><a href="#">Điểm rèn luyện</a></li>
-                        <li><a href="#">Thông báo</a></li>
-                    }
-                    else if (roleName == "ADMIN" || roleName == "LECTURER")
-                    {
-                        <li><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                        <li><a href="#">Quản lý sinh viên</a></li>
-                        <li><a href="#">Quản lý hoạt động</a></li>
-                        <li><a href="#">Báo cáo</a></li>
-                    }
-                </ul>
+                    @initial
+                </div>
                 <div class="user-info">
-                    @{
-                        var userRoleName = Session["RoleName"] != null ? Session["RoleName"].ToString() : "";
-                        var profileUrl = userRoleName == "STUDENT"
-                        ? Url.Action("Profile", "Student")
-                        : "#";
-                    }
-                    <a href="@profileUrl" class="user-avatar-link" title="Xem hồ sơ">
-                        <div class="user-avatar">
-                            @{
-                                var fullName = Session["FullName"] != null ? Session["FullName"].ToString() : "User";
-                                var initial = fullName.Length > 0 ? fullName.Substring(0, 1).ToUpper() : "U";
-                            }
-                            @initial
-                        </div>
-                    </a>
-                    <span>@Session["FullName"]</span>
-                    <form action="@Url.Action("Logout", "Account")" method="post" style="display: inline;">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="logout-btn">Đăng xuất</button>
-                    </form>
+                    <div class="user-name">@Session["FullName"]</div>
+                    <div class="user-role">Sinh viên</div>
                 </div>
             </div>
-        </nav>
+
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                @{
+                    var currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+                }
+                <a href="@Url.Action("Dashboard", "Student")" class="nav-item @(currentAction == "Dashboard" ? "active" : "")">
+                    <i class="fas fa-home"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="@Url.Action("Profile", "Student")" class="nav-item @(currentAction == "Profile" ? "active" : "")">
+                    <i class="fas fa-user"></i>
+                    <span class="nav-text">Hồ sơ</span>
+                        <span class="nav-text">Đăng xuất</span>
+                    </button>
+                </form>
+            </nav>
+        </div>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper" id="mainWrapper">
+            <!-- Top Header -->
+            <div class="top-header">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">@ViewBag.Title</h1>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                @RenderBody()
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; @DateTime.Now.Year - Hệ thống Quản Lý Điểm Rèn Luyện</p>
+            </footer>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const sidebar = document.getElementById('sidebar');
+                const mainWrapper = document.getElementById('mainWrapper');
+                const toggleBtn = document.getElementById('sidebarToggle');
+
+                // Load saved state
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    mainWrapper.classList.add('sidebar-collapsed');
+                }
+
+                // Toggle functionality
+                toggleBtn.addEventListener('click', function () {
+                    const isMobile = window.innerWidth <= 768;
+
+                    if (isMobile) {
+                        sidebar.classList.toggle('mobile-open');
+                    } else {
+                        sidebar.classList.toggle('collapsed');
+                        mainWrapper.classList.toggle('sidebar-collapsed');
+                        const collapsed = sidebar.classList.contains('collapsed');
+                        localStorage.setItem('sidebarCollapsed', collapsed);
+                    }
+                });
+
+                // Close mobile sidebar when clicking outside
+                document.addEventListener('click', function (e) {
+                    const isMobile = window.innerWidth <= 768;
+                    if (isMobile && sidebar.classList.contains('mobile-open')) {
+                        if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                            sidebar.classList.remove('mobile-open');
+                        }
+                    }
+                });
+            });
+        </script>
     }
-
-    <div class="main-content">
-        @RenderBody()
-    </div>
-
-    @if (Session["MAND"] != null)
+    else
     {
-        <footer class="footer">
-            <p>&copy; @DateTime.Now.Year - Hệ thống Quản Lý Điểm Rèn Luyện</p>
-        </footer>
+        @RenderBody()
     }
 
     @Scripts.Render("~/bundles/jquery")

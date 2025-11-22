@@ -1,0 +1,372 @@
+@model QuanLyDiemRenLuyen.Models.NotificationsViewModel
+@{
+    ViewBag.Title = "Thông báo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .notifications-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .notifications-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .btn-mark-all {
+        background: #2563eb;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .btn-mark-all:hover {
+        background: #1e40af;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .filter-tab {
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        color: #64748b;
+        font-weight: 500;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .filter-tab:hover {
+        color: #2563eb;
+    }
+
+    .filter-tab.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+    }
+
+    .notification-list {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+
+    .notification-item {
+        padding: 20px;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        display: flex;
+        gap: 16px;
+        align-items: start;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item:hover {
+        background: #f8fafc;
+    }
+
+    .notification-item.unread {
+        background: #f0f9ff;
+    }
+
+    .notification-item.unread:hover {
+        background: #e0f2fe;
+    }
+
+    .notification-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #dbeafe;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .notification-item.unread .notification-icon {
+        background: #2563eb;
+        color: white;
+    }
+
+    .notification-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notification-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 8px;
+    }
+
+    .notification-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .notification-time {
+        font-size: 13px;
+        color: #64748b;
+        white-space: nowrap;
+    }
+
+    .notification-message {
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .unread-indicator {
+        width: 8px;
+        height: 8px;
+        background: #2563eb;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        font-size: 64px;
+        color: #e2e8f0;
+        margin-bottom: 16px;
+    }
+
+    .empty-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+
+    .empty-message {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 24px;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #2563eb;
+        font-weight: 500;
+        font-size: 14px;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .pagination .active {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+    }
+
+    .pagination a:hover:not(.active) {
+        background: #f8fafc;
+    }
+</style>
+
+<div class="notifications-container">
+    <div class="notifications-header">
+        <h1 class="page-title">
+            <i class="fas fa-bell"></i>
+            Thông báo
+            @if (Model.UnreadCount > 0)
+            {
+                <span style="font-size: 16px; color: #2563eb;">(@Model.UnreadCount chưa đọc)</span>
+            }
+        </h1>
+        @if (Model.UnreadCount > 0)
+        {
+            <button class="btn-mark-all" onclick="markAllAsRead()">
+                <i class="fas fa-check-double"></i> Đánh dấu tất cả đã đọc
+            </button>
+        }
+    </div>
+
+    <div class="filter-tabs">
+        <a href="@Url.Action("Notifications", new { filter = "all" })"
+           class="filter-tab @(Model.CurrentFilter == "all" ? "active" : "")">
+            Tất cả (@Model.TotalCount)
+        </a>
+        <a href="@Url.Action("Notifications", new { filter = "unread" })"
+           class="filter-tab @(Model.CurrentFilter == "unread" ? "active" : "")">
+            Chưa đọc (@Model.UnreadCount)
+        </a>
+        <a href="@Url.Action("Notifications", new { filter = "read" })"
+           class="filter-tab @(Model.CurrentFilter == "read" ? "active" : "")">
+            Đã đọc (@(Model.TotalCount - Model.UnreadCount))
+        </a>
+    </div>
+
+    @if (Model.Notifications.Count > 0)
+    {
+        <div class="notification-list">
+            @foreach (var notification in Model.Notifications)
+            {
+                <div class="notification-item @(!notification.IsRead ? "unread" : "")"
+                     onclick="markAsRead('@notification.Id')">
+                    <div class="notification-icon" style="color: @notification.GetIconColor()">
+                        <i class="@notification.GetIcon()"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-header-row">
+                            <h3 class="notification-title">@notification.Title</h3>
+                            <span class="notification-time">@notification.GetRelativeTime()</span>
+                        </div>
+                        <p class="notification-message">@notification.Content</p>
+                    </div>
+                    @if (!notification.IsRead)
+                    {
+                        <div class="unread-indicator"></div>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="pagination">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="@Url.Action("Notifications", new { page = Model.CurrentPage - 1, filter = Model.CurrentFilter })">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                }
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.CurrentPage)
+                    {
+                        <span class="active">@i</span>
+                    }
+                    else if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+                    {
+                        <a href="@Url.Action("Notifications", new { page = i, filter = Model.CurrentFilter })">@i</a>
+                    }
+                    else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+                    {
+                        <span>...</span>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a href="@Url.Action("Notifications", new { page = Model.CurrentPage + 1, filter = Model.CurrentFilter })">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="notification-list">
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+                <h3 class="empty-title">Không có thông báo</h3>
+                <p class="empty-message">
+                    @if (Model.CurrentFilter == "unread")
+                    {
+                        <text>Bạn đã đọc hết tất cả thông báo</text>
+                    }
+                    else if (Model.CurrentFilter == "read")
+                    {
+                        <text>Bạn chưa có thông báo đã đọc nào</text>
+                    }
+                    else
+                    {
+                        <text>Bạn chưa có thông báo nào</text>
+                    }
+                </p>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    function markAsRead(notificationId) {
+        $.ajax({
+            url: '@Url.Action("MarkAsRead", "Student")',
+            type: 'POST',
+            data: { notificationId: notificationId },
+            success: function (response) {
+                if (response.success) {
+                    // Reload page to update UI
+                    location.reload();
+                }
+            },
+            error: function () {
+                alert('Có lỗi xảy ra khi đánh dấu đã đọc');
+            }
+        });
+    }
+
+    function markAllAsRead() {
+        if (confirm('Đánh dấu tất cả thông báo là đã đọc?')) {
+            $.ajax({
+                url: '@Url.Action("MarkAllAsRead", "Student")',
+                type: 'POST',
+                success: function (response) {
+                    if (response.success) {
+                        location.reload();
+                    }
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra');
+                }
+            });
+        }
+    }
+</script>

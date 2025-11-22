@@ -46,7 +46,7 @@ namespace QuanLyDiemRenLuyen.Controllers
 
         private User GetUserInfo(string mand)
         {
-            string query = @"SELECT MAND, EMAIL, FULL_NAME, AVATAR_URL, ROLE_NAME, IS_ACTIVE, CREATED_AT 
+            string query = @"SELECT MAND, EMAIL, FULL_NAME, AVATAR_URL, ROLE_NAME, IS_ACTIVE, CREATED_AT
                            FROM USERS WHERE MAND = :MAND";
 
             var parameters = new[] { OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand) };
@@ -122,7 +122,7 @@ namespace QuanLyDiemRenLuyen.Controllers
 
         private List<ActivityRegistration> GetRecentActivities(string mand)
         {
-            string query = @"SELECT a.ID as ACTIVITY_ID, a.TITLE, a.DESCRIPTION, a.START_AT, a.END_AT, 
+            string query = @"SELECT a.ID as ACTIVITY_ID, a.TITLE, a.DESCRIPTION, a.START_AT, a.END_AT,
                            a.LOCATION, a.POINTS, r.STATUS as REG_STATUS, r.REGISTERED_AT
                            FROM REGISTRATIONS r
                            INNER JOIN ACTIVITIES a ON r.ACTIVITY_ID = a.ID
@@ -1084,6 +1084,677 @@ namespace QuanLyDiemRenLuyen.Controllers
                 CurrentProofStatus = row["STATUS"] != DBNull.Value ? row["STATUS"].ToString() : "NOT_UPLOADED",
                 CurrentProofUploadedAt = row["CREATED_AT_UTC"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["CREATED_AT_UTC"]) : null
             };
+        }
+
+        // ==================== SCORE MANAGEMENT ====================
+
+        // GET: Student/Scores
+        public ActionResult Scores()
+        {
+            try
+            {
+                string mand = Session["MAND"]?.ToString();
+                if (string.IsNullOrEmpty(mand))
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                var viewModel = GetScoresViewModel(mand);
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View(new ScoreViewModel());
+            }
+        }
+
+        // GET: Student/ScoreDetail
+        public ActionResult ScoreDetail(string scoreId)
+        {
+            try
+            {
+                string mand = Session["MAND"]?.ToString();
+                if (string.IsNullOrEmpty(mand))
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (string.IsNullOrEmpty(scoreId))
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy điểm";
+                    return RedirectToAction("Scores");
+                }
+
+                var viewModel = GetScoreDetailViewModel(mand, scoreId);
+                if (viewModel == null)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy điểm";
+                    return RedirectToAction("Scores");
+                }
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return RedirectToAction("Scores");
+            }
+        }
+
+        // GET: Student/CreateReviewRequest
+        public ActionResult CreateReviewRequest(string scoreId)
+        {
+            try
+            {
+                string mand = Session["MAND"]?.ToString();
+                if (string.IsNullOrEmpty(mand))
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (string.IsNullOrEmpty(scoreId))
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy điểm";
+                    return RedirectToAction("Scores");
+                }
+
+                // Kiểm tra xem điểm có tồn tại và thuộc về sinh viên này không
+                string checkQuery = @"SELECT s.ID, s.TERM_ID, t.NAME as TERM_NAME, s.TOTAL as TOTAL_SCORE
+                                     FROM SCORES s
+                                     INNER JOIN TERMS t ON s.TERM_ID = t.ID
+                                     WHERE s.ID = :ScoreId AND s.STUDENT_ID = :StudentId";
+
+                var checkParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId),
+                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
+                };
+
+                DataTable dt = OracleDbHelper.ExecuteQuery(checkQuery, checkParams);
+                if (dt.Rows.Count == 0)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy điểm";
+                    return RedirectToAction("Scores");
+                }
+
+                var model = new CreateReviewRequestViewModel
+                {
+                    ScoreId = scoreId,
+                    TermId = dt.Rows[0]["TERM_ID"].ToString(),
+                    TermName = dt.Rows[0]["TERM_NAME"].ToString(),
+                    CurrentScore = Convert.ToDecimal(dt.Rows[0]["TOTAL_SCORE"])
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return RedirectToAction("Scores");
+            }
+        }
+
+        // POST: Student/CreateReviewRequest
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult CreateReviewRequest(CreateReviewRequestViewModel model)
+        {
+            try
+            {
+                string mand = Session["MAND"]?.ToString();
+                if (string.IsNullOrEmpty(mand))
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    return View(model);
+                }
+
+                // Kiểm tra xem đã có đơn phúc khảo chưa
+                string checkQuery = @"SELECT COUNT(*) FROM FEEDBACKS
+                                     WHERE STUDENT_ID = :StudentId
+                                     AND TERM_ID = :TermId
+                                     AND STATUS IN ('SUBMITTED', 'IN_REVIEW')";
+
+                var checkParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, model.TermId)
+                };
+
+                int existingCount = Convert.ToInt32(OracleDbHelper.ExecuteScalar(checkQuery, checkParams));
+                if (existingCount > 0)
+                {
+                    TempData["ErrorMessage"] = "Bạn đã có đơn phúc khảo đang chờ xử lý cho học kỳ này";
+                    return RedirectToAction("ScoreDetail", new { scoreId = model.ScoreId });
+                }
+
+                // Tạo ID mới
+                string newId = "FB" + DateTime.Now.ToString("yyyyMMddHHmmss");
+
+                // Thêm đơn phúc khảo
+                string insertQuery = @"INSERT INTO FEEDBACKS
+                                      (ID, STUDENT_ID, TERM_ID, CRITERION_ID, TITLE, CONTENT,
+                                       REQUESTED_SCORE, STATUS, CREATED_AT)
+                                      VALUES
+                                      (:Id, :StudentId, :TermId, :CriterionId, :Title, :Content,
+                                       :RequestedScore, 'SUBMITTED', SYSDATE)";
+
+                var insertParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, newId),
+                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, model.TermId),
+                    OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2,
+                        string.IsNullOrEmpty(model.CriterionId) ? (object)DBNull.Value : model.CriterionId),
+                    OracleDbHelper.CreateParameter("Title", OracleDbType.Varchar2, model.Title),
+                    OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, model.Content),
+                    OracleDbHelper.CreateParameter("RequestedScore", OracleDbType.Decimal, model.RequestedScore)
+                };
+
+                OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
+
+                TempData["SuccessMessage"] = "Gửi đơn phúc khảo thành công";
+                return RedirectToAction("ScoreDetail", new { scoreId = model.ScoreId });
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View(model);
+            }
+        }
+
+        private ScoreViewModel GetScoresViewModel(string mand)
+        {
+            var viewModel = new ScoreViewModel();
+
+            // Lấy thông tin sinh viên
+            string studentQuery = @"SELECT u.FULL_NAME, s.STUDENT_CODE, c.NAME as CLASS_NAME
+                                   FROM USERS u
+                                   INNER JOIN STUDENTS s ON u.MAND = s.USER_ID
+                                   LEFT JOIN CLASSES c ON s.CLASS_ID = c.ID
+                                   WHERE u.MAND = :MAND";
+
+            var studentParams = new[] { OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand) };
+            DataTable studentDt = OracleDbHelper.ExecuteQuery(studentQuery, studentParams);
+
+            if (studentDt.Rows.Count > 0)
+            {
+                viewModel.StudentId = mand;
+                viewModel.StudentName = studentDt.Rows[0]["FULL_NAME"].ToString();
+                viewModel.StudentCode = studentDt.Rows[0]["STUDENT_CODE"].ToString();
+                viewModel.ClassName = studentDt.Rows[0]["CLASS_NAME"] != DBNull.Value ? studentDt.Rows[0]["CLASS_NAME"].ToString() : "";
+            }
+
+            // Lấy danh sách điểm theo học kỳ
+            string scoresQuery = @"SELECT s.ID, s.TERM_ID, t.NAME as TERM_NAME, t.YEAR as TERM_YEAR,
+                                         t.TERM_NUMBER, s.TOTAL, s.STATUS, s.APPROVED_BY,
+                                         u.FULL_NAME as APPROVED_BY_NAME, s.APPROVED_AT, s.CREATED_AT
+                                  FROM SCORES s
+                                  INNER JOIN TERMS t ON s.TERM_ID = t.ID
+                                  LEFT JOIN USERS u ON s.APPROVED_BY = u.MAND
+                                  WHERE s.STUDENT_ID = :StudentId
+                                  ORDER BY t.YEAR DESC, t.TERM_NUMBER DESC";
+
+            var scoresParams = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand) };
+            DataTable scoresDt = OracleDbHelper.ExecuteQuery(scoresQuery, scoresParams);
+
+            viewModel.TermScores = new List<TermScoreItem>();
+            foreach (DataRow row in scoresDt.Rows)
+            {
+                decimal total = Convert.ToDecimal(row["TOTAL"]);
+                string classification = GetClassification(total);
+                string scoreId = row["ID"].ToString();
+                string status = row["STATUS"].ToString();
+
+                // Kiểm tra xem có đơn phúc khảo đang chờ không
+                string checkFeedbackQuery = @"SELECT COUNT(*) FROM FEEDBACKS
+                                             WHERE STUDENT_ID = :StudentId
+                                             AND TERM_ID = :TermId
+                                             AND STATUS IN ('SUBMITTED', 'IN_REVIEW')";
+
+                var feedbackParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, row["TERM_ID"].ToString())
+                };
+
+                int pendingFeedbackCount = Convert.ToInt32(OracleDbHelper.ExecuteScalar(checkFeedbackQuery, feedbackParams));
+
+                viewModel.TermScores.Add(new TermScoreItem
+                {
+                    ScoreId = scoreId,
+                    TermId = row["TERM_ID"].ToString(),
+                    TermName = row["TERM_NAME"].ToString(),
+                    TermYear = Convert.ToInt32(row["TERM_YEAR"]),
+                    TermNumber = Convert.ToInt32(row["TERM_NUMBER"]),
+                    Total = total,
+                    Status = status,
+                    Classification = classification,
+                    ApprovedBy = row["APPROVED_BY"] != DBNull.Value ? row["APPROVED_BY"].ToString() : null,
+                    ApprovedByName = row["APPROVED_BY_NAME"] != DBNull.Value ? row["APPROVED_BY_NAME"].ToString() : null,
+                    ApprovedAt = row["APPROVED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["APPROVED_AT"]) : null,
+                    CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
+                    CanRequestReview = status == "APPROVED" && pendingFeedbackCount == 0,
+                    HasPendingReview = pendingFeedbackCount > 0
+                });
+            }
+
+            // Tính thống kê
+            viewModel.Statistics = new ScoreStatistics();
+            if (viewModel.TermScores.Count > 0)
+            {
+                viewModel.Statistics.AverageScore = viewModel.TermScores.Average(x => x.Total);
+                viewModel.Statistics.HighestScore = viewModel.TermScores.Max(x => x.Total);
+                viewModel.Statistics.LowestScore = viewModel.TermScores.Min(x => x.Total);
+                viewModel.Statistics.TotalTerms = viewModel.TermScores.Count;
+                viewModel.Statistics.ApprovedTerms = viewModel.TermScores.Count(x => x.Status == "APPROVED");
+            }
+
+            return viewModel;
+        }
+
+
+
+        private ScoreDetailViewModel GetScoreDetailViewModel(string mand, string scoreId)
+        {
+            // Lấy thông tin điểm cơ bản
+            string scoreQuery = @"SELECT s.ID, s.STUDENT_ID, s.TERM_ID, t.NAME as TERM_NAME,
+                                        t.YEAR as TERM_YEAR, t.TERM_NUMBER, s.TOTAL, s.STATUS,
+                                        s.APPROVED_BY, u.FULL_NAME as APPROVED_BY_NAME,
+                                        s.APPROVED_AT, s.CREATED_AT,
+                                        st.STUDENT_CODE, us.FULL_NAME as STUDENT_NAME,
+                                        c.NAME as CLASS_NAME
+                                 FROM SCORES s
+                                 INNER JOIN TERMS t ON s.TERM_ID = t.ID
+                                 INNER JOIN STUDENTS st ON s.STUDENT_ID = st.USER_ID
+                                 INNER JOIN USERS us ON st.USER_ID = us.MAND
+                                 LEFT JOIN CLASSES c ON st.CLASS_ID = c.ID
+                                 LEFT JOIN USERS u ON s.APPROVED_BY = u.MAND
+                                 WHERE s.ID = :ScoreId AND s.STUDENT_ID = :StudentId";
+
+            var scoreParams = new[]
+            {
+                OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId),
+                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
+            };
+
+            DataTable scoreDt = OracleDbHelper.ExecuteQuery(scoreQuery, scoreParams);
+            if (scoreDt.Rows.Count == 0) return null;
+
+            DataRow scoreRow = scoreDt.Rows[0];
+            decimal total = Convert.ToDecimal(scoreRow["TOTAL"]);
+
+            var viewModel = new ScoreDetailViewModel
+            {
+                ScoreId = scoreId,
+                StudentId = mand,
+                StudentName = scoreRow["STUDENT_NAME"].ToString(),
+                StudentCode = scoreRow["STUDENT_CODE"].ToString(),
+                ClassName = scoreRow["CLASS_NAME"] != DBNull.Value ? scoreRow["CLASS_NAME"].ToString() : "",
+                TermId = scoreRow["TERM_ID"].ToString(),
+                TermName = scoreRow["TERM_NAME"].ToString(),
+                TermYear = Convert.ToInt32(scoreRow["TERM_YEAR"]),
+                TermNumber = Convert.ToInt32(scoreRow["TERM_NUMBER"]),
+                Total = total,
+                Status = scoreRow["STATUS"].ToString(),
+                Classification = GetClassification(total),
+                ApprovedBy = scoreRow["APPROVED_BY"] != DBNull.Value ? scoreRow["APPROVED_BY"].ToString() : null,
+                ApprovedByName = scoreRow["APPROVED_BY_NAME"] != DBNull.Value ? scoreRow["APPROVED_BY_NAME"].ToString() : null,
+                ApprovedAt = scoreRow["APPROVED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(scoreRow["APPROVED_AT"]) : null,
+                CreatedAt = Convert.ToDateTime(scoreRow["CREATED_AT"])
+            };
+
+            // Lấy điểm theo tiêu chí
+            string criteriaQuery = @"SELECT c.ID, c.NAME, c.MAX_POINTS,
+                                           COALESCE(SUM(a.POINTS), 0) as EARNED_POINTS,
+                                           COUNT(DISTINCT r.ACTIVITY_ID) as ACTIVITY_COUNT
+                                    FROM CRITERIA c
+                                    LEFT JOIN ACTIVITIES a ON c.ID = a.CRITERION_ID
+                                    LEFT JOIN REGISTRATIONS r ON a.ID = r.ACTIVITY_ID
+                                        AND r.STUDENT_ID = :StudentId
+                                        AND r.STATUS = 'CHECKED_IN'
+                                    WHERE c.TERM_ID = :TermId
+                                    GROUP BY c.ID, c.NAME, c.MAX_POINTS
+                                    ORDER BY c.ID";
+
+            var criteriaParams = new[]
+            {
+                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, viewModel.TermId)
+            };
+
+            DataTable criteriaDt = OracleDbHelper.ExecuteQuery(criteriaQuery, criteriaParams);
+            viewModel.CriterionScores = new List<CriterionScoreItem>();
+
+            foreach (DataRow row in criteriaDt.Rows)
+            {
+                string criterionId = row["ID"].ToString();
+                var criterionItem = new CriterionScoreItem
+                {
+                    CriterionId = criterionId,
+                    CriterionName = row["NAME"].ToString(),
+                    MaxPoints = Convert.ToDecimal(row["MAX_POINTS"]),
+                    EarnedPoints = Convert.ToDecimal(row["EARNED_POINTS"]),
+                    ActivityCount = Convert.ToInt32(row["ACTIVITY_COUNT"]),
+                    Activities = new List<ActivityScoreItem>()
+                };
+
+                // Lấy danh sách hoạt động của tiêu chí này
+                string activitiesQuery = @"SELECT a.ID, a.TITLE, a.POINTS, a.START_AT, r.STATUS
+                                          FROM ACTIVITIES a
+                                          INNER JOIN REGISTRATIONS r ON a.ID = r.ACTIVITY_ID
+                                          WHERE a.CRITERION_ID = :CriterionId
+                                          AND r.STUDENT_ID = :StudentId
+                                          AND r.STATUS = 'CHECKED_IN'
+                                          ORDER BY a.START_AT DESC";
+
+                var activityParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2, criterionId),
+                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
+                };
+
+                DataTable activitiesDt = OracleDbHelper.ExecuteQuery(activitiesQuery, activityParams);
+                foreach (DataRow actRow in activitiesDt.Rows)
+                {
+                    criterionItem.Activities.Add(new ActivityScoreItem
+                    {
+                        ActivityId = actRow["ID"].ToString(),
+                        ActivityTitle = actRow["TITLE"].ToString(),
+                        Points = actRow["POINTS"] != DBNull.Value ? Convert.ToDecimal(actRow["POINTS"]) : 0,
+                        Date = Convert.ToDateTime(actRow["START_AT"]),
+                        Status = actRow["STATUS"].ToString()
+                    });
+                }
+
+                viewModel.CriterionScores.Add(criterionItem);
+            }
+
+            // Lấy lịch sử thay đổi điểm
+            string historyQuery = @"SELECT ACTION, OLD_VALUE, NEW_VALUE, CHANGED_BY,
+                                          u.FULL_NAME as CHANGED_BY_NAME, REASON, CHANGED_AT
+                                   FROM SCORE_HISTORY sh
+                                   LEFT JOIN USERS u ON sh.CHANGED_BY = u.MAND
+                                   WHERE sh.SCORE_ID = :ScoreId
+                                   ORDER BY sh.CHANGED_AT DESC";
+
+            var historyParams = new[] { OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId) };
+            DataTable historyDt = OracleDbHelper.ExecuteQuery(historyQuery, historyParams);
+
+            viewModel.History = new List<ScoreHistoryItem>();
+            foreach (DataRow row in historyDt.Rows)
+            {
+                viewModel.History.Add(new ScoreHistoryItem
+                {
+                    Action = row["ACTION"].ToString(),
+                    OldValue = row["OLD_VALUE"] != DBNull.Value ? row["OLD_VALUE"].ToString() : null,
+                    NewValue = row["NEW_VALUE"] != DBNull.Value ? row["NEW_VALUE"].ToString() : null,
+                    ChangedBy = row["CHANGED_BY"] != DBNull.Value ? row["CHANGED_BY"].ToString() : null,
+                    ChangedByName = row["CHANGED_BY_NAME"] != DBNull.Value ? row["CHANGED_BY_NAME"].ToString() : "Hệ thống",
+                    Reason = row["REASON"] != DBNull.Value ? row["REASON"].ToString() : null,
+                    ChangedAt = Convert.ToDateTime(row["CHANGED_AT"])
+                });
+            }
+
+            // Lấy thông tin đơn phúc khảo (nếu có)
+            string feedbackQuery = @"SELECT f.ID, f.TITLE, f.CONTENT, f.REQUESTED_SCORE, f.STATUS,
+                                           f.RESPONSE, f.RESPONDED_BY, u.FULL_NAME as RESPONDED_BY_NAME,
+                                           f.RESPONDED_AT, f.CREATED_AT
+                                    FROM FEEDBACKS f
+                                    LEFT JOIN USERS u ON f.RESPONDED_BY = u.MAND
+                                    WHERE f.STUDENT_ID = :StudentId AND f.TERM_ID = :TermId
+                                    ORDER BY f.CREATED_AT DESC
+                                    FETCH FIRST 1 ROWS ONLY";
+
+            var feedbackParams = new[]
+            {
+                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, viewModel.TermId)
+            };
+
+            DataTable feedbackDt = OracleDbHelper.ExecuteQuery(feedbackQuery, feedbackParams);
+            if (feedbackDt.Rows.Count > 0)
+            {
+                DataRow fbRow = feedbackDt.Rows[0];
+                viewModel.ReviewRequest = new ReviewRequestInfo
+                {
+                    Id = fbRow["ID"].ToString(),
+                    Title = fbRow["TITLE"].ToString(),
+                    Content = fbRow["CONTENT"].ToString(),
+                    RequestedScore = Convert.ToDecimal(fbRow["REQUESTED_SCORE"]),
+                    Status = fbRow["STATUS"].ToString(),
+                    Response = fbRow["RESPONSE"] != DBNull.Value ? fbRow["RESPONSE"].ToString() : null,
+                    RespondedBy = fbRow["RESPONDED_BY"] != DBNull.Value ? fbRow["RESPONDED_BY"].ToString() : null,
+                    RespondedByName = fbRow["RESPONDED_BY_NAME"] != DBNull.Value ? fbRow["RESPONDED_BY_NAME"].ToString() : null,
+                    RespondedAt = fbRow["RESPONDED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(fbRow["RESPONDED_AT"]) : null,
+                    CreatedAt = Convert.ToDateTime(fbRow["CREATED_AT"])
+                };
+            }
+
+            return viewModel;
+        }
+
+        // ==================== NOTIFICATIONS ====================
+
+        // GET: Student/Notifications
+        public ActionResult Notifications(int page = 1, string filter = "all")
+        {
+            try
+            {
+                string mand = Session["MAND"]?.ToString();
+                if (string.IsNullOrEmpty(mand))
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                const int pageSize = 10;
+                var viewModel = new NotificationsViewModel
+                {
+                    CurrentPage = page,
+                    CurrentFilter = filter
+                };
+
+                // Get notifications with pagination
+                var notifications = GetNotificationsList(mand, filter, page, pageSize, out int totalCount);
+                viewModel.Notifications = notifications;
+                viewModel.TotalCount = totalCount;
+                viewModel.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+                viewModel.UnreadCount = GetUnreadCount(mand);
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View(new NotificationsViewModel());
+            }
+        }
+
+        // POST: Student/MarkAsRead
+        [HttpPost]
+        public JsonResult MarkAsRead(string notificationId)
+        {
+            try
+            {
+                string mand = Session["MAND"]?.ToString();
+                if (string.IsNullOrEmpty(mand))
+                {
+                    return Json(new { success = false, message = "Chưa đăng nhập" });
+                }
+
+                // MERGE để đảm bảo chỉ có một record
+                string mergeQuery = @"MERGE INTO NOTIFICATION_READS nr
+                                     USING (SELECT :NotificationId AS NID, :StudentId AS SID FROM DUAL) src
+                                     ON (nr.NOTIFICATION_ID = src.NID AND nr.STUDENT_ID = src.SID)
+                                     WHEN MATCHED THEN
+                                         UPDATE SET IS_READ = 1, READ_AT = SYSTIMESTAMP
+                                     WHEN NOT MATCHED THEN
+                                         INSERT (ID, NOTIFICATION_ID, STUDENT_ID, IS_READ, READ_AT)
+                                         VALUES (RAWTOHEX(SYS_GUID()), src.NID, src.SID, 1, SYSTIMESTAMP)";
+
+                var parameters = new[]
+                {
+                    OracleDbHelper.CreateParameter("NotificationId", OracleDbType.Varchar2, notificationId),
+                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(mergeQuery, parameters);
+                int unreadCount = GetUnreadCount(mand);
+
+                return Json(new { success = true, unreadCount = unreadCount });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // POST: Student/MarkAllAsRead
+        [HttpPost]
+        public JsonResult MarkAllAsRead()
+        {
+            try
+            {
+                string mand = Session["MAND"]?.ToString();
+                if (string.IsNullOrEmpty(mand))
+                {
+                    return Json(new { success = false, message = "Chưa đăng nhập" });
+                }
+
+                // Lấy tất cả notification IDs cho student này
+                string getNotificationsQuery = @"SELECT n.ID
+                                                FROM NOTIFICATIONS n
+                                                WHERE (n.TO_USER_ID = :StudentId OR
+                                                       (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT'))";
+
+                var getParams = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand) };
+                DataTable notificationsDt = OracleDbHelper.ExecuteQuery(getNotificationsQuery, getParams);
+
+                // MERGE từng notification
+                foreach (DataRow row in notificationsDt.Rows)
+                {
+                    string notificationId = row["ID"].ToString();
+                    string mergeQuery = @"MERGE INTO NOTIFICATION_READS nr
+                                         USING (SELECT :NotificationId AS NID, :StudentId AS SID FROM DUAL) src
+                                         ON (nr.NOTIFICATION_ID = src.NID AND nr.STUDENT_ID = src.SID)
+                                         WHEN MATCHED THEN
+                                             UPDATE SET IS_READ = 1, READ_AT = SYSTIMESTAMP
+                                         WHEN NOT MATCHED THEN
+                                             INSERT (ID, NOTIFICATION_ID, STUDENT_ID, IS_READ, READ_AT)
+                                             VALUES (RAWTOHEX(SYS_GUID()), src.NID, src.SID, 1, SYSTIMESTAMP)";
+
+                    var mergeParams = new[]
+                    {
+                        OracleDbHelper.CreateParameter("NotificationId", OracleDbType.Varchar2, notificationId),
+                        OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
+                    };
+
+                    OracleDbHelper.ExecuteNonQuery(mergeQuery, mergeParams);
+                }
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        private List<NotificationItem> GetNotificationsList(string mand, string filter, int page, int pageSize, out int totalCount)
+        {
+            var notifications = new List<NotificationItem>();
+
+            // Build WHERE clause based on filter
+            string filterClause = "";
+            if (filter == "unread")
+            {
+                filterClause = " AND COALESCE(nr.IS_READ, 0) = 0";
+            }
+            else if (filter == "read")
+            {
+                filterClause = " AND COALESCE(nr.IS_READ, 0) = 1";
+            }
+
+            // Get total count
+            string countQuery = $@"SELECT COUNT(*)
+                                  FROM NOTIFICATIONS n
+                                  LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :StudentId
+                                  WHERE (n.TO_USER_ID = :StudentId OR
+                                         (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT'))
+                                  {filterClause}";
+
+            var countParams = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand) };
+            totalCount = Convert.ToInt32(ExecuteScalar(countQuery, countParams));
+
+            // Get paginated notifications
+            int offset = (page - 1) * pageSize;
+            string query = $@"SELECT * FROM (
+                                SELECT n.ID, n.TITLE, n.CONTENT, n.CREATED_AT,
+                                       COALESCE(nr.IS_READ, 0) AS IS_READ,
+                                       nr.READ_AT,
+                                       ROW_NUMBER() OVER (ORDER BY n.CREATED_AT DESC) AS RN
+                                FROM NOTIFICATIONS n
+                                LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :StudentId
+                                WHERE (n.TO_USER_ID = :StudentId OR
+                                       (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT'))
+                                {filterClause}
+                            )
+                            WHERE RN > :Offset AND RN <= :EndRow";
+
+            var parameters = new[]
+            {
+                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                OracleDbHelper.CreateParameter("Offset", OracleDbType.Int32, offset),
+                OracleDbHelper.CreateParameter("EndRow", OracleDbType.Int32, offset + pageSize)
+            };
+
+            DataTable dt = OracleDbHelper.ExecuteQuery(query, parameters);
+
+            foreach (DataRow row in dt.Rows)
+            {
+                notifications.Add(new NotificationItem
+                {
+                    Id = row["ID"].ToString(),
+                    Title = row["TITLE"].ToString(),
+                    Content = row["CONTENT"] != DBNull.Value ? row["CONTENT"].ToString() : "",
+                    CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
+                    IsRead = Convert.ToInt32(row["IS_READ"]) == 1,
+                    ReadAt = row["READ_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["READ_AT"]) : null
+                });
+            }
+
+            return notifications;
+        }
+
+        private int GetUnreadCount(string mand)
+        {
+            string query = @"SELECT COUNT(*)
+                           FROM NOTIFICATIONS n
+                           LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :StudentId
+                           WHERE (n.TO_USER_ID = :StudentId OR
+                                  (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT'))
+                           AND COALESCE(nr.IS_READ, 0) = 0";
+
+            var parameters = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand) };
+            return Convert.ToInt32(OracleDbHelper.ExecuteScalar(query, parameters));
+        }
+
+        private object ExecuteScalar(string query, OracleParameter[] parameters)
+        {
+            return OracleDbHelper.ExecuteScalar(query, parameters);
+        }
+
+        private string GetClassification(decimal score)
+        {
+            if (score >= 90) return "Xuất sắc";
+            if (score >= 80) return "Giỏi";
+            if (score >= 65) return "Khá";
+            if (score >= 50) return "Trung bình";
+            return "Yếu";
         }
     }
 }

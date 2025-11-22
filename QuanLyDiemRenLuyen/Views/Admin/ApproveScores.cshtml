@@ -1,0 +1,278 @@
+@model QuanLyDiemRenLuyen.Models.ClassScoreListViewModel
+@{
+    ViewBag.Title = "Xét Duyệt Điểm Rèn Luyện";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .approve-container {
+        padding: 30px;
+    }
+
+    .page-header {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    .filter-bar {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .filter-group select,
+    .filter-group input {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-filter {
+        padding: 10px 24px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        align-self: flex-end;
+    }
+
+    .btn-filter:hover {
+        background: #5568d3;
+    }
+
+    .classes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .class-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .class-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .class-card h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .class-card .department {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .class-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .stat-item .value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .stat-item .label {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .progress-text {
+        font-size: 13px;
+        color: #666;
+        text-align: center;
+    }
+
+    .btn-view-class {
+        width: 100%;
+        padding: 12px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 15px;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+
+    .btn-view-class:hover {
+        background: #5568d3;
+    }
+</style>
+
+<div class="approve-container">
+    <div class="page-header">
+        <h1><i class="fas fa-check-double"></i> Xét Duyệt Điểm Rèn Luyện</h1>
+
+        <form method="get" action="@Url.Action("ApproveScores", "Admin")">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label><i class="fas fa-building"></i> Khoa</label>
+                    <select name="filterDepartment">
+                        <option value="">Tất cả khoa</option>
+                        <option value="CNTT" @(Model.FilterDepartment == "CNTT" ? "selected" : "")>Công nghệ thông tin
+                        </option>
+                        <option value="KTDL" @(Model.FilterDepartment == "KTDL" ? "selected" : "")>Kỹ thuật dữ liệu
+                        </option>
+                        <option value="KHMT" @(Model.FilterDepartment == "KHMT" ? "selected" : "")>Khoa học máy tính
+                        </option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar"></i> Học kỳ</label>
+                    <select name="filterTerm">
+                        <option value="">Tất cả học kỳ</option>
+                        <option value="1" @(Model.FilterTerm == "1" ? "selected" : "")>Học kỳ 1 - 2024</option>
+                        <option value="2" @(Model.FilterTerm == "2" ? "selected" : "")>Học kỳ 2 - 2024</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-search"></i> Tìm kiếm</label>
+                    <input type="text" name="searchKeyword" placeholder="Tên lớp, mã lớp..."
+                        value="@Model.SearchKeyword" />
+                </div>
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-filter"></i> Lọc
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (Model.Classes != null && Model.Classes.Count > 0)
+    {
+        <div class="classes-grid">
+            @foreach (var classItem in Model.Classes)
+            {
+                <div class="class-card"
+                    onclick="window.location.href='@Url.Action("ClassScores", "Admin", new { classId = classItem.ClassId, termId = classItem.TermId })'">
+                    <h3><i class="fas fa-users-class"></i> @classItem.ClassName</h3>
+                    <div class="department"><i class="fas fa-building"></i> @classItem.DepartmentName</div>
+
+                    <div class="class-stats">
+                        <div class="stat-item">
+                            <div class="value">@classItem.TotalStudents</div>
+                            <div class="label">Sinh viên</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value">@classItem.PendingApproval</div>
+                            <div class="label">Chờ duyệt</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value">@classItem.ApprovedStudents</div>
+                            <div class="label">Đã duyệt</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value">@classItem.AverageScore.ToString("F1")</div>
+                            <div class="label">Điểm TB</div>
+                        </div>
+                    </div>
+
+                    @{
+                        var approvalPercent = classItem.TotalStudents > 0
+                        ? (classItem.ApprovedStudents * 100.0 / classItem.TotalStudents)
+                        : 0;
+                    }
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: @approvalPercent%"></div>
+                    </div>
+                    <div class="progress-text">
+                        Đã duyệt @classItem.ApprovedStudents/@classItem.TotalStudents (@approvalPercent.ToString("F1")%)
+                    </div>
+
+                    <a href="@Url.Action("ClassScores", "Admin", new { classId = classItem.ClassId, termId = classItem.TermId })"
+                        class="btn-view-class" onclick="event.stopPropagation()">
+                        <i class="fas fa-eye"></i> Xem chi tiết
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 80px 20px; background: white; border-radius: 12px;">
+            <i class="fas fa-inbox" style="font-size: 64px; color: #ccc; display: block; margin-bottom: 20px;"></i>
+            <h3 style="color: #999;">Không tìm thấy lớp nào</h3>
+            <p style="color: #999;">Thử thay đổi bộ lọc để xem kết quả khác.</p>
+        </div>
+    }
+</div>
+</style>
+
+<div class="approve-container">
+    <div class="page-header">
+        <h1><i class="fas fa-check-double"></i> Xét Duyệt Điểm Rèn Luyện</h1>

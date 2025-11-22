@@ -1,8 +1,8 @@
 ﻿body {
-    font-size: .85em;
-    font-family: "Segoe UI", Verdana, Helvetica, Sans-Serif;
-    color: #232323;
-    background-color: #fff;
+    font-size: 14px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a;
+    background-color: #f8fafc;
 }
 
 header, footer, nav, section {
@@ -13,14 +13,16 @@ header, footer, nav, section {
 /* Styles for basic forms
 -----------------------------------------------------------*/
 fieldset {
-    border: 1px solid #ddd;
+    border: 1px solid #e2e8f0;
     padding: 0 1.4em 1.4em 1.4em;
     margin: 0 0 1.5em 0;
+    border-radius: 8px;
 }
 
 legend {
     font-size: 1.2em;
-    font-weight: bold;
+    font-weight: 600;
+    color: #0f172a;
 }
 
 textarea {
@@ -29,6 +31,8 @@ textarea {
 
 .editor-label {
     margin: 1em 0 0 0;
+    font-weight: 600;
+    color: #64748b;
 }
 
 .editor-field {
@@ -39,7 +43,8 @@ textarea {
 /* Styles for validation helpers
 -----------------------------------------------------------*/
 .field-validation-error {
-    color: #f00;
+    color: #dc2626;
+    font-size: 13px;
 }
 
 .field-validation-valid {
@@ -47,13 +52,17 @@ textarea {
 }
 
 .input-validation-error {
-    border: 1px solid #f00;
-    background-color: #fee;
+    border: 1px solid #dc2626 !important;
+    background-color: #fef2f2 !important;
 }
 
 .validation-summary-errors {
-    font-weight: bold;
-    color: #f00;
+    font-weight: 600;
+    color: #dc2626;
+    background: #fef2f2;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #fecaca;
 }
 
 .validation-summary-valid {

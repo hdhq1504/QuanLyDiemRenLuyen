@@ -51,7 +51,7 @@ namespace QuanLyDiemRenLuyen.Controllers
 
                 // Thống kê hoạt động
                 string statsQuery = @"
-                    SELECT 
+                    SELECT
                         (SELECT COUNT(*) FROM ACTIVITIES) as TOTAL_ACTIVITIES,
                         (SELECT COUNT(*) FROM ACTIVITIES WHERE APPROVAL_STATUS = 'PENDING') as PENDING_ACTIVITIES,
                         (SELECT COUNT(*) FROM ACTIVITIES WHERE APPROVAL_STATUS = 'APPROVED') as APPROVED_ACTIVITIES,
@@ -491,6 +491,641 @@ namespace QuanLyDiemRenLuyen.Controllers
 
             return viewModel;
         }
+
+        // ==================== SCORE MANAGEMENT ====================
+
+        // GET: Admin/ClassScores
+        public ActionResult ClassScores(string classId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                if (string.IsNullOrEmpty(classId))
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy lớp học";
+                    return RedirectToAction("ApproveScores");
+                }
+
+                var viewModel = GetClassScoresViewModel(classId);
+                if (viewModel == null)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy lớp học";
+                    return RedirectToAction("ApproveScores");
+                }
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return RedirectToAction("ApproveScores");
+            }
+        }
+
+        // POST: Admin/UpdateScore
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult UpdateScore(string scoreId, decimal newScore, string reason)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null)
+            {
+                return Json(new { success = false, message = "Không có quyền truy cập" });
+            }
+
+            try
+            {
+                string mand = Session["MAND"].ToString();
+
+                // Lấy điểm cũ
+                string getOldScoreQuery = "SELECT TOTAL FROM SCORES WHERE ID = :ScoreId";
+                var getParams = new[] { OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId) };
+                object oldScoreObj = OracleDbHelper.ExecuteScalar(getOldScoreQuery, getParams);
+
+                if (oldScoreObj == null || oldScoreObj == DBNull.Value)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy điểm" });
+                }
+
+                decimal oldScore = Convert.ToDecimal(oldScoreObj);
+
+                // Cập nhật điểm
+                string updateQuery = @"UPDATE SCORES
+                                      SET TOTAL = :NewScore,
+                                          STATUS = 'PROVISIONAL'
+                                      WHERE ID = :ScoreId";
+
+                var updateParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("NewScore", OracleDbType.Decimal, newScore),
+                    OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(updateQuery, updateParams);
+
+                if (result > 0)
+                {
+                    // Thêm vào lịch sử
+                    string historyId = "SH" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                    string insertHistoryQuery = @"INSERT INTO SCORE_HISTORY
+                                                 (ID, SCORE_ID, ACTION, OLD_VALUE, NEW_VALUE,
+                                                  CHANGED_BY, REASON, CHANGED_AT)
+                                                 VALUES
+                                                 (:Id, :ScoreId, 'UPDATE', :OldValue, :NewValue,
+                                                  :ChangedBy, :Reason, SYSDATE)";
+
+                    var historyParams = new[]
+                    {
+                        OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, historyId),
+                        OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId),
+                        OracleDbHelper.CreateParameter("OldValue", OracleDbType.Varchar2, oldScore.ToString()),
+                        OracleDbHelper.CreateParameter("NewValue", OracleDbType.Varchar2, newScore.ToString()),
+                        OracleDbHelper.CreateParameter("ChangedBy", OracleDbType.Varchar2, mand),
+                        OracleDbHelper.CreateParameter("Reason", OracleDbType.Varchar2,
+                            string.IsNullOrEmpty(reason) ? (object)DBNull.Value : reason)
+                    };
+
+                    OracleDbHelper.ExecuteNonQuery(insertHistoryQuery, historyParams);
+
+                    return Json(new { success = true, message = "Cập nhật điểm thành công" });
+                }
+
+                return Json(new { success = false, message = "Không thể cập nhật điểm" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
+        // POST: Admin/ApproveScore
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ApproveScore(string scoreId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null)
+            {
+                return Json(new { success = false, message = "Không có quyền truy cập" });
+            }
+
+            try
+            {
+                string mand = Session["MAND"].ToString();
+
+                string updateQuery = @"UPDATE SCORES
+                                      SET STATUS = 'APPROVED',
+                                          APPROVED_BY = :ApprovedBy,
+                                          APPROVED_AT = SYSDATE
+                                      WHERE ID = :ScoreId";
+
+                var parameters = new[]
+                {
+                    OracleDbHelper.CreateParameter("ApprovedBy", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(updateQuery, parameters);
+
+                if (result > 0)
+                {
+                    // Thêm vào lịch sử
+                    string historyId = "SH" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                    string insertHistoryQuery = @"INSERT INTO SCORE_HISTORY
+                                                 (ID, SCORE_ID, ACTION, CHANGED_BY, CHANGED_AT)
+                                                 VALUES
+                                                 (:Id, :ScoreId, 'APPROVE', :ChangedBy, SYSDATE)";
+
+                    var historyParams = new[]
+                    {
+                        OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, historyId),
+                        OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId),
+                        OracleDbHelper.CreateParameter("ChangedBy", OracleDbType.Varchar2, mand)
+                    };
+
+                    OracleDbHelper.ExecuteNonQuery(insertHistoryQuery, historyParams);
+
+                    return Json(new { success = true, message = "Phê duyệt điểm thành công" });
+                }
+
+                return Json(new { success = false, message = "Không thể phê duyệt điểm" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
+
+
+        // POST: Admin/ApproveSelectedScores
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ApproveSelectedScores(string[] scoreIds)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null)
+            {
+                return Json(new { success = false, message = "Không có quyền truy cập" });
+            }
+
+            try
+            {
+                if (scoreIds == null || scoreIds.Length == 0)
+                {
+                    return Json(new { success = false, message = "Chưa chọn điểm nào" });
+                }
+
+                string mand = Session["MAND"].ToString();
+                int successCount = 0;
+
+                foreach (string scoreId in scoreIds)
+                {
+                    string updateQuery = @"UPDATE SCORES
+                                          SET STATUS = 'APPROVED',
+                                              APPROVED_BY = :ApprovedBy,
+                                              APPROVED_AT = SYSDATE
+                                          WHERE ID = :ScoreId";
+
+                    var parameters = new[]
+                    {
+                        OracleDbHelper.CreateParameter("ApprovedBy", OracleDbType.Varchar2, mand),
+                        OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId)
+                    };
+
+                    int result = OracleDbHelper.ExecuteNonQuery(updateQuery, parameters);
+
+                    if (result > 0)
+                    {
+                        successCount++;
+
+                        // Thêm vào lịch sử
+                        string historyId = "SH" + DateTime.Now.ToString("yyyyMMddHHmmss") + successCount;
+                        string insertHistoryQuery = @"INSERT INTO SCORE_HISTORY
+                                                     (ID, SCORE_ID, ACTION, CHANGED_BY, CHANGED_AT)
+                                                     VALUES
+                                                     (:Id, :ScoreId, 'APPROVE', :ChangedBy, SYSDATE)";
+
+                        var historyParams = new[]
+                        {
+                            OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, historyId),
+                            OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId),
+                            OracleDbHelper.CreateParameter("ChangedBy", OracleDbType.Varchar2, mand)
+                        };
+
+                        OracleDbHelper.ExecuteNonQuery(insertHistoryQuery, historyParams);
+                    }
+                }
+
+                return Json(new { success = true, message = $"Đã phê duyệt {successCount}/{scoreIds.Length} điểm" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
+        // GET: Admin/ApproveScores
+        public ActionResult ApproveScores(string department, string term, string search)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                var viewModel = GetClassScoreListViewModel(department, term, search);
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View(new ClassScoreListViewModel { Classes = new List<ClassItem>() });
+            }
+        }
+
+        // GET: Admin/ReviewRequests
+        public ActionResult ReviewRequests(string status, string term)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                var viewModel = GetReviewRequestListViewModel(status, term);
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View(new ReviewRequestListViewModel { Requests = new List<ReviewRequestItem>() });
+            }
+        }
+
+        // POST: Admin/RespondReviewRequest
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult RespondReviewRequest(string requestId, string action, string response, decimal? approvedScore)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null)
+            {
+                return Json(new { success = false, message = "Không có quyền truy cập" });
+            }
+
+            try
+            {
+                string mand = Session["MAND"].ToString();
+                string newStatus = action == "APPROVE" ? "APPROVED" : "REJECTED";
+
+                // Cập nhật đơn phúc khảo
+                string updateFeedbackQuery = @"UPDATE FEEDBACKS
+                                              SET STATUS = :Status,
+                                                  RESPONSE = :Response,
+                                                  RESPONDED_BY = :RespondedBy,
+                                                  RESPONDED_AT = SYSDATE
+                                              WHERE ID = :RequestId";
+
+                var feedbackParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Status", OracleDbType.Varchar2, newStatus),
+                    OracleDbHelper.CreateParameter("Response", OracleDbType.Clob,
+                        string.IsNullOrEmpty(response) ? (object)DBNull.Value : response),
+                    OracleDbHelper.CreateParameter("RespondedBy", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("RequestId", OracleDbType.Varchar2, requestId)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(updateFeedbackQuery, feedbackParams);
+
+                if (result > 0 && action == "APPROVE" && approvedScore.HasValue)
+                {
+                    // Lấy thông tin feedback để cập nhật điểm
+                    string getFeedbackQuery = @"SELECT STUDENT_ID, TERM_ID FROM FEEDBACKS WHERE ID = :RequestId";
+                    var getParams = new[] { OracleDbHelper.CreateParameter("RequestId", OracleDbType.Varchar2, requestId) };
+                    DataTable feedbackDt = OracleDbHelper.ExecuteQuery(getFeedbackQuery, getParams);
+
+                    if (feedbackDt.Rows.Count > 0)
+                    {
+                        string studentId = feedbackDt.Rows[0]["STUDENT_ID"].ToString();
+                        string termId = feedbackDt.Rows[0]["TERM_ID"].ToString();
+
+                        // Lấy điểm cũ
+                        string getScoreQuery = @"SELECT ID, TOTAL FROM SCORES
+                                                WHERE STUDENT_ID = :StudentId AND TERM_ID = :TermId";
+                        var scoreParams = new[]
+                        {
+                            OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentId),
+                            OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
+                        };
+                        DataTable scoreDt = OracleDbHelper.ExecuteQuery(getScoreQuery, scoreParams);
+
+                        if (scoreDt.Rows.Count > 0)
+                        {
+                            string scoreId = scoreDt.Rows[0]["ID"].ToString();
+                            decimal oldScore = Convert.ToDecimal(scoreDt.Rows[0]["TOTAL"]);
+
+                            // Cập nhật điểm
+                            string updateScoreQuery = @"UPDATE SCORES
+                                                       SET TOTAL = :NewScore,
+                                                           STATUS = 'APPROVED',
+                                                           APPROVED_BY = :ApprovedBy,
+                                                           APPROVED_AT = SYSDATE
+                                                       WHERE ID = :ScoreId";
+
+                            var updateScoreParams = new[]
+                            {
+                                OracleDbHelper.CreateParameter("NewScore", OracleDbType.Decimal, approvedScore.Value),
+                                OracleDbHelper.CreateParameter("ApprovedBy", OracleDbType.Varchar2, mand),
+                                OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId)
+                            };
+
+                            OracleDbHelper.ExecuteNonQuery(updateScoreQuery, updateScoreParams);
+
+                            // Thêm vào lịch sử
+                            string historyId = "SH" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                            string insertHistoryQuery = @"INSERT INTO SCORE_HISTORY
+                                                         (ID, SCORE_ID, ACTION, OLD_VALUE, NEW_VALUE,
+                                                          CHANGED_BY, REASON, CHANGED_AT)
+                                                         VALUES
+                                                         (:Id, :ScoreId, 'REVIEW_APPROVED', :OldValue, :NewValue,
+                                                          :ChangedBy, :Reason, SYSDATE)";
+
+                            var historyParams = new[]
+                            {
+                                OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, historyId),
+                                OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId),
+                                OracleDbHelper.CreateParameter("OldValue", OracleDbType.Varchar2, oldScore.ToString()),
+                                OracleDbHelper.CreateParameter("NewValue", OracleDbType.Varchar2, approvedScore.Value.ToString()),
+                                OracleDbHelper.CreateParameter("ChangedBy", OracleDbType.Varchar2, mand),
+                                OracleDbHelper.CreateParameter("Reason", OracleDbType.Varchar2, "Phúc khảo được chấp nhận")
+                            };
+
+                            OracleDbHelper.ExecuteNonQuery(insertHistoryQuery, historyParams);
+                        }
+                    }
+                }
+
+                string message = action == "APPROVE" ? "Đã chấp nhận đơn phúc khảo" : "Đã từ chối đơn phúc khảo";
+                return Json(new { success = true, message = message });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
+
+        // ==================== SCORE HELPER METHODS ====================
+
+        private ClassScoreViewModel GetClassScoresViewModel(string classId)
+        {
+            // Lấy thông tin lớp học
+            string classQuery = @"SELECT c.ID, c.NAME, c.CODE, d.NAME as DEPT_NAME,
+                                        t.ID as TERM_ID, t.NAME as TERM_NAME,
+                                        u.FULL_NAME as ADVISOR_NAME
+                                 FROM CLASSES c
+                                 LEFT JOIN DEPARTMENTS d ON c.DEPARTMENT_ID = d.ID
+                                 LEFT JOIN TERMS t ON t.IS_CURRENT = 1
+                                 LEFT JOIN USERS u ON c.ADVISOR_ID = u.MAND
+                                 WHERE c.ID = :ClassId";
+
+            var classParams = new[] { OracleDbHelper.CreateParameter("ClassId", OracleDbType.Varchar2, classId) };
+            DataTable classDt = OracleDbHelper.ExecuteQuery(classQuery, classParams);
+
+            if (classDt.Rows.Count == 0) return null;
+
+            DataRow classRow = classDt.Rows[0];
+            string termId = classRow["TERM_ID"] != DBNull.Value ? classRow["TERM_ID"].ToString() : null;
+
+            var viewModel = new ClassScoreViewModel
+            {
+                ClassId = classId,
+                ClassName = classRow["NAME"].ToString(),
+                ClassCode = classRow["CODE"].ToString(),
+                DepartmentName = classRow["DEPT_NAME"] != DBNull.Value ? classRow["DEPT_NAME"].ToString() : "",
+                TermId = termId,
+                TermName = classRow["TERM_NAME"] != DBNull.Value ? classRow["TERM_NAME"].ToString() : "",
+                AdvisorName = classRow["ADVISOR_NAME"] != DBNull.Value ? classRow["ADVISOR_NAME"].ToString() : "",
+                Students = new List<StudentScoreItem>()
+            };
+
+            if (string.IsNullOrEmpty(termId))
+            {
+                return viewModel;
+            }
+
+            // Lấy danh sách sinh viên và điểm
+            string studentsQuery = @"SELECT s.USER_ID, st.STUDENT_CODE, u.FULL_NAME,
+                                           sc.ID as SCORE_ID, sc.TOTAL, sc.STATUS,
+                                           (SELECT COUNT(*) FROM REGISTRATIONS r
+                                            INNER JOIN ACTIVITIES a ON r.ACTIVITY_ID = a.ID
+                                            WHERE r.STUDENT_ID = s.USER_ID
+                                            AND a.TERM_ID = :TermId
+                                            AND r.STATUS = 'CHECKED_IN') as ACTIVITY_COUNT
+                                    FROM STUDENTS s
+                                    INNER JOIN USERS u ON s.USER_ID = u.MAND
+                                    LEFT JOIN SCORES sc ON s.USER_ID = sc.STUDENT_ID AND sc.TERM_ID = :TermId
+                                    WHERE s.CLASS_ID = :ClassId
+                                    ORDER BY st.STUDENT_CODE";
+
+            var studentsParams = new[]
+            {
+                OracleDbHelper.CreateParameter("ClassId", OracleDbType.Varchar2, classId),
+                OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
+            };
+
+            DataTable studentsDt = OracleDbHelper.ExecuteQuery(studentsQuery, studentsParams);
+
+            foreach (DataRow row in studentsDt.Rows)
+            {
+                decimal total = row["TOTAL"] != DBNull.Value ? Convert.ToDecimal(row["TOTAL"]) : 0;
+                string status = row["STATUS"] != DBNull.Value ? row["STATUS"].ToString() : "PROVISIONAL";
+
+                viewModel.Students.Add(new StudentScoreItem
+                {
+                    ScoreId = row["SCORE_ID"] != DBNull.Value ? row["SCORE_ID"].ToString() : null,
+                    StudentId = row["USER_ID"].ToString(),
+                    StudentCode = row["STUDENT_CODE"].ToString(),
+                    StudentName = row["FULL_NAME"].ToString(),
+                    Total = total,
+                    Status = status,
+                    Classification = GetClassification(total),
+                    ActivityCount = Convert.ToInt32(row["ACTIVITY_COUNT"]),
+                    CanEdit = true,
+                    CanApprove = status == "PROVISIONAL"
+                });
+            }
+
+            // Tính thống kê
+            viewModel.Statistics = new ClassScoreStatistics
+            {
+                TotalStudents = viewModel.Students.Count,
+                ApprovedStudents = viewModel.Students.Count(x => x.Status == "APPROVED"),
+                AverageScore = viewModel.Students.Count > 0 ? viewModel.Students.Average(x => x.Total) : 0,
+                HighestScore = viewModel.Students.Count > 0 ? viewModel.Students.Max(x => x.Total) : 0
+            };
+
+            return viewModel;
+        }
+
+        private ClassScoreListViewModel GetClassScoreListViewModel(string department, string term, string search)
+        {
+            var viewModel = new ClassScoreListViewModel
+            {
+                FilterDepartment = department,
+                FilterTerm = term,
+                SearchKeyword = search,
+                Classes = new List<ClassItem>()
+            };
+
+            // Lấy học kỳ hiện tại nếu không có filter
+            string termId = term;
+            if (string.IsNullOrEmpty(termId))
+            {
+                string currentTermQuery = "SELECT ID FROM TERMS WHERE IS_CURRENT = 1 FETCH FIRST 1 ROWS ONLY";
+                object termObj = OracleDbHelper.ExecuteScalar(currentTermQuery, null);
+                termId = termObj != null ? termObj.ToString() : null;
+            }
+
+            if (string.IsNullOrEmpty(termId))
+            {
+                return viewModel;
+            }
+
+            // Lấy danh sách lớp
+            string classesQuery = @"SELECT c.ID, c.NAME, c.CODE, d.NAME as DEPT_NAME,
+                                          t.ID as TERM_ID, t.NAME as TERM_NAME,
+                                          (SELECT COUNT(*) FROM STUDENTS WHERE CLASS_ID = c.ID) as TOTAL_STUDENTS,
+                                          (SELECT COUNT(*) FROM SCORES sc
+                                           INNER JOIN STUDENTS s ON sc.STUDENT_ID = s.USER_ID
+                                           WHERE s.CLASS_ID = c.ID AND sc.TERM_ID = :TermId
+                                           AND sc.STATUS = 'PROVISIONAL') as PENDING_APPROVAL,
+                                          (SELECT COUNT(*) FROM SCORES sc
+                                           INNER JOIN STUDENTS s ON sc.STUDENT_ID = s.USER_ID
+                                           WHERE s.CLASS_ID = c.ID AND sc.TERM_ID = :TermId
+                                           AND sc.STATUS = 'APPROVED') as APPROVED_STUDENTS,
+                                          (SELECT AVG(sc.TOTAL) FROM SCORES sc
+                                           INNER JOIN STUDENTS s ON sc.STUDENT_ID = s.USER_ID
+                                           WHERE s.CLASS_ID = c.ID AND sc.TERM_ID = :TermId) as AVG_SCORE
+                                   FROM CLASSES c
+                                   LEFT JOIN DEPARTMENTS d ON c.DEPARTMENT_ID = d.ID
+                                   LEFT JOIN TERMS t ON t.ID = :TermId
+                                   WHERE 1=1";
+
+            var parameters = new List<OracleParameter>
+            {
+                OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
+            };
+
+            if (!string.IsNullOrEmpty(department))
+            {
+                classesQuery += " AND c.DEPARTMENT_ID = :DepartmentId";
+                parameters.Add(OracleDbHelper.CreateParameter("DepartmentId", OracleDbType.Varchar2, department));
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                classesQuery += " AND (c.NAME LIKE :Search OR c.CODE LIKE :Search)";
+                parameters.Add(OracleDbHelper.CreateParameter("Search", OracleDbType.Varchar2, "%" + search + "%"));
+            }
+
+            classesQuery += " ORDER BY c.CODE";
+
+            DataTable classesDt = OracleDbHelper.ExecuteQuery(classesQuery, parameters.ToArray());
+
+            foreach (DataRow row in classesDt.Rows)
+            {
+                viewModel.Classes.Add(new ClassItem
+                {
+                    ClassId = row["ID"].ToString(),
+                    ClassName = row["NAME"].ToString(),
+                    ClassCode = row["CODE"].ToString(),
+                    DepartmentName = row["DEPT_NAME"] != DBNull.Value ? row["DEPT_NAME"].ToString() : "",
+                    TermId = row["TERM_ID"] != DBNull.Value ? row["TERM_ID"].ToString() : "",
+                    TermName = row["TERM_NAME"] != DBNull.Value ? row["TERM_NAME"].ToString() : "",
+                    TotalStudents = Convert.ToInt32(row["TOTAL_STUDENTS"]),
+                    PendingApproval = Convert.ToInt32(row["PENDING_APPROVAL"]),
+                    ApprovedStudents = Convert.ToInt32(row["APPROVED_STUDENTS"]),
+                    AverageScore = row["AVG_SCORE"] != DBNull.Value ? Convert.ToDecimal(row["AVG_SCORE"]) : 0
+                });
+            }
+
+            return viewModel;
+        }
+
+        private ReviewRequestListViewModel GetReviewRequestListViewModel(string status, string term)
+        {
+            var viewModel = new ReviewRequestListViewModel
+            {
+                FilterStatus = status ?? "ALL",
+                FilterTerm = term,
+                Requests = new List<ReviewRequestItem>()
+            };
+
+            // Lấy danh sách đơn phúc khảo
+            string requestsQuery = @"SELECT f.ID, f.TITLE, f.CONTENT, f.REQUESTED_SCORE, f.STATUS,
+                                           f.CREATED_AT, f.RESPONDED_AT,
+                                           s.STUDENT_CODE, u.FULL_NAME as STUDENT_NAME,
+                                           t.NAME as TERM_NAME, t.YEAR as TERM_YEAR,
+                                           sc.TOTAL as CURRENT_SCORE
+                                    FROM FEEDBACKS f
+                                    INNER JOIN STUDENTS s ON f.STUDENT_ID = s.USER_ID
+                                    INNER JOIN USERS u ON s.USER_ID = u.MAND
+                                    INNER JOIN TERMS t ON f.TERM_ID = t.ID
+                                    LEFT JOIN SCORES sc ON f.STUDENT_ID = sc.STUDENT_ID AND f.TERM_ID = sc.TERM_ID
+                                    WHERE 1=1";
+
+            var parameters = new List<OracleParameter>();
+
+            if (!string.IsNullOrEmpty(status) && status != "ALL")
+            {
+                requestsQuery += " AND f.STATUS = :Status";
+                parameters.Add(OracleDbHelper.CreateParameter("Status", OracleDbType.Varchar2, status));
+            }
+
+            if (!string.IsNullOrEmpty(term))
+            {
+                requestsQuery += " AND f.TERM_ID = :TermId";
+                parameters.Add(OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, term));
+            }
+
+            requestsQuery += " ORDER BY f.CREATED_AT DESC";
+
+            DataTable requestsDt = OracleDbHelper.ExecuteQuery(requestsQuery, parameters.ToArray());
+
+            foreach (DataRow row in requestsDt.Rows)
+            {
+                viewModel.Requests.Add(new ReviewRequestItem
+                {
+                    RequestId = row["ID"].ToString(),
+                    Title = row["TITLE"].ToString(),
+                    Content = row["CONTENT"].ToString(),
+                    StudentCode = row["STUDENT_CODE"].ToString(),
+                    StudentName = row["STUDENT_NAME"].ToString(),
+                    TermName = row["TERM_NAME"].ToString(),
+                    TermYear = Convert.ToInt32(row["TERM_YEAR"]),
+                    CurrentScore = row["CURRENT_SCORE"] != DBNull.Value ? Convert.ToDecimal(row["CURRENT_SCORE"]) : 0,
+                    RequestedScore = Convert.ToDecimal(row["REQUESTED_SCORE"]),
+                    Status = row["STATUS"].ToString(),
+                    CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
+                    RespondedAt = row["RESPONDED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["RESPONDED_AT"]) : null
+                });
+            }
+
+            return viewModel;
+        }
+
+        private string GetClassification(decimal score)
+        {
+            if (score >= 90) return "Xuất sắc";
+            if (score >= 80) return "Giỏi";
+            if (score >= 65) return "Khá";
+            if (score >= 50) return "Trung bình";
+            return "Yếu";
+        }
     }
 }
+
+
 

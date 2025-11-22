@@ -8,29 +8,36 @@
     .activities-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 24px;
     }
 
     .page-header {
-        margin-bottom: 30px;
+        margin-bottom: 24px;
     }
 
     .page-header h1 {
-        color: #2c3e50;
-        margin-bottom: 10px;
+        color: #0f172a;
+        margin-bottom: 8px;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .page-header p {
+        color: #64748b;
+        font-size: 14px;
     }
 
     .search-filter-section {
         background: white;
         padding: 20px;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
         margin-bottom: 20px;
     }
 
     .search-filter-form {
         display: flex;
-        gap: 15px;
+        gap: 12px;
         flex-wrap: wrap;
         align-items: flex-end;
     }
@@ -42,170 +49,179 @@
 
     .form-group label {
         display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
-        color: #555;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #64748b;
+        font-size: 14px;
     }
 
     .form-control {
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
         font-size: 14px;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #2563eb;
     }
 
     .btn {
         padding: 10px 20px;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
         font-size: 14px;
-        transition: all 0.3s;
+        font-weight: 500;
     }
 
     .btn-primary {
-        background: #3498db;
+        background: #2563eb;
         color: white;
     }
 
     .btn-primary:hover {
-        background: #2980b9;
+        background: #1e40af;
     }
 
     .btn-secondary {
-        background: #95a5a6;
+        background: #64748b;
         color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #475569;
     }
 
     .activity-card {
         background: white;
         border-radius: 8px;
         padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s;
-    }
-
-    .activity-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        margin-bottom: 16px;
+        border: 1px solid #e2e8f0;
     }
 
     .activity-header {
         display: flex;
         justify-content: space-between;
         align-items: start;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
     }
 
     .activity-title {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 5px;
+        color: #0f172a;
+        margin-bottom: 8px;
     }
 
     .activity-meta {
         display: flex;
-        gap: 15px;
+        gap: 16px;
         flex-wrap: wrap;
-        margin-bottom: 10px;
-        font-size: 14px;
-        color: #666;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: #64748b;
     }
 
     .meta-item {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 4px;
     }
 
     .badge {
-        padding: 5px 12px;
-        border-radius: 20px;
+        padding: 4px 12px;
+        border-radius: 6px;
         font-size: 12px;
-        font-weight: 500;
+        font-weight: 600;
     }
 
     .badge-success {
-        background: #27ae60;
-        color: white;
+        background: #d1fae5;
+        color: #065f46;
     }
 
     .badge-warning {
-        background: #f39c12;
-        color: white;
+        background: #fef3c7;
+        color: #92400e;
     }
 
     .badge-info {
-        background: #3498db;
-        color: white;
+        background: #dbeafe;
+        color: #1e40af;
     }
 
     .badge-danger {
-        background: #e74c3c;
-        color: white;
+        background: #fee2e2;
+        color: #991b1b;
     }
 
     .badge-secondary {
-        background: #95a5a6;
-        color: white;
+        background: #f1f5f9;
+        color: #475569;
     }
 
     .activity-description {
-        color: #555;
-        margin-bottom: 15px;
+        color: #64748b;
+        margin-bottom: 12px;
         line-height: 1.6;
+        font-size: 14px;
     }
 
     .activity-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-top: 15px;
-        border-top: 1px solid #eee;
+        padding-top: 12px;
+        border-top: 1px solid #f1f5f9;
     }
 
     .btn-view {
-        background: #3498db;
+        background: #2563eb;
         color: white;
-        padding: 8px 20px;
+        padding: 8px 16px;
         text-decoration: none;
-        border-radius: 4px;
-        transition: background 0.3s;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 14px;
     }
 
     .btn-view:hover {
-        background: #2980b9;
+        background: #1e40af;
+        text-decoration: none;
     }
 
     .pagination {
         display: flex;
         justify-content: center;
-        gap: 10px;
-        margin-top: 30px;
+        gap: 8px;
+        margin-top: 24px;
     }
 
     .pagination a,
     .pagination span {
         padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
         text-decoration: none;
-        color: #3498db;
+        color: #2563eb;
+        font-weight: 500;
+        font-size: 14px;
     }
 
     .pagination .active {
-        background: #3498db;
+        background: #2563eb;
         color: white;
-        border-color: #3498db;
+        border-color: #2563eb;
     }
 
     .no-activities {
         text-align: center;
-        padding: 40px;
-        color: #999;
+        padding: 48px;
+        color: #94a3b8;
     }
 </style>
 

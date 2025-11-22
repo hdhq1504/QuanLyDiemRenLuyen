@@ -215,7 +215,9 @@
 </style>
 
 <div class="detail-container">
-    <a href="@Url.Action("Activities", "Student")" class="back-link">← Quay lại danh sách</a>
+    <a href="@Url.Action("Activities", "Student")" class="back-link">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+    </a>
 
     @if (TempData["SuccessMessage"] != null)
     {
@@ -260,43 +262,43 @@
 
         <div class="info-grid">
             <div class="info-item">
-                <div class="info-label">📅 Thời gian bắt đầu</div>
+                <div class="info-label"><i class="fas fa-calendar-alt"></i> Thời gian bắt đầu</div>
                 <div class="info-value">@Model.StartAt.ToString("dd/MM/yyyy HH:mm")</div>
             </div>
             <div class="info-item">
-                <div class="info-label">⏰ Thời gian kết thúc</div>
+                <div class="info-label"><i class="fas fa-clock"></i> Thời gian kết thúc</div>
                 <div class="info-value">@Model.EndAt.ToString("dd/MM/yyyy HH:mm")</div>
             </div>
             <div class="info-item">
-                <div class="info-label">📍 Địa điểm</div>
+                <div class="info-label"><i class="fas fa-map-marker-alt"></i> Địa điểm</div>
                 <div class="info-value">@Model.Location</div>
             </div>
             <div class="info-item">
-                <div class="info-label">⭐ Điểm rèn luyện</div>
+                <div class="info-label"><i class="fas fa-star"></i> Điểm rèn luyện</div>
                 <div class="info-value">@(Model.Points ?? 0) điểm</div>
             </div>
             <div class="info-item">
-                <div class="info-label">👥 Số lượng</div>
+                <div class="info-label"><i class="fas fa-users"></i> Số lượng</div>
                 <div class="info-value">@Model.CurrentParticipants/@Model.MaxParticipants người</div>
             </div>
             @if (Model.RegistrationDeadline.HasValue)
             {
                 <div class="info-item">
-                    <div class="info-label">⏳ Hạn đăng ký</div>
+                    <div class="info-label"><i class="fas fa-hourglass-half"></i> Hạn đăng ký</div>
                     <div class="info-value">@Model.RegistrationDeadline.Value.ToString("dd/MM/yyyy HH:mm")</div>
                 </div>
             }
         </div>
 
         <div class="section">
-            <h2 class="section-title">📝 Mô tả</h2>
+            <h2 class="section-title"><i class="fas fa-align-left"></i> Mô tả</h2>
             <div class="section-content">@Html.Raw(Model.Description.Replace("\n", "<br/>"))</div>
         </div>
 
         @if (!string.IsNullOrEmpty(Model.Requirements))
         {
             <div class="section">
-                <h2 class="section-title">📋 Yêu cầu</h2>
+                <h2 class="section-title"><i class="fas fa-clipboard-list"></i> Yêu cầu</h2>
                 <div class="section-content">@Html.Raw(Model.Requirements.Replace("\n", "<br/>"))</div>
             </div>
         }
@@ -304,7 +306,7 @@
         @if (!string.IsNullOrEmpty(Model.Benefits))
         {
             <div class="section">
-                <h2 class="section-title">🎁 Quyền lợi</h2>
+                <h2 class="section-title"><i class="fas fa-gift"></i> Quyền lợi</h2>
                 <div class="section-content">@Html.Raw(Model.Benefits.Replace("\n", "<br/>"))</div>
             </div>
         }
@@ -312,7 +314,7 @@
         @if (Model.IsRegistered)
         {
             <div class="proof-section">
-                <h3 class="section-title">📎 Minh chứng tham gia</h3>
+                <h3 class="section-title"><i class="fas fa-paperclip"></i> Minh chứng tham gia</h3>
                 @if (!string.IsNullOrEmpty(Model.ProofFilePath))
                 {
                     <div class="proof-info">
@@ -333,7 +335,7 @@
                         </div>
                     </div>
                     <p><strong>Đã upload:</strong> @Model.ProofUploadedAt?.ToString("dd/MM/yyyy HH:mm")</p>
-                    @if (Model.ApprovedPoints.HasValue)
+                    if (Model.ApprovedPoints.HasValue)
                     {
                         <p><strong>Điểm được duyệt:</strong> @Model.ApprovedPoints điểm</p>
                     }
@@ -354,7 +356,7 @@
                     <input type="hidden" name="activityId" value="@Model.Id" />
                     <button type="submit" class="btn btn-primary"
                         onclick="return confirm('Bạn có chắc muốn đăng ký hoạt động này?')">
-                        ✅ Đăng ký tham gia
+                        <i class="fas fa-check-circle"></i> Đăng ký tham gia
                     </button>
                 }
             }
@@ -366,7 +368,7 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="activityId" value="@Model.Id" />
                     <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn hủy đăng ký?')">
-                        ❌ Hủy đăng ký
+                        <i class="fas fa-times-circle"></i> Hủy đăng ký
                     </button>
                 }
             }
@@ -374,7 +376,7 @@
             @if (Model.CanUploadProof)
             {
                 <a href="@Url.Action("UploadProof", "Student", new { id = Model.Id })" class="btn btn-info">
-                    📤 Upload minh chứng
+                    <i class="fas fa-upload"></i> Upload minh chứng
                 </a>
             }
         </div>
@@ -384,15 +386,15 @@
             <div class="alert alert-info" style="margin-top: 20px;">
                 @if (Model.CurrentParticipants >= Model.MaxParticipants)
                 {
-                    <p>⚠️ Hoạt động đã đủ số lượng người tham gia</p>
+                    <p><i class="fas fa-exclamation-triangle"></i> Hoạt động đã đủ số lượng người tham gia</p>
                 }
                 else if (Model.RegistrationDeadline.HasValue && Model.RegistrationDeadline < DateTime.Now)
                 {
-                    <p>⚠️ Đã hết hạn đăng ký</p>
+                    <p><i class="fas fa-exclamation-triangle"></i> Đã hết hạn đăng ký</p>
                 }
                 else if (Model.Status != "ACTIVE")
                 {
-                    <p>⚠️ Hoạt động không còn mở đăng ký</p>
+                    <p><i class="fas fa-exclamation-triangle"></i> Hoạt động không còn mở đăng ký</p>
                 }
             </div>
         }

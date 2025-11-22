@@ -1,0 +1,498 @@
+@model QuanLyDiemRenLuyen.Models.ScoreDetailViewModel
+@{
+    ViewBag.Title = "Chi Tiết Điểm Rèn Luyện";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .score-detail-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    .breadcrumb {
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .breadcrumb a {
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .detail-header {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 30px;
+    }
+
+    .detail-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    .header-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .info-item .label {
+        font-size: 13px;
+        color: #666;
+    }
+
+    .info-item .value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .score-display {
+        text-align: center;
+        padding: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        margin-bottom: 30px;
+    }
+
+    .score-display .score-value {
+        font-size: 64px;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .score-display .classification {
+        font-size: 24px;
+        font-weight: 600;
+        opacity: 0.95;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 20px 25px;
+        border-bottom: 2px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .card-body {
+        padding: 25px;
+    }
+
+    .criterion-item {
+        padding: 20px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+
+    .criterion-item:hover {
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+    }
+
+    .criterion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .criterion-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .criterion-points {
+        font-size: 18px;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s;
+    }
+
+    .activity-list {
+        margin-top: 15px;
+        padding-left: 20px;
+    }
+
+    .activity-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .history-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .history-item {
+        position: relative;
+        padding: 15px 0;
+        border-left: 2px solid #e9ecef;
+        padding-left: 25px;
+        margin-bottom: 15px;
+    }
+
+    .history-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 20px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #667eea;
+    }
+
+    .history-date {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 5px;
+    }
+
+    .history-action {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .history-details {
+        font-size: 14px;
+        color: #666;
+    }
+
+    .btn-review {
+        padding: 12px 24px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-review:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .review-info {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+
+    .review-info h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #856404;
+        margin-bottom: 8px;
+    }
+
+    .review-info p {
+        font-size: 13px;
+        color: #856404;
+        margin: 0;
+    }
+
+    @media
+    (max-width: 968px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="score-detail-container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="@Url.Action("Dashboard", "Student")"><i class="fas fa-home"></i> Trang chủ</a>
+        <span> / </span>
+        <a href="@Url.Action("Scores", "Student")">Điểm rèn luyện</a>
+        <span> / </span>
+        <span>Chi tiết</span>
+    </div>
+
+    <!-- Header -->
+    <div class="detail-header">
+        <h1><i class="fas fa-file-alt"></i> Chi Tiết Điểm Rèn Luyện</h1>
+        <div class="header-info">
+            <div class="info-item">
+                <span class="label">Sinh viên</span>
+                <span class="value">@Model.StudentName</span>
+            </div>
+            <div class="info-item">
+                <span class="label">MSSV</span>
+                <span class="value">@Model.StudentCode</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Lớp</span>
+                <span class="value">@Model.ClassName</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Học kỳ</span>
+                <span class="value">@Model.TermName</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Trạng thái</span>
+                <span class="value">
+                    @if (Model.Status == "APPROVED")
+                    {
+                        <span style="color: #28a745;"><i class="fas fa-check-circle"></i> Đã duyệt</span>
+                    }
+                    else
+                    {
+                        <span style="color: #ffc107;"><i class="fas fa-clock"></i> Tạm thời</span>
+                    }
+                </span>
+            </div>
+            @if (Model.ApprovedAt.HasValue)
+            {
+                <div class="info-item">
+                    <span class="label">Ngày duyệt</span>
+                    <span class="value">@Model.ApprovedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Score Display -->
+    <div class="score-display">
+        <div class="score-value">@Model.Total.ToString("F2")</div>
+        <div class="classification">@Model.Classification</div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+        <!-- Left Column: Criterion Scores -->
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-list-check"></i> Chi Tiết Điểm Theo Tiêu Chí</h2>
+                </div>
+                <div class="card-body">
+                    @if (Model.CriterionScores != null && Model.CriterionScores.Count > 0)
+                    {
+                        foreach (var criterion in Model.CriterionScores)
+                        {
+                            <div class="criterion-item">
+                                <div class="criterion-header">
+                                    <div class="criterion-name">
+                                        <i class="fas fa-bookmark"></i> @criterion.CriterionName
+                                    </div>
+                                    <div class="criterion-points">
+                                        @criterion.EarnedPoints.ToString("F2") / @criterion.MaxPoints.ToString("F2")
+                                    </div>
+                                </div>
+                                <div class="progress-bar">
+                                    @{
+                                        var percentage = criterion.MaxPoints > 0 ? (criterion.EarnedPoints / criterion.MaxPoints *
+                                        100) : 0;
+                                    }
+                                    <div class="progress-fill" style="width: @percentage%"></div>
+                                </div>
+                                <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
+                                    <i class="fas fa-calendar-check"></i> @criterion.ActivityCount hoạt động
+                                </div>
+
+                                @if (criterion.Activities != null && criterion.Activities.Count > 0)
+                                {
+                                    <div class="activity-list">
+                                        @foreach (var activity in criterion.Activities)
+                                        {
+                                            <div class="activity-item">
+                                                <div>
+                                                    <div style="font-weight: 500;">@activity.ActivityTitle</div>
+                                                    <div style="font-size: 12px; color: #999;">
+                                                        @activity.ActivityDate.ToString("dd/MM/yyyy")
+                                                    </div>
+                                                </div>
+                                                <div style="font-weight: 600; color: #667eea;">
+                                                    +@activity.Points.ToString("F2")
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p style="text-align: center; color: #999; padding: 40px 0;">
+                            <i class="fas fa-inbox" style="font-size: 48px; display: block; margin-bottom: 15px;"></i>
+                            Chưa có dữ liệu chi tiết
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: History & Review -->
+        <div>
+            <!-- History -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">
+                    <h2><i class="fas fa-history"></i> Lịch Sử Thay Đổi</h2>
+                </div>
+                <div class="card-body">
+                    @if (Model.History != null && Model.History.Count > 0)
+                    {
+                        <div class="history-timeline">
+                            @foreach (var item in Model.History)
+                            {
+                                <div class="history-item">
+                                    <div class="history-date">
+                                        <i class="fas fa-clock"></i> @item.ChangedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                    <div class="history-action">@item.Action</div>
+                                    <div class="history-details">
+                                        @if (item.OldValue != item.NewValue)
+                                        {
+                                            <span>@item.OldValue → @item.NewValue</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(item.ChangedByName))
+                                        {
+                                            <div style="margin-top: 5px;">
+                                                <i class="fas fa-user"></i> @item.ChangedByName
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(item.Reason))
+                                        {
+                                            <div style="margin-top: 5px; font-style: italic;">
+                                                "@item.Reason"
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p style="text-align: center; color: #999; padding: 20px 0;">
+                            Chưa có lịch sử thay đổi
+                        </p>
+                    }
+                </div>
+            </div>
+
+            <!-- Review Request -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-file-signature"></i> Phúc Khảo</h2>
+                </div>
+                <div class="card-body">
+                    @if (Model.ReviewRequest != null)
+                    {
+                        <div class="review-info">
+                            <h4><i class="fas fa-info-circle"></i> Đơn phúc khảo đang xử lý</h4>
+                            <p><strong>Tiêu đề:</strong> @Model.ReviewRequest.Title</p>
+                            <p><strong>Trạng thái:</strong> @Model.ReviewRequest.Status</p>
+                            <p><strong>Ngày gửi:</strong> @Model.ReviewRequest.CreatedAt.ToString("dd/MM/yyyy")</p>
+                            @if (Model.ReviewRequest.RespondedAt.HasValue)
+                            {
+                                <p><strong>Ngày phản hồi:</strong> @Model.ReviewRequest.RespondedAt.Value.ToString("dd/MM/yyyy")
+                                </p>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.ReviewRequest.Response))
+                            {
+                                <p style="margin-top: 10px;"><strong>Phản hồi:</strong></p>
+                                <p style="background: white; padding: 10px; border-radius: 4px; margin-top: 5px;">
+                                    @Model.ReviewRequest.Response
+                                </p>
+                            }
+                        </div>
+                    }
+                    else if (Model.Status == "APPROVED")
+                    {
+                        <p style="text-align: center; color: #999; padding: 20px 0;">
+                            Điểm đã được phê duyệt chính thức
+                        </p>
+                    }
+                    else
+                    {
+                        <p style="color: #666; margin-bottom: 15px;">
+                            Nếu bạn có thắc mắc về điểm rèn luyện, bạn có thể gửi đơn phúc khảo.
+                        </p>
+                        <a href="@Url.Action("CreateReviewRequest", "Student", new { scoreId = Model.ScoreId })"
+                            class="btn-review">
+                            <i class="fas fa-paper-plane"></i> Gửi đơn phúc khảo
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

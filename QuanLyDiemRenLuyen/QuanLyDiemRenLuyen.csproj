@@ -172,18 +172,21 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\AdminController.cs" />
-    <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\StudentController.cs" />
     <Compile Include="Helpers\OracleDbHelper.cs" />
     <Compile Include="Helpers\PasswordHelper.cs" />
     <Compile Include="Models\ActivityViewModel.cs" />
     <Compile Include="Models\AdminViewModel.cs" />
+    <Compile Include="Models\ClassScoreViewModel.cs" />
+    <Compile Include="Models\EditStudentProfileViewModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />
+    <Compile Include="Models\NotificationsViewModel.cs" />
     <Compile Include="Models\PasswordViewModel.cs" />
     <Compile Include="Models\RegisterViewModel.cs" />
+    <Compile Include="Models\ReviewRequestViewModel.cs" />
+    <Compile Include="Models\ScoreViewModel.cs" />
     <Compile Include="Models\StudentDashboardViewModel.cs" />
     <Compile Include="Models\StudentProfileViewModel.cs" />
-    <Compile Include="Models\EditStudentProfileViewModel.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -249,22 +252,27 @@
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
-    <Content Include="Views\Home\Home.cshtml" />
-    <Content Include="Views\Home\About.cshtml" />
-    <Content Include="Views\Home\HienThi.cshtml" />
+    <Content Include="Views\Account\ForgotPassword.cshtml" />
     <Content Include="Views\Account\Login.cshtml" />
     <Content Include="Views\Account\Register.cshtml" />
-    <Content Include="Views\Admin\Dashboard.cshtml" />
+    <Content Include="Views\Account\ResetPassword.cshtml" />
     <Content Include="Views\Admin\Activities.cshtml" />
     <Content Include="Views\Admin\ApproveActivity.cshtml" />
+    <Content Include="Views\Admin\ApproveScores.cshtml" />
+    <Content Include="Views\Admin\ClassScores.cshtml" />
+    <Content Include="Views\Admin\Dashboard.cshtml" />
+    <Content Include="Views\Admin\ReviewRequests.cshtml" />
     <Content Include="Views\Admin\ViewRegistrations.cshtml" />
     <Content Include="Views\Student\Activities.cshtml" />
     <Content Include="Views\Student\ActivityDetail.cshtml" />
     <Content Include="Views\Student\ChangePassword.cshtml" />
     <Content Include="Views\Student\Dashboard.cshtml" />
-    <Content Include="Views\Student\Profile.cshtml" />
-    <Content Include="Views\Student\UploadProof.cshtml" />
     <Content Include="Views\Student\EditProfile.cshtml" />
+    <Content Include="Views\Student\Notifications.cshtml" />
+    <Content Include="Views\Student\Profile.cshtml" />
+    <Content Include="Views\Student\ScoreDetail.cshtml" />
+    <Content Include="Views\Student\Scores.cshtml" />
+    <Content Include="Views\Student\UploadProof.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

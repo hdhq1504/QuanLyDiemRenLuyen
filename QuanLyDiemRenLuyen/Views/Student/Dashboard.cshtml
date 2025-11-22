@@ -6,59 +6,57 @@
 
 <style>
     .dashboard-container {
-        padding: 20px;
-        background: #f5f5f5;
+        padding: 24px;
+        background: #f8fafc;
         min-height: 100vh;
     }
 
     .welcome-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #2563eb;
         color: white;
-        padding: 30px;
-        border-radius: 10px;
-        margin-bottom: 30px;
+        padding: 32px;
+        border-radius: 8px;
+        margin-bottom: 32px;
     }
 
     .welcome-section h1 {
-        margin: 0 0 10px 0;
-        font-size: 32px;
+        margin: 0 0 8px 0;
+        font-size: 28px;
+        font-weight: 600;
     }
 
     .welcome-section p {
         margin: 0;
-        opacity: 0.9;
+        font-size: 14px;
     }
 
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
-        margin-bottom: 30px;
+        margin-bottom: 32px;
     }
 
     .stat-card {
         background: white;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
+        padding: 24px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
     }
 
     .stat-card h3 {
-        color: #666;
-        font-size: 14px;
-        margin: 0 0 10px 0;
+        color: #64748b;
+        font-size: 12px;
+        margin: 0 0 8px 0;
         text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
 
     .stat-card .value {
-        font-size: 36px;
-        font-weight: bold;
-        color: #667eea;
+        font-size: 32px;
+        font-weight: 700;
+        color: #2563eb;
         margin: 0;
     }
 
@@ -70,25 +68,26 @@
 
     .card {
         background: white;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 24px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
         margin-bottom: 20px;
     }
 
     .card h2 {
         margin: 0 0 20px 0;
-        color: #333;
-        font-size: 20px;
-        border-bottom: 2px solid #667eea;
-        padding-bottom: 10px;
+        color: #0f172a;
+        font-size: 18px;
+        font-weight: 600;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e2e8f0;
     }
 
     .info-row {
         display: flex;
         justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
     }
 
     .info-row:last-child {
@@ -97,89 +96,95 @@
 
     .info-label {
         font-weight: 600;
-        color: #666;
+        color: #64748b;
+        font-size: 14px;
     }
 
     .info-value {
-        color: #333;
+        color: #0f172a;
+        font-size: 14px;
     }
 
     .activity-item {
-        padding: 15px;
-        border-left: 4px solid #667eea;
-        background: #f9f9f9;
-        margin-bottom: 15px;
-        border-radius: 5px;
+        padding: 16px;
+        border-left: 3px solid #2563eb;
+        background: #f8fafc;
+        margin-bottom: 12px;
+        border-radius: 4px;
     }
 
     .activity-item h4 {
-        margin: 0 0 5px 0;
-        color: #333;
+        margin: 0 0 8px 0;
+        color: #0f172a;
+        font-size: 16px;
+        font-weight: 600;
     }
 
     .activity-item p {
-        margin: 5px 0;
-        font-size: 14px;
-        color: #666;
+        margin: 4px 0;
+        font-size: 13px;
+        color: #64748b;
     }
 
     .activity-item .status {
         display: inline-block;
-        padding: 3px 10px;
-        border-radius: 3px;
+        padding: 4px 12px;
+        border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
     }
 
     .status.registered {
-        background: #fff3cd;
-        color: #856404;
+        background: #fef3c7;
+        color: #92400e;
     }
 
     .status.checked-in {
-        background: #d4edda;
-        color: #155724;
+        background: #d1fae5;
+        color: #065f46;
     }
 
     .notification-item {
-        padding: 15px;
-        background: #f9f9f9;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        border-left: 4px solid #ffc107;
+        padding: 16px;
+        background: #f8fafc;
+        margin-bottom: 12px;
+        border-radius: 4px;
+        border-left: 3px solid #f59e0b;
     }
 
     .notification-item h4 {
-        margin: 0 0 5px 0;
-        color: #333;
+        margin: 0 0 4px 0;
+        color: #0f172a;
         font-size: 14px;
+        font-weight: 600;
     }
 
     .notification-item p {
         margin: 0;
         font-size: 13px;
-        color: #666;
+        color: #64748b;
     }
 
     .score-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 15px;
-        background: #f9f9f9;
-        margin-bottom: 10px;
-        border-radius: 5px;
+        padding: 16px;
+        background: #f8fafc;
+        margin-bottom: 12px;
+        border-radius: 4px;
     }
 
     .score-item .term-name {
         font-weight: 600;
-        color: #333;
+        color: #0f172a;
+        font-size: 14px;
     }
 
     .score-item .score-value {
         font-size: 24px;
-        font-weight: bold;
-        color: #667eea;
+        font-weight: 700;
+        color: #2563eb;
     }
 
     @@media (max-width: 768px) {
@@ -304,7 +309,7 @@
                 }
                 else
                 {
-                    <p style="color: #999; text-align: center; padding: 20px;">Chưa có hoạt động nào</p>
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Chưa có hoạt động nào</p>
                 }
             </div>
 
@@ -318,7 +323,7 @@
                         <div class="score-item">
                             <div>
                                 <div class="term-name">@score.TermName</div>
-                                <small style="color: #999;">
+                                <small style="color: #94a3b8;">
                                     @(score.Status == "APPROVED" ? "Đã duyệt" : "Tạm tính")
                                     @if (score.ApprovedAt.HasValue)
                                     {
@@ -332,7 +337,7 @@
                 }
                 else
                 {
-                    <p style="color: #999; text-align: center; padding: 20px;">Chưa có điểm rèn luyện</p>
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Chưa có điểm rèn luyện</p>
                 }
             </div>
         </div>
@@ -355,13 +360,13 @@
                                     : content;
                             }
                             <p>@Html.Raw(displayContent)</p>
-                            <small style="color: #999;">@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                            <small style="color: #94a3b8;">@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
                         </div>
                     }
                 }
                 else
                 {
-                    <p style="color: #999; text-align: center; padding: 20px;">Không có thông báo mới</p>
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">Không có thông báo mới</p>
                 }
             </div>
         </div>

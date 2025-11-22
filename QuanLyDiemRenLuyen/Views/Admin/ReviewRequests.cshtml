@@ -1,0 +1,460 @@
+@model QuanLyDiemRenLuyen.Models.ReviewRequestListViewModel
+@{
+    ViewBag.Title = "Quản Lý Phúc Khảo Điểm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .review-container {
+        padding: 30px;
+    }
+
+    .page-header {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        padding: 10px 20px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: #666;
+    }
+
+    .tab-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+
+    .tab-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .filter-bar {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .filter-group select {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .btn-filter {
+        padding: 10px 24px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        align-self: flex-end;
+    }
+
+    .requests-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .request-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .request-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .request-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        gap: 20px;
+    }
+
+    .request-title {
+        flex: 1;
+    }
+
+    .request-title h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .request-meta {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+        color: #666;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-submitted {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-in-review {
+        background: #cfe2ff;
+        color: #084298;
+    }
+
+    .status-approved {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-closed {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .request-content {
+        margin-bottom: 15px;
+        color: #666;
+        line-height: 1.6;
+    }
+
+    .request-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .score-info {
+        display: flex;
+        gap: 20px;
+        font-size: 14px;
+    }
+
+    .score-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .score-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 12px;
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #ccc;
+        display: block;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        color: #999;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #999;
+    }
+</style>
+
+<div class="review-container">
+    <div class="page-header">
+        <h1><i class="fas fa-file-signature"></i> Quản Lý Phúc Khảo Điểm</h1>
+
+        <div class="filter-tabs">
+            <button class="tab-btn @(string.IsNullOrEmpty(Model.FilterStatus) ? "active" : "")"
+                onclick="filterByStatus('')">
+                <i class="fas fa-list"></i> Tất cả
+            </button>
+            <button class="tab-btn @(Model.FilterStatus == "SUBMITTED" ? "active" : "")"
+                onclick="filterByStatus('SUBMITTED')">
+                <i class="fas fa-paper-plane"></i> Mới gửi
+            </button>
+            <button class="tab-btn @(Model.FilterStatus == "IN_REVIEW" ? "active" : "")"
+                onclick="filterByStatus('IN_REVIEW')">
+                <i class="fas fa-eye"></i> Đang xử lý
+            </button>
+            <button class="tab-btn @(Model.FilterStatus == "APPROVED" ? "active" : "")"
+                onclick="filterByStatus('APPROVED')">
+                <i class="fas fa-check-circle"></i> Đã duyệt
+            </button>
+            <button class="tab-btn @(Model.FilterStatus == "REJECTED" ? "active" : "")"
+                onclick="filterByStatus('REJECTED')">
+                <i class="fas fa-times-circle"></i> Từ chối
+            </button>
+        </div>
+
+        <form method="get" action="@Url.Action("ReviewRequests", "Admin")">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar"></i> Học kỳ</label>
+                    <select name="filterTerm">
+                        <option value="">Tất cả học kỳ</option>
+                        <option value="1" @(Model.FilterTerm == "1" ? "selected" : "")>Học kỳ 1 - 2024</option>
+                        <option value="2" @(Model.FilterTerm == "2" ? "selected" : "")>Học kỳ 2 - 2024</option>
+                    </select>
+                </div>
+                <input type="hidden" name="filterStatus" value="@Model.FilterStatus" />
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-filter"></i> Lọc
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (Model.Requests != null && Model.Requests.Count > 0)
+    {
+        <div class="requests-list">
+            @foreach (var request in Model.Requests)
+            {
+                <div class="request-card" onclick="window.location.href='@Url.Action("ReviewRequestDetail", "Admin", new { id = request.Id })'">
+                    <div class="request-header">
+                        <div class="request-title">
+                            <h3>@request.Title</h3>
+                            <div class="request-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user"></i>
+                                    <span>@request.StudentName (@request.StudentCode)</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>@request.TermName</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>@request.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            </div>
+                        </div>
+                        @{
+                            var statusClass = "status-submitted";
+                            var statusIcon = "fa-paper-plane";
+                            var statusText = "Mới gửi";
+
+                            if (request.Status == "IN_REVIEW")
+                            {
+                                statusClass = "status-in-review";
+                                statusIcon = "fa-eye";
+                                statusText = "Đang xử lý";
+                            }
+                            else if (request.Status == "APPROVED")
+                            {
+                                statusClass = "status-approved";
+                                statusIcon = "fa-check-circle";
+                                statusText = "Đã duyệt";
+                            }
+                            else if (request.Status == "REJECTED")
+                            {
+                                statusClass = "status-rejected";
+                                statusIcon = "fa-times-circle";
+                                statusText = "Từ chối";
+                            }
+                            else if (request.Status == "CLOSED")
+                            {
+                                statusClass = "status-closed";
+                                statusIcon = "fa-lock";
+                                statusText = "Đã đóng";
+                            }
+                        }
+                        <span class="status-badge @statusClass">
+                            <i class="fas @statusIcon"></i> @statusText
+                        </span>
+                    </div>
+
+                    <div class="request-content">
+                        @(request.Content.Length > 200 ? request.Content.Substring(0, 200) + "..." : request.Content)
+                    </div>
+
+                    <div class="request-footer">
+                        <div class="score-info">
+                            <div class="score-item">
+                                <span>Điểm hiện tại:</span>
+                                <span class="score-value">@request.CurrentScore</span>
+                            </div>
+                            <div class="score-item">
+                                <span>Điểm yêu cầu:</span>
+                                <span class="score-value" style="color: #28a745;">@request.RequestedScore</span>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <a href="@Url.Action("ReviewRequestDetail", "Admin", new { id = request.Id })"
+                               class="btn btn-primary" onclick="event.stopPropagation()">
+                                <i class="fas fa-eye"></i> Xem chi tiết
+                            </a>
+                            @if (request.Status == "SUBMITTED" || request.Status == "IN_REVIEW")
+                            {
+                                <button class="btn btn-success" onclick="event.stopPropagation(); approveRequest('@request.Id')">
+                                    <i class="fas fa-check"></i> Duyệt
+                                </button>
+                                <button class="btn btn-danger" onclick="event.stopPropagation(); rejectRequest('@request.Id')">
+                                    <i class="fas fa-times"></i> Từ chối
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h3>Không có đơn phúc khảo nào</h3>
+            <p>Chưa có đơn phúc khảo nào được gửi hoặc không có kết quả phù hợp với bộ lọc.</p>
+        </div>
+    }
+</div>
+
+<script>
+    function filterByStatus(status) {
+        const url = new URL(window.location.href);
+        if (status) {
+            url.searchParams.set('filterStatus', status);
+        } else {
+            url.searchParams.delete('filterStatus');
+        }
+        window.location.href = url.toString();
+    }
+
+    function approveRequest(requestId) {
+        if (confirm('Bạn có chắc muốn phê duyệt đơn phúc khảo này?')) {
+            window.location.href = '@Url.Action("ApproveReviewRequest", "Admin")?id=' + requestId;
+        }
+    }
+
+    function rejectRequest(requestId) {
+        const reason = prompt('Nhập lý do từ chối:');
+        if (reason) {
+            window.location.href = '@Url.Action("RejectReviewRequest", "Admin")?id=' + requestId + '&reason=' + encodeURIComponent(reason);
+        }
+    }
+</script>

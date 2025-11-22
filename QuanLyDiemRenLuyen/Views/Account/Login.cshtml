@@ -10,6 +10,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - Quản Lý Điểm Rèn Luyện</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -18,37 +21,78 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
         }
 
-        .login-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        .auth-container {
+            display: flex;
             width: 100%;
-            max-width: 400px;
-            padding: 40px;
+            min-height: 100vh;
         }
 
-        .login-header {
+        /* Left Panel - Branding */
+        .auth-branding {
+            flex: 1;
+            background: #2563eb;
+            color: white;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            margin-bottom: 30px;
         }
 
-        .login-header h2 {
-            color: #333;
+        .auth-branding h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .auth-branding p {
+            font-size: 18px;
+            opacity: 0.9;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .auth-icon {
+            font-size: 80px;
+            margin-bottom: 32px;
+        }
+
+        /* Right Panel - Form */
+        .auth-form-panel {
+            flex: 1;
+            background: white;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-container {
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            margin-bottom: 32px;
+        }
+
+        .form-header h2 {
+            color: #0f172a;
             font-size: 28px;
-            margin-bottom: 10px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
-        .login-header p {
-            color: #666;
+        .form-header p {
+            color: #64748b;
             font-size: 14px;
         }
 
@@ -59,36 +103,39 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
+            color: #0f172a;
+            font-weight: 600;
+            font-size: 14px;
         }
 
         .form-group input[type="email"],
         .form-group input[type="password"] {
             width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
             font-size: 14px;
-            transition: border-color 0.3s;
+            background: #f8fafc;
+            font-family: inherit;
         }
 
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #2563eb;
+            background: white;
         }
 
         .form-group .field-validation-error {
-            color: #dc3545;
-            font-size: 12px;
-            margin-top: 5px;
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 6px;
             display: block;
         }
 
         .checkbox-group {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .checkbox-group input[type="checkbox"] {
@@ -97,51 +144,58 @@
 
         .checkbox-group label {
             margin: 0;
-            color: #666;
+            color: #64748b;
             font-size: 14px;
+            font-weight: 500;
         }
 
         .btn-login {
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 20px;
+            background: #2563eb;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
+            font-family: inherit;
         }
 
         .btn-login:hover {
-            transform: translateY(-2px);
+            background: #1e40af;
         }
 
-        .register-link {
+        .form-links {
+            margin-top: 24px;
             text-align: center;
-            margin-top: 20px;
-            color: #666;
+        }
+
+        .form-links a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
             font-size: 14px;
         }
 
-        .register-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .register-link a:hover {
+        .form-links a:hover {
             text-decoration: underline;
         }
 
+        .form-links p {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+
         .validation-summary-errors {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 12px;
-            border-radius: 5px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: 6px;
             margin-bottom: 20px;
+            font-size: 14px;
         }
 
         .validation-summary-errors ul {
@@ -150,67 +204,106 @@
         }
 
         .alert-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 12px;
-            border-radius: 5px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 12px 16px;
+            border-radius: 6px;
             margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .auth-container {
+                flex-direction: column;
+            }
+
+            .auth-branding {
+                padding: 40px 20px;
+                min-height: auto;
+            }
+
+            .auth-branding h1 {
+                font-size: 28px;
+            }
+
+            .auth-branding p {
+                font-size: 16px;
+            }
+
+            .auth-icon {
+                font-size: 60px;
+                margin-bottom: 20px;
+            }
+
+            .auth-form-panel {
+                padding: 40px 20px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <h2>Đăng Nhập</h2>
-            <p>Hệ thống Quản Lý Điểm Rèn Luyện</p>
+    <div class="auth-container">
+        <!-- Left Panel - Branding -->
+        <div class="auth-branding">
+            <div class="auth-icon">📚</div>
+            <h1>Quản Lý Điểm Rèn Luyện</h1>
+            <p>Hệ thống quản lý và theo dõi điểm rèn luyện sinh viên hiện đại và hiệu quả</p>
         </div>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert-success">
-                @TempData["SuccessMessage"]
-            </div>
-        }
+        <!-- Right Panel - Login Form -->
+        <div class="auth-form-panel">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Đăng Nhập</h2>
+                    <p>Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục</p>
+                </div>
 
-        @Html.ValidationSummary(true, "", new { @class = "validation-summary-errors" })
-
-        @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new
-        {
-            @class
-                = "login-form"
-        }))
-        {
-            @Html.AntiForgeryToken()
-
-            <div class="form-group">
-                @Html.LabelFor(m => m.Email)
-                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Nhập email của bạn", type =
-                "email" })
-            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
-        </div>
-
-        <div class="form-group">
-            @Html.LabelFor(m => m.Password)
-            @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Nhập mật khẩu" })
-            @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation-error" })
-        </div>
-
-        <div class="checkbox-group">
-            @Html.CheckBoxFor(m => m.RememberMe)
-            @Html.LabelFor(m => m.RememberMe)
-        </div>
-
-        <button type="submit" class="btn-login">Đăng Nhập</button>
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert-success">
+                        @TempData["SuccessMessage"]
+                    </div>
                 }
 
-        <div class="register-link">
-            <a href="@Url.Action("ForgotPassword", "Account")">Quên mật khẩu?</a>
-        </div>
+                @Html.ValidationSummary(true, "", new { @class = "validation-summary-errors" })
 
-        <div class="register-link">
-            Chưa có tài khoản? <a href="@Url.Action("Register", "Account")">Đăng ký ngay</a>
+                @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new
+                {
+                    @class
+                        = "login-form"
+                }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Email, "Email")
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "example@email.com", type =
+                        "email" })
+                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Password, "Mật khẩu")
+                    @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Nhập mật khẩu" })
+                    @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation-error" })
+                </div>
+
+                <div class="checkbox-group">
+                    @Html.CheckBoxFor(m => m.RememberMe)
+                    @Html.LabelFor(m => m.RememberMe, "Ghi nhớ đăng nhập")
+                </div>
+
+                <button type="submit" class="btn-login">Đăng Nhập</button>
+                        }
+
+                <div class="form-links">
+                    <a href="@Url.Action("ForgotPassword", "Account")">Quên mật khẩu?</a>
+                    <p>Chưa có tài khoản? <a href="@Url.Action("Register", "Account")">Đăng ký ngay</a></p>
+                </div>
+            </div>
         </div>
     </div>
 
