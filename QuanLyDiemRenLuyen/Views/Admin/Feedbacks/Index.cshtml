@@ -1,0 +1,244 @@
+@model QuanLyDiemRenLuyen.Models.AdminFeedbackListViewModel
+@{
+    ViewBag.Title = "Quản lý phản hồi";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .content-header {
+        margin-bottom: 25px;
+    }
+
+    .content-header h2 {
+        font-size: 24px;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .content-header p {
+        color: #7f8c8d;
+    }
+
+    .filter-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #5a6c7d;
+    }
+
+    .form-control {
+        padding: 10px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #5a6c7d;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .badge-submitted {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-responded {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 25px;
+        padding: 20px;
+    }
+
+    .pagination a, .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #5a6c7d;
+    }
+
+    .pagination .active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+</style>
+
+<div class="content-header">
+    <h2><i class="fas fa-comments"></i> Quản lý phản hồi</h2>
+    <p>Xem và phản hồi ý kiến của sinh viên</p>
+</div>
+
+<div class="filter-bar">
+    @using (Html.BeginForm("Index", "Feedbacks", FormMethod.Get))
+    {
+        <div class="filter-row">
+            <div class="form-group">
+                <label>Tìm kiếm</label>
+                <input type="text" name="search" class="form-control" placeholder="Tiêu đề, tên sinh viên..." value="@Model.SearchKeyword" />
+            </div>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                    <option value="SUBMITTED" @(Model.FilterStatus == "SUBMITTED" ? "selected" : "")>Chờ phản hồi</option>
+                    <option value="RESPONDED" @(Model.FilterStatus == "RESPONDED" ? "selected" : "")>Đã phản hồi</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="card">
+    @if (Model.Feedbacks.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tiêu đề</th>
+                    <th>Sinh viên</th>
+                    <th>Học kỳ</th>
+                    <th>Ngày gửi</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Feedbacks)
+                {
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600;">@item.Title</div>
+                            <div style="font-size: 13px; color: #7f8c8d; margin-top: 3px;">@item.Content</div>
+                        </td>
+                        <td>
+                            <div>@item.StudentName</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">@item.StudentId</div>
+                        </td>
+                        <td>@item.TermName</td>
+                        <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @if (item.Status == "SUBMITTED")
+                            {
+                                <span class="badge badge-submitted">Chờ phản hồi</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-responded">Đã phản hồi</span>
+                            }
+                        </td>
+                        <td>
+                            <a href="@Url.Action("Detail", "Feedbacks", new { id = item.Id })" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        if (Model.TotalPages > 1)
+        {
+            <div class="pagination">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == Model.CurrentPage)
+                    {
+                        <span class="active">@i</span>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Index", "Feedbacks", new { status = Model.FilterStatus, search = Model.SearchKeyword, page = i })">@i</a>
+                    }
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align: center; padding: 50px; color: #95a5a6;">
+            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px;"></i>
+            <p>Không tìm thấy phản hồi nào</p>
+        </div>
+    }
+</div>

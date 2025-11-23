@@ -1,0 +1,340 @@
+@model QuanLyDiemRenLuyen.Models.ProofListViewModel
+@{
+    ViewBag.Title = "Quản lý minh chứng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .filter-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 15px;
+        align-items: end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #5a6c7d;
+    }
+
+    .form-control {
+        padding: 10px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #5a6c7d;
+        border-bottom: 2px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .badge-success {
+        background: #c3e6cb;
+        color: #155724;
+    }
+
+    .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-danger {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 25px;
+        padding: 20px;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #5a6c7d;
+        transition: all 0.3s;
+    }
+
+    .pagination a:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .pagination .active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .file-link {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .file-link:hover {
+        color: #5568d3;
+        text-decoration: underline;
+    }
+
+    .student-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .student-id {
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    .activity-title {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+
+<div class="content-header">
+    <div class="header-actions">
+        <div>
+            <h2><i class="fas fa-file-check"></i> Quản lý minh chứng</h2>
+            <p>Danh sách minh chứng của sinh viên</p>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i> @ViewBag.ErrorMessage
+    </div>
+}
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <form method="get">
+        <div class="filter-row">
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                    <option value="SUBMITTED" @(Model.FilterStatus == "SUBMITTED" ? "selected" : "")>Chờ duyệt</option>
+                    <option value="APPROVED" @(Model.FilterStatus == "APPROVED" ? "selected" : "")>Đã duyệt</option>
+                    <option value="REJECTED" @(Model.FilterStatus == "REJECTED" ? "selected" : "")>Từ chối</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Lọc
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Proofs Table -->
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sinh viên</th>
+                <th>Hoạt động</th>
+                <th>File minh chứng</th>
+                <th>Thời gian nộp</th>
+                <th style="text-align: center;">Trạng thái</th>
+                <th style="width: 100px; text-align: center;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Proofs != null && Model.Proofs.Count > 0)
+            {
+                foreach (var item in Model.Proofs)
+                {
+                    <tr>
+                        <td>
+                            <div class="student-info">
+                                <span class="student-name">@item.StudentName</span>
+                                <span class="student-id">MSSV: @item.StudentId</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="activity-title" title="@item.ActivityTitle">
+                                @item.ActivityTitle
+                            </div>
+                        </td>
+                        <td>
+                            <a href="@item.StoredPath" target="_blank" class="file-link">
+                                <i class="fas fa-paperclip"></i> @item.FileName
+                            </a>
+                        </td>
+                        <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td style="text-align: center;">
+                            @if (item.Status == "APPROVED")
+                            {
+                                <span class="badge badge-success">Đã duyệt</span>
+                            }
+                            else if (item.Status == "REJECTED")
+                            {
+                                <span class="badge badge-danger">Từ chối</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-warning">Chờ duyệt</span>
+                            }
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="@Url.Action("Detail", "Proofs", new { id = item.Id })" class="btn btn-primary btn-sm" title="Chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-inbox" style="font-size: 32px; color: #ccc; margin-bottom: 10px;"></i>
+                        <p style="color: #999;">Không có minh chứng nào</p>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                if (i == Model.CurrentPage)
+                {
+                    <span class="active">@i</span>
+                }
+                else
+                {
+                    <a href="@Url.Action("Index", new { page = i, status = Model.FilterStatus })">@i</a>
+                }
+            }
+        </div>
+    }
+</div>

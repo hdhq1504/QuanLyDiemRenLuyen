@@ -321,9 +321,17 @@
                         <td>
                             @if (reg.HasProof && !string.IsNullOrEmpty(reg.ProofFilePath))
                             {
-                                <a href="@Url.Content("~/" + reg.ProofFilePath)" target="_blank" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-file-download"></i> Xem
-                                </a>
+                                <div>
+                                    <a href="@Url.Content("~/" + reg.ProofFilePath)" target="_blank" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-file-download"></i> Xem
+                                    </a>
+                                    @if (!string.IsNullOrEmpty(reg.ProofFileName))
+                                    {
+                                        <div style="font-size: 12px; color: #6c757d; margin-top: 5px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@reg.ProofFileName">
+                                            @reg.ProofFileName
+                                        </div>
+                                    }
+                                </div>
                             }
                         </td>
                     </tr>

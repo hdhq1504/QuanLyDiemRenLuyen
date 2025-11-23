@@ -301,12 +301,13 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             string dataQuery = @"SELECT r.ID as REG_ID, r.STUDENT_ID, r.STATUS, r.REGISTERED_AT, r.CHECKED_IN_AT,
                                        s.FULL_NAME as STUDENT_NAME, s.EMAIL as STUDENT_EMAIL, s.CLASS_ID,
-                                       p.ID as PROOF_ID, p.STATUS as PROOF_STATUS, p.STORED_PATH as PROOF_PATH, p.CREATED_AT_UTC as PROOF_UPLOADED_AT
+                                       p.ID as PROOF_ID, p.STATUS as PROOF_STATUS, p.STORED_PATH as PROOF_PATH, 
+                                       p.FILE_NAME as PROOF_FILE_NAME, p.CREATED_AT_UTC as PROOF_UPLOADED_AT
                                 FROM REGISTRATIONS r
                                 INNER JOIN STUDENTS s ON r.STUDENT_ID = s.MAND
                                 LEFT JOIN (
                                     SELECT * FROM (
-                                        SELECT REGISTRATION_ID, ID, STATUS, STORED_PATH, CREATED_AT_UTC,
+                                        SELECT REGISTRATION_ID, ID, STATUS, STORED_PATH, FILE_NAME, CREATED_AT_UTC,
                                                ROW_NUMBER() OVER (PARTITION BY REGISTRATION_ID ORDER BY CREATED_AT_UTC DESC) as rn
                                         FROM PROOFS
                                     ) WHERE rn = 1
@@ -358,6 +359,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     HasProof = row["PROOF_ID"] != DBNull.Value,
                     ProofStatus = row["PROOF_STATUS"] != DBNull.Value ? row["PROOF_STATUS"].ToString() : "",
                     ProofFilePath = row["PROOF_PATH"] != DBNull.Value ? row["PROOF_PATH"].ToString() : "",
+                    ProofFileName = row["PROOF_FILE_NAME"] != DBNull.Value ? EncryptionHelper.Decrypt(row["PROOF_FILE_NAME"].ToString()) : "", // Decrypt FileName
                     ProofUploadedAt = row["PROOF_UPLOADED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["PROOF_UPLOADED_AT"]) : null
                 });
             }

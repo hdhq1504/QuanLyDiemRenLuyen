@@ -314,6 +314,10 @@
                     <i class="fas fa-calendar-alt"></i>
                     <span class="nav-text">Hoạt động</span>
                 </a>
+                <a href="@Url.Action("MyRegistrations", "Activities")" class="nav-item @(currentAction == "MyRegistrations" ? "active" : "")">
+                    <i class="fas fa-calendar-check"></i>
+                    <span class="nav-text">Hoạt động của tôi</span>
+                </a>
                 <a href="@Url.Action("Notifications", "Student")" class="nav-item @(currentAction == "Notifications" ? "active" : "")">
                     <i class="fas fa-bell"></i>
                     <span class="nav-text">Thông báo</span>

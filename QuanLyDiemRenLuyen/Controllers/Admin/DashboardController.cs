@@ -97,6 +97,29 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     });
                 }
 
+                // Phản hồi gần đây
+                viewModel.RecentFeedbacks = new List<RecentFeedbackItem>();
+                string feedbackQuery = @"
+                    SELECT f.ID, f.TITLE, f.STATUS, f.CREATED_AT, u.FULL_NAME as STUDENT_NAME
+                    FROM FEEDBACKS f
+                    JOIN STUDENTS s ON f.STUDENT_ID = s.USER_ID
+                    JOIN USERS u ON s.USER_ID = u.MAND
+                    ORDER BY f.CREATED_AT DESC
+                    FETCH FIRST 5 ROWS ONLY";
+
+                DataTable feedbackTable = OracleDbHelper.ExecuteQuery(feedbackQuery, null);
+                foreach (DataRow row in feedbackTable.Rows)
+                {
+                    viewModel.RecentFeedbacks.Add(new RecentFeedbackItem
+                    {
+                        Id = row["ID"].ToString(),
+                        Title = row["TITLE"].ToString(),
+                        StudentName = row["STUDENT_NAME"].ToString(),
+                        Status = row["STATUS"].ToString(),
+                        CreatedAt = Convert.ToDateTime(row["CREATED_AT"])
+                    });
+                }
+
                 return View("~/Views/Admin/Dashboard.cshtml", viewModel);
             }
             catch (Exception ex)
@@ -105,7 +128,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 return View("~/Views/Admin/Dashboard.cshtml", new AdminDashboardViewModel
                 {
                     RecentActivities = new List<RecentActivityItem>(),
-                    PendingApprovals = new List<PendingApprovalItem>()
+                    PendingApprovals = new List<PendingApprovalItem>(),
+                    RecentFeedbacks = new List<RecentFeedbackItem>()
                 });
             }
         }

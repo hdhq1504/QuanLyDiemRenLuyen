@@ -188,7 +188,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 {
                     RequestId = row["ID"].ToString(),
                     Title = row["TITLE"].ToString(),
-                    Content = row["CONTENT"].ToString(),
+                    Content = EncryptionHelper.Decrypt(row["CONTENT"].ToString()), // Decrypt Content
                     StudentCode = row["STUDENT_CODE"].ToString(),
                     StudentName = row["STUDENT_NAME"].ToString(),
                     TermName = row["TERM_NAME"].ToString(),

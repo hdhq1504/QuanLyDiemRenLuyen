@@ -239,9 +239,12 @@
         </h1>
         <div class="user-info">
             <span><i class="fas fa-user-circle"></i> @Session["FullName"]</span>
-            <a href="@Url.Action("Logout", "Account")" class="btn-logout">
+            <a href="#" onclick="document.getElementById('logoutForm').submit(); return false;" class="btn-logout">
                 <i class="fas fa-sign-out-alt"></i> Đăng xuất
             </a>
+            <form id="logoutForm" action="@Url.Action("Logout", "Account")" method="post" style="display:none;">
+                @Html.AntiForgeryToken()
+            </form>
         </div>
     </div>
 
@@ -261,6 +264,10 @@
         <a href="@Url.Action("Activities", "Admin", new { approvalStatus = "PENDING" })" class="nav-item">
             <i class="fas fa-check-circle"></i>
             <span>Phê duyệt hoạt động</span>
+        </a>
+        <a href="@Url.Action("Index", "Proofs")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Proofs" ? "active" : "")">
+            <i class="fas fa-file-contract"></i>
+            <span>Quản lý minh chứng</span>
         </a>
         <a href="@Url.Action("Index", "Users")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Users" ? "active" : "")">
             <i class="fas fa-users"></i>

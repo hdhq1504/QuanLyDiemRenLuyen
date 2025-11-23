@@ -104,10 +104,11 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 // Lấy tất cả notification IDs cho student này
                 string getNotificationsQuery = @"SELECT n.ID
                                                 FROM NOTIFICATIONS n
-                                                WHERE (n.TO_USER_ID = :StudentId OR
-                                                       (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT'))";
+                                                WHERE (n.TO_USER_ID = :MAND)
+                                                   OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT')
+                                                   OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE IS NULL)";
 
-                var getParams = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand) };
+                var getParams = new[] { OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand) };
                 DataTable notificationsDt = OracleDbHelper.ExecuteQuery(getNotificationsQuery, getParams);
 
                 // MERGE từng notification
@@ -160,12 +161,13 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             // Get total count
             string countQuery = $@"SELECT COUNT(*)
                                   FROM NOTIFICATIONS n
-                                  LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :StudentId
-                                  WHERE (n.TO_USER_ID = :StudentId OR
-                                         (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT'))
+                                  LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :MAND
+                                  WHERE ((n.TO_USER_ID = :MAND)
+                                     OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT')
+                                     OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE IS NULL))
                                   {filterClause}";
 
-            var countParams = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand) };
+            var countParams = new[] { OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand) };
             totalCount = Convert.ToInt32(OracleDbHelper.ExecuteScalar(countQuery, countParams));
 
             // Get paginated notifications
@@ -176,16 +178,18 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                                        nr.READ_AT,
                                        ROW_NUMBER() OVER (ORDER BY n.CREATED_AT DESC) AS RN
                                 FROM NOTIFICATIONS n
-                                LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :StudentId
-                                WHERE (n.TO_USER_ID = :StudentId OR
-                                       (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT'))
+                                FROM NOTIFICATIONS n
+                                LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :MAND
+                                WHERE ((n.TO_USER_ID = :MAND)
+                                   OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT')
+                                   OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE IS NULL))
                                 {filterClause}
                             )
                             WHERE RN > :Offset AND RN <= :EndRow";
 
             var parameters = new[]
             {
-                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand),
                 OracleDbHelper.CreateParameter("Offset", OracleDbType.Int32, offset),
                 OracleDbHelper.CreateParameter("EndRow", OracleDbType.Int32, offset + pageSize)
             };
@@ -212,12 +216,13 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
         {
             string query = @"SELECT COUNT(*)
                            FROM NOTIFICATIONS n
-                           LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :StudentId
-                           WHERE (n.TO_USER_ID = :StudentId OR
-                                  (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT'))
+                           LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :MAND
+                           WHERE ((n.TO_USER_ID = :MAND)
+                              OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT')
+                              OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE IS NULL))
                            AND COALESCE(nr.IS_READ, 0) = 0";
 
-            var parameters = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand) };
+            var parameters = new[] { OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand) };
             return Convert.ToInt32(OracleDbHelper.ExecuteScalar(query, parameters));
         }
 

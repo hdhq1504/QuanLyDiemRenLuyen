@@ -145,6 +145,34 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             }
         }
 
+        // GET: Student/Activities/MyRegistrations
+        public ActionResult MyRegistrations(int page = 1)
+        {
+            try
+            {
+                var authCheck = CheckAuth();
+                if (authCheck != null) return authCheck;
+
+                string mand = GetCurrentStudentId();
+                int pageSize = 10;
+                
+                var viewModel = new MyRegistrationsViewModel
+                {
+                    CurrentPage = page,
+                    Registrations = GetMyRegistrations(mand, page, pageSize, out int totalCount)
+                };
+                
+                viewModel.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+                return View("~/Views/Student/MyRegistrations.cshtml", viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View("~/Views/Student/MyRegistrations.cshtml", new MyRegistrationsViewModel { Registrations = new List<MyRegistrationItem>() });
+            }
+        }
+
         // POST: Student/Activities/CancelRegistration
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -300,7 +328,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                     OracleDbHelper.CreateParameter("RegistrationId", OracleDbType.Varchar2, registrationId),
                     OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
                     OracleDbHelper.CreateParameter("ActivityId", OracleDbType.Varchar2, activityId),
-                    OracleDbHelper.CreateParameter("FileName", OracleDbType.Varchar2, proofFile.FileName),
+                    OracleDbHelper.CreateParameter("FileName", OracleDbType.Varchar2, EncryptionHelper.Encrypt(proofFile.FileName)), // Encrypt FileName
                     OracleDbHelper.CreateParameter("StoredPath", OracleDbType.Varchar2, relativePath),
                     OracleDbHelper.CreateParameter("ContentType", OracleDbType.Varchar2, proofFile.ContentType),
                     OracleDbHelper.CreateParameter("FileSize", OracleDbType.Int32, proofFile.ContentLength),
@@ -497,7 +525,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                                              viewModel.StartAt > now;
 
             viewModel.CanUploadProof = viewModel.IsRegistered &&
-                                      viewModel.RegistrationStatus == "CHECKED_IN" &&
+                                      (viewModel.RegistrationStatus == "REGISTERED" || viewModel.RegistrationStatus == "CHECKED_IN") &&
                                       viewModel.ProofStatus != "APPROVED";
 
             return viewModel;
@@ -532,6 +560,59 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 CurrentProofStatus = row["STATUS"] != DBNull.Value ? row["STATUS"].ToString() : "NOT_UPLOADED",
                 CurrentProofUploadedAt = row["CREATED_AT_UTC"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["CREATED_AT_UTC"]) : null
             };
+        }
+
+        private List<MyRegistrationItem> GetMyRegistrations(string mand, int page, int pageSize, out int totalCount)
+        {
+            var list = new List<MyRegistrationItem>();
+            totalCount = 0;
+
+            string countQuery = "SELECT COUNT(*) FROM REGISTRATIONS WHERE STUDENT_ID = :StudentId AND STATUS != 'CANCELLED'";
+            
+            // Query to get registrations with activity info and proof status
+            // Note: We take the latest proof if multiple exist (though UI might only allow one active)
+            string dataQuery = @"SELECT r.STATUS as REG_STATUS, r.REGISTERED_AT,
+                                       a.ID as ACTIVITY_ID, a.TITLE, a.START_AT, a.LOCATION, a.POINTS,
+                                       p.STATUS as PROOF_STATUS, p.STORED_PATH
+                                FROM REGISTRATIONS r
+                                JOIN ACTIVITIES a ON r.ACTIVITY_ID = a.ID
+                                LEFT JOIN (
+                                    SELECT REGISTRATION_ID, STATUS, STORED_PATH,
+                                           ROW_NUMBER() OVER (PARTITION BY REGISTRATION_ID ORDER BY CREATED_AT_UTC DESC) as rn
+                                    FROM PROOFS
+                                ) p ON r.ID = p.REGISTRATION_ID AND p.rn = 1
+                                WHERE r.STUDENT_ID = :StudentId AND r.STATUS != 'CANCELLED'
+                                ORDER BY r.REGISTERED_AT DESC";
+
+            var parameters = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand) };
+
+            totalCount = Convert.ToInt32(OracleDbHelper.ExecuteScalar(countQuery, parameters));
+
+            int offset = (page - 1) * pageSize;
+            string pagingQuery = $@"SELECT * FROM (
+                                    SELECT x.*, ROWNUM rnum FROM ({dataQuery}) x
+                                    WHERE ROWNUM <= {offset + pageSize}
+                                  ) WHERE rnum > {offset}";
+
+            DataTable dt = OracleDbHelper.ExecuteQuery(pagingQuery, parameters);
+
+            foreach (DataRow row in dt.Rows)
+            {
+                list.Add(new MyRegistrationItem
+                {
+                    ActivityId = row["ACTIVITY_ID"].ToString(),
+                    ActivityTitle = row["TITLE"].ToString(),
+                    StartAt = Convert.ToDateTime(row["START_AT"]),
+                    Location = row["LOCATION"] != DBNull.Value ? row["LOCATION"].ToString() : "",
+                    Points = row["POINTS"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["POINTS"]) : null,
+                    RegistrationStatus = row["REG_STATUS"].ToString(),
+                    RegisteredAt = Convert.ToDateTime(row["REGISTERED_AT"]),
+                    ProofStatus = row["PROOF_STATUS"] != DBNull.Value ? row["PROOF_STATUS"].ToString() : "NOT_UPLOADED",
+                    ProofPath = row["STORED_PATH"] != DBNull.Value ? row["STORED_PATH"].ToString() : ""
+                });
+            }
+
+            return list;
         }
 
         #endregion

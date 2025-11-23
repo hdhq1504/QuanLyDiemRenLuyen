@@ -6,7 +6,7 @@
 <div style="padding: 24px; max-width: 900px; margin: 0 auto;">
     <!-- Header -->
     <div style="margin-bottom: 24px;">
-        <a href="@Url.Action("Feedbacks")" style="color: #2563eb; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+        <a href="@Url.Action("Index")" style="color: #2563eb; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px;">
             <i class="fas fa-arrow-left"></i> Quay lại danh sách
         </a>
         <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #0f172a;">Tạo phản hồi mới</h2>
@@ -21,7 +21,7 @@
     }
 
     <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        @using (Html.BeginForm("CreateFeedback", "Student", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        @using (Html.BeginForm("Create", "Feedbacks", FormMethod.Post, new { enctype = "multipart/form-data" }))
         {
             @Html.AntiForgeryToken()
 
@@ -62,7 +62,7 @@
             </div>
 
             <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                <a href="@Url.Action("Feedbacks")" style="padding: 12px 24px; background: #f1f5f9; color: #0f172a; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                <a href="@Url.Action("Index")" style="padding: 12px 24px; background: #f1f5f9; color: #0f172a; border-radius: 8px; text-decoration: none; font-weight: 600;">
                     Hủy
                 </a>
                 <button type="submit" style="padding: 12px 32px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">

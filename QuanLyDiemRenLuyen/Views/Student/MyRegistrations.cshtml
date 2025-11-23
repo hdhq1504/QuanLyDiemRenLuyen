@@ -1,0 +1,349 @@
+@model QuanLyDiemRenLuyen.Models.MyRegistrationsViewModel
+@{
+    ViewBag.Title = "Hoạt động của tôi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .registrations-container {
+        padding: 24px;
+    }
+
+    .page-header {
+        margin-bottom: 24px;
+    }
+
+    .page-header h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .page-header p {
+        margin: 8px 0 0 0;
+        color: #64748b;
+    }
+
+    .alert {
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        border: 1px solid;
+    }
+
+    .alert-success {
+        background: #d1fae5;
+        border-color: #6ee7b7;
+        color: #065f46;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        border-color: #fca5a5;
+        color: #991b1b;
+    }
+
+    .empty-state {
+        background: white;
+        padding: 60px 24px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #cbd5e1;
+        margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+        margin: 0 0 8px 0;
+        color: #0f172a;
+    }
+
+    .empty-state p {
+        color: #64748b;
+        margin: 0 0 24px 0;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary:hover {
+        opacity: 0.9;
+    }
+
+    .btn-primary i {
+        font-size: 16px;
+        margin-bottom: 0;
+    }
+
+    .registrations-list {
+        display: grid;
+        gap: 16px;
+    }
+
+    .registration-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 12px;
+    }
+
+    .card-header-content {
+        flex: 1;
+    }
+
+    .activity-title {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .registration-date {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .badge {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        color: white;
+    }
+
+    .activity-meta {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 12px;
+    }
+
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .proof-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .proof-status-label {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .proof-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: white;
+    }
+
+    .btn i {
+        font-size: 14px;
+    }
+
+    .btn-view {
+        background: #2563eb;
+    }
+
+    .btn-upload {
+        background: #10b981;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 24px;
+    }
+
+    .pagination a {
+        padding: 8px 16px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #0f172a;
+    }
+
+    .pagination a:hover {
+        background: #f8fafc;
+    }
+
+    .pagination a.active {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+        font-weight: 600;
+    }
+</style>
+
+<div class="registrations-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h2>Hoạt động của tôi</h2>
+        <p>Danh sách các hoạt động bạn đã đăng ký</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
+    {
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(TempData["ErrorMessage"] as string))
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Registration List -->
+    @if (Model.Registrations == null || Model.Registrations.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-calendar-check"></i>
+            <h3>Chưa có hoạt động nào</h3>
+            <p>Bạn chưa đăng ký hoạt động nào. Hãy tìm kiếm và đăng ký các hoạt động rèn luyện!</p>
+            <a href="@Url.Action("Activities", "Student")" class="btn-primary">
+                <i class="fas fa-search"></i> Tìm hoạt động
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="registrations-list">
+            @foreach (var item in Model.Registrations)
+            {
+                var regStatusColor = item.RegistrationStatus == "CHECKED_IN" ? "#10b981" : item.RegistrationStatus == "REGISTERED" ? "#3b82f6" : "#6b7280";
+                var regStatusText = item.RegistrationStatus == "CHECKED_IN" ? "Đã điểm danh" : item.RegistrationStatus == "REGISTERED" ? "Đã đăng ký" : "Đã hủy";
+                var regStatusIcon = item.RegistrationStatus == "CHECKED_IN" ? "fa-check-circle" : item.RegistrationStatus == "REGISTERED" ? "fa-calendar-check" : "fa-times-circle";
+
+                var proofStatusColor = item.ProofStatus == "APPROVED" ? "#10b981" : item.ProofStatus == "REJECTED" ? "#ef4444" : item.ProofStatus == "SUBMITTED" ? "#f59e0b" : "#6b7280";
+                var proofStatusText = item.ProofStatus == "APPROVED" ? "Đã duyệt" : item.ProofStatus == "REJECTED" ? "Từ chối" : item.ProofStatus == "SUBMITTED" ? "Chờ duyệt" : "Chưa nộp";
+                var proofStatusIcon = item.ProofStatus == "APPROVED" ? "fa-check-circle" : item.ProofStatus == "REJECTED" ? "fa-times-circle" : item.ProofStatus == "SUBMITTED" ? "fa-clock" : "fa-file-upload";
+
+                <div class="registration-card">
+                    <div class="card-header">
+                        <div class="card-header-content">
+                            <h3 class="activity-title">@item.ActivityTitle</h3>
+                            <div class="registration-date">
+                                <span><i class="fas fa-clock"></i> Đăng ký: @item.RegisteredAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                        </div>
+                        <span class="badge" style="background: @regStatusColor;">
+                            <i class="fas @regStatusIcon"></i> @regStatusText
+                        </span>
+                    </div>
+
+                    <div class="activity-meta">
+                        <span><i class="fas fa-calendar"></i> @item.StartAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        <span><i class="fas fa-map-marker-alt"></i> @item.Location</span>
+                        <span><i class="fas fa-star"></i> @(item.Points ?? 0) điểm</span>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="proof-status">
+                            <span class="proof-status-label">Minh chứng:</span>
+                            <span class="proof-badge" style="background: @proofStatusColor;">
+                                <i class="fas @proofStatusIcon"></i> @proofStatusText
+                            </span>
+                        </div>
+                        <div class="card-actions">
+                            <a href="@Url.Action("Detail", "Activities", new { id = item.ActivityId })" class="btn btn-view">
+                                <i class="fas fa-eye"></i> Xem chi tiết
+                            </a>
+                            @if (item.ProofStatus != "APPROVED" && item.RegistrationStatus != "CANCELLED")
+                            {
+                                <a href="@Url.Action("UploadProof", "Activities", new { id = item.ActivityId })" class="btn btn-upload">
+                                    <i class="fas fa-upload"></i> Nộp minh chứng
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        if (Model.TotalPages > 1)
+        {
+            <div class="pagination">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="@Url.Action("MyRegistrations", new { page = Model.CurrentPage - 1 })">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                }
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <a href="@Url.Action("MyRegistrations", new { page = i })" class="@(i == Model.CurrentPage ? "active" : "")">
+                        @i
+                    </a>
+                }
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a href="@Url.Action("MyRegistrations", new { page = Model.CurrentPage + 1 })">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+</div>

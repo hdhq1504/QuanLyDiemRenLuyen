@@ -1,0 +1,353 @@
+@model QuanLyDiemRenLuyen.Models.ProofDetailViewModel
+@{
+    ViewBag.Title = "Chi tiết minh chứng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #667eea;
+        margin: 0;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .info-group {
+        margin-bottom: 15px;
+    }
+
+    .info-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 14px;
+        color: #2c3e50;
+    }
+
+    .info-value-bold {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .badge-success {
+        background: #c3e6cb;
+        color: #155724;
+    }
+
+    .badge-danger {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .back-link {
+        color: #6c757d;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        margin-bottom: 10px;
+        transition: color 0.3s;
+    }
+
+    .back-link:hover {
+        color: #667eea;
+    }
+
+    .note-box {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 6px;
+        border-left: 3px solid #667eea;
+        font-size: 14px;
+        color: #495057;
+    }
+
+    .file-preview {
+        background: #f8f9fa;
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        padding: 20px;
+    }
+
+    .file-preview img {
+        max-width: 100%;
+        max-height: 600px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .file-preview iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+        border-radius: 8px;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+
+<div class="content-header">
+    <a href="@Url.Action("Index", "Proofs")" class="back-link">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+    </a>
+    <div class="header-actions">
+        <div>
+            <h2><i class="fas fa-file-check"></i> Chi tiết minh chứng</h2>
+        </div>
+        <div>
+            @if (Model.Status == "SUBMITTED")
+            {
+                <div class="btn-group">
+                    <form action="@Url.Action("Reject", "Proofs")" method="post" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn từ chối minh chứng này?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times-circle"></i> Từ chối
+                        </button>
+                    </form>
+                    <form action="@Url.Action("Approve", "Proofs")" method="post" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn duyệt minh chứng này?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-circle"></i> Duyệt
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <span class="badge @(Model.Status == "APPROVED" ? "badge-success" : "badge-danger")">
+                    @(Model.Status == "APPROVED" ? "Đã duyệt" : "Đã từ chối")
+                </span>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 25px;">
+    <!-- Left Column: Information Cards -->
+    <div>
+        <!-- Student Information -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fas fa-user"></i> Thông tin sinh viên</h5>
+            </div>
+            <div class="card-body">
+                <div class="info-group">
+                    <div class="info-label">Họ tên</div>
+                    <div class="info-value-bold">@Model.StudentName</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">MSSV</div>
+                    <div class="info-value">@Model.StudentId</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Lớp</div>
+                    <div class="info-value">@Model.StudentClass</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Information -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fas fa-calendar-alt"></i> Thông tin hoạt động</h5>
+            </div>
+            <div class="card-body">
+                <div class="info-group">
+                    <div class="info-label">Tên hoạt động</div>
+                    <div class="info-value-bold">@Model.ActivityTitle</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Thời gian diễn ra</div>
+                    <div class="info-value">@Model.ActivityDate.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proof Information -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fas fa-info-circle"></i> Thông tin minh chứng</h5>
+            </div>
+            <div class="card-body">
+                <div class="info-group">
+                    <div class="info-label">Thời gian nộp</div>
+                    <div class="info-value">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+                @if (Model.ReviewedAt.HasValue)
+                {
+                    <div class="info-group">
+                        <div class="info-label">Thời gian duyệt</div>
+                        <div class="info-value">@Model.ReviewedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                }
+                <div class="info-group">
+                    <div class="info-label">Kích thước file</div>
+                    <div class="info-value">@String.Format("{0:N0} KB", Model.FileSize / 1024)</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Ghi chú của sinh viên</div>
+                    <div class="note-box">
+                        @(string.IsNullOrEmpty(Model.Note) ? "Không có ghi chú" : Model.Note)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: File Preview -->
+    <div>
+        <div class="card" style="height: 100%;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h5 class="card-title"><i class="fas fa-file-image"></i> Nội dung minh chứng</h5>
+                <a href="@Model.StoredPath" download="@Model.FileName" class="btn btn-primary btn-sm">
+                    <i class="fas fa-download"></i> Tải về
+                </a>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="file-preview">
+                    @if (Model.ContentType.StartsWith("image/"))
+                    {
+                        <img src="@Model.StoredPath" alt="Minh chứng" />
+                    }
+                    else if (Model.ContentType == "application/pdf")
+                    {
+                        <iframe src="@Model.StoredPath"></iframe>
+                    }
+                    else
+                    {
+                        <div style="text-align: center;">
+                            <i class="fas fa-file-alt" style="font-size: 64px; color: #ccc; margin-bottom: 20px;"></i>
+                            <p style="color: #6c757d; margin-bottom: 20px;">Không thể xem trước file này.</p>
+                            <a href="@Model.StoredPath" class="btn btn-primary">
+                                <i class="fas fa-download"></i> Tải về để xem
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

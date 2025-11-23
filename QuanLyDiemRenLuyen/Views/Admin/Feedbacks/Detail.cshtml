@@ -1,0 +1,210 @@
+@model QuanLyDiemRenLuyen.Models.AdminFeedbackItem
+@{
+    ViewBag.Title = "Chi tiết phản hồi";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .detail-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .info-row {
+        margin-bottom: 15px;
+    }
+
+    .info-label {
+        font-size: 13px;
+        color: #7f8c8d;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 15px;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .content-box {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        line-height: 1.6;
+    }
+
+    .response-form textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        resize: vertical;
+        font-family: inherit;
+        margin-bottom: 15px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #95a5a6;
+        color: white;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .status-submitted {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-responded {
+        background: #d4edda;
+        color: #155724;
+    }
+</style>
+
+<div class="content-header" style="margin-bottom: 25px;">
+    <a href="@Url.Action("Index", "Feedbacks")" class="btn btn-secondary" style="margin-bottom: 15px;">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+    <h2>Chi tiết phản hồi</h2>
+</div>
+
+<div class="detail-container">
+    <!-- Left Column: Content & Response -->
+    <div class="main-content">
+        <div class="card">
+            <div class="section-title">Nội dung phản hồi</div>
+            
+            <div class="info-row">
+                <div class="info-label">Tiêu đề</div>
+                <div class="info-value" style="font-size: 18px;">@Model.Title</div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Nội dung</div>
+                <div class="content-box">@Model.Content</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Phản hồi của Admin</div>
+
+            @if (Model.Status == "RESPONDED")
+            {
+                <div class="info-row">
+                    <div class="info-label">Người phản hồi</div>
+                    <div class="info-value">@Model.RespondedBy</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Thời gian</div>
+                    <div class="info-value">@Model.RespondedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Nội dung phản hồi</div>
+                    <div class="content-box" style="background: #e8f4f8; border-color: #bee5eb;">@Model.Response</div>
+                </div>
+            }
+            else
+            {
+                using (Html.BeginForm("Respond", "Feedbacks", FormMethod.Post, new { @class = "response-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    
+                    <div class="form-group">
+                        <label style="margin-bottom: 10px; display: block; font-weight: 600;">Nhập nội dung phản hồi:</label>
+                        <textarea name="response" required placeholder="Nhập câu trả lời cho sinh viên..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Gửi phản hồi
+                    </button>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Right Column: Student Info -->
+    <div class="sidebar">
+        <div class="card">
+            <div class="section-title">Thông tin sinh viên</div>
+
+            <div class="info-row">
+                <div class="info-label">Họ tên</div>
+                <div class="info-value">@Model.StudentName</div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Mã số sinh viên</div>
+                <div class="info-value">@Model.StudentId</div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Học kỳ</div>
+                <div class="info-value">@Model.TermName</div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Ngày gửi</div>
+                <div class="info-value">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+            </div>
+
+            <div class="info-row">
+                <div class="info-label">Trạng thái</div>
+                <div class="info-value">
+                    @if (Model.Status == "SUBMITTED")
+                    {
+                        <span class="status-badge status-submitted">Chờ phản hồi</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-responded">Đã phản hồi</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

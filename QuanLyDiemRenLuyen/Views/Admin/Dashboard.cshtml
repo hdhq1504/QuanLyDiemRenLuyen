@@ -310,6 +310,57 @@
     }
 </div>
 
+<!-- Recent Feedbacks -->
+<div class="card">
+    <h3 class="section-title">
+        <i class="fas fa-comments"></i>
+        Phản hồi gần đây
+    </h3>
+    @if (Model.RecentFeedbacks != null && Model.RecentFeedbacks.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tiêu đề</th>
+                    <th>Sinh viên</th>
+                    <th>Ngày gửi</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.RecentFeedbacks)
+                {
+                    <tr>
+                        <td>@item.Title</td>
+                        <td>@item.StudentName</td>
+                        <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @if (item.Status == "SUBMITTED")
+                            {
+                                <span class="badge badge-pending">Chờ phản hồi</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-approved">Đã phản hồi</span>
+                            }
+                        </td>
+                        <td>
+                            <a href="@Url.Action("Detail", "Feedbacks", new { id = item.Id })" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Xem
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="text-align: center; color: #999; padding: 20px;">Chưa có phản hồi nào</p>
+    }
+</div>
+
 <!-- Pending Approvals -->
 <div class="card">
     <h3 class="section-title">

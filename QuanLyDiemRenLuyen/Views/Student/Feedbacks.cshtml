@@ -10,14 +10,14 @@
             <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #0f172a;">Phản hồi điểm rèn luyện</h2>
             <p style="margin: 8px 0 0 0; color: #64748b;">Gửi và theo dõi phản hồi về điểm rèn luyện của bạn</p>
         </div>
-        <a href="@Url.Action("CreateFeedback")" class="btn btn-primary" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+        <a href="@Url.Action("Create")" class="btn btn-primary" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
             <i class="fas fa-plus"></i> Tạo phản hồi mới
         </a>
     </div>
 
     <!-- Filters -->
     <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <form method="get" action="@Url.Action("Feedbacks")" style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <form method="get" action="@Url.Action("Index")" style="display: flex; gap: 16px; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 200px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a; font-size: 14px;">Trạng thái</label>
                 <select name="status" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
@@ -66,7 +66,7 @@
             <i class="fas fa-comments" style="font-size: 64px; color: #cbd5e1; margin-bottom: 16px;"></i>
             <h3 style="margin: 0 0 8px 0; color: #0f172a;">Chưa có phản hồi nào</h3>
             <p style="color: #64748b; margin: 0 0 24px 0;">Bạn chưa gửi phản hồi nào về điểm rèn luyện</p>
-            <a href="@Url.Action("CreateFeedback")" class="btn btn-primary" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+            <a href="@Url.Action("Create")" class="btn btn-primary" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
                 <i class="fas fa-plus"></i> Tạo phản hồi đầu tiên
             </a>
         </div>
@@ -80,7 +80,7 @@
                 var statusText = feedback.Status == "SUBMITTED" ? "Đã gửi" : feedback.Status == "RESPONDED" ? "Đã phản hồi" : "Đã đóng";
                 var statusIcon = feedback.Status == "SUBMITTED" ? "fa-clock" : feedback.Status == "RESPONDED" ? "fa-check-circle" : "fa-times-circle";
 
-                <a href="@Url.Action("FeedbackDetail", new { id = feedback.Id })" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-decoration: none; color: inherit; display: block; transition: all 0.2s;">
+                <a href="@Url.Action("Detail", new { id = feedback.Id })" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-decoration: none; color: inherit; display: block; transition: all 0.2s;">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                         <div style="flex: 1;">
                             <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #0f172a;">@feedback.Title</h3>
@@ -112,19 +112,19 @@
             <div style="display: flex; justify-content: center; gap: 8px; margin-top: 24px;">
                 @if (Model.CurrentPage > 1)
                 {
-                    <a href="@Url.Action("Feedbacks", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = Model.CurrentPage - 1 })" style="padding: 8px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #0f172a;">
+                    <a href="@Url.Action("Index", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = Model.CurrentPage - 1 })" style="padding: 8px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #0f172a;">
                         <i class="fas fa-chevron-left"></i>
                     </a>
                 }
                 @for (int i = 1; i <= Model.TotalPages; i++)
                 {
-                    <a href="@Url.Action("Feedbacks", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = i })" style="padding: 8px 16px; background: @(i == Model.CurrentPage ? "#2563eb" : "white"); color: @(i == Model.CurrentPage ? "white" : "#0f172a"); border: 1px solid @(i == Model.CurrentPage ? "#2563eb" : "#e2e8f0"); border-radius: 8px; text-decoration: none; font-weight: @(i == Model.CurrentPage ? "600" : "400");">
+                    <a href="@Url.Action("Index", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = i })" style="padding: 8px 16px; background: @(i == Model.CurrentPage ? "#2563eb" : "white"); color: @(i == Model.CurrentPage ? "white" : "#0f172a"); border: 1px solid @(i == Model.CurrentPage ? "#2563eb" : "#e2e8f0"); border-radius: 8px; text-decoration: none; font-weight: @(i == Model.CurrentPage ? "600" : "400");">
                         @i
                     </a>
                 }
                 @if (Model.CurrentPage < Model.TotalPages)
                 {
-                    <a href="@Url.Action("Feedbacks", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = Model.CurrentPage + 1 })" style="padding: 8px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #0f172a;">
+                    <a href="@Url.Action("Index", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = Model.CurrentPage + 1 })" style="padding: 8px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #0f172a;">
                         <i class="fas fa-chevron-right"></i>
                     </a>
                 }

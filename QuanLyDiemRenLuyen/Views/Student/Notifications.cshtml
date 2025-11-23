@@ -6,7 +6,7 @@
 
 <style>
     .notifications-container {
-        max-width: 900px;
+        max-width: 1100px;
         margin: 0 auto;
         padding: 24px;
     }
@@ -236,15 +236,15 @@
     </div>
 
     <div class="filter-tabs">
-        <a href="@Url.Action("Notifications", new { filter = "all" })"
+        <a href="@Url.Action("Index", new { filter = "all" })"
            class="filter-tab @(Model.CurrentFilter == "all" ? "active" : "")">
             Tất cả (@Model.TotalCount)
         </a>
-        <a href="@Url.Action("Notifications", new { filter = "unread" })"
+        <a href="@Url.Action("Index", new { filter = "unread" })"
            class="filter-tab @(Model.CurrentFilter == "unread" ? "active" : "")">
             Chưa đọc (@Model.UnreadCount)
         </a>
-        <a href="@Url.Action("Notifications", new { filter = "read" })"
+        <a href="@Url.Action("Index", new { filter = "read" })"
            class="filter-tab @(Model.CurrentFilter == "read" ? "active" : "")">
             Đã đọc (@(Model.TotalCount - Model.UnreadCount))
         </a>
@@ -280,7 +280,7 @@
             <div class="pagination">
                 @if (Model.CurrentPage > 1)
                 {
-                    <a href="@Url.Action("Notifications", new { page = Model.CurrentPage - 1, filter = Model.CurrentFilter })">
+                    <a href="@Url.Action("Index", new { page = Model.CurrentPage - 1, filter = Model.CurrentFilter })">
                         <i class="fas fa-chevron-left"></i>
                     </a>
                 }
@@ -293,7 +293,7 @@
                     }
                     else if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
                     {
-                        <a href="@Url.Action("Notifications", new { page = i, filter = Model.CurrentFilter })">@i</a>
+                        <a href="@Url.Action("Index", new { page = i, filter = Model.CurrentFilter })">@i</a>
                     }
                     else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
                     {
@@ -303,7 +303,7 @@
 
                 @if (Model.CurrentPage < Model.TotalPages)
                 {
-                    <a href="@Url.Action("Notifications", new { page = Model.CurrentPage + 1, filter = Model.CurrentFilter })">
+                    <a href="@Url.Action("Index", new { page = Model.CurrentPage + 1, filter = Model.CurrentFilter })">
                         <i class="fas fa-chevron-right"></i>
                     </a>
                 }
@@ -338,7 +338,7 @@
 <script>
     function markAsRead(notificationId) {
         $.ajax({
-            url: '@Url.Action("MarkAsRead", "Student")',
+            url: '@Url.Action("MarkAsRead", "Notifications")',
             type: 'POST',
             data: { notificationId: notificationId },
             success: function (response) {
@@ -356,7 +356,7 @@
     function markAllAsRead() {
         if (confirm('Đánh dấu tất cả thông báo là đã đọc?')) {
             $.ajax({
-                url: '@Url.Action("MarkAllAsRead", "Student")',
+                url: '@Url.Action("MarkAllAsRead", "Notifications")',
                 type: 'POST',
                 success: function (response) {
                     if (response.success) {

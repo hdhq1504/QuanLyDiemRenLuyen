@@ -174,6 +174,8 @@
     <Compile Include="Controllers\Admin\AdminBaseController.cs" />
     <Compile Include="Controllers\Admin\ClassesController.cs" />
     <Compile Include="Controllers\Admin\DashboardController.cs" />
+    <Compile Include="Controllers\Admin\FeedbacksController.cs" />
+    <Compile Include="Controllers\Admin\ProofsController.cs" />
     <Compile Include="Controllers\Admin\ReviewRequestsController.cs" />
     <Compile Include="Controllers\Admin\ScoresController.cs" />
     <Compile Include="Controllers\Admin\UsersController.cs" />
@@ -185,6 +187,7 @@
     <Compile Include="Controllers\Student\ScoresController.cs" />
     <Compile Include="Controllers\Student\StudentBaseController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Helpers\EncryptionHelper.cs" />
     <Compile Include="Helpers\OracleDbHelper.cs" />
     <Compile Include="Helpers\PasswordHelper.cs" />
     <Compile Include="Models\ActivityViewModel.cs" />
@@ -195,6 +198,7 @@
     <Compile Include="Models\LoginViewModel.cs" />
     <Compile Include="Models\NotificationsViewModel.cs" />
     <Compile Include="Models\PasswordViewModel.cs" />
+    <Compile Include="Models\ProofViewModel.cs" />
     <Compile Include="Models\RegisterViewModel.cs" />
     <Compile Include="Models\ReviewRequestViewModel.cs" />
     <Compile Include="Models\ScoreViewModel.cs" />
@@ -274,6 +278,10 @@
     <Content Include="Views\Admin\Classes\Index.cshtml" />
     <Content Include="Views\Admin\Classes\Create.cshtml" />
     <Content Include="Views\Admin\Classes\Edit.cshtml" />
+    <Content Include="Views\Admin\Feedbacks\Detail.cshtml" />
+    <Content Include="Views\Admin\Feedbacks\Index.cshtml" />
+    <Content Include="Views\Admin\Proofs\Detail.cshtml" />
+    <Content Include="Views\Admin\Proofs\Index.cshtml" />
     <Content Include="Views\Admin\Users\Index.cshtml" />
     <Content Include="Views\Admin\Users\Create.cshtml" />
     <Content Include="Views\Admin\Users\Edit.cshtml" />
@@ -292,6 +300,7 @@
     <Content Include="Views\Student\EditProfile.cshtml" />
     <Content Include="Views\Student\FeedbackDetail.cshtml" />
     <Content Include="Views\Student\Feedbacks.cshtml" />
+    <Content Include="Views\Student\MyRegistrations.cshtml" />
     <Content Include="Views\Student\Notifications.cshtml" />
     <Content Include="Views\Student\Profile.cshtml" />
     <Content Include="Views\Student\ScoreDetail.cshtml" />

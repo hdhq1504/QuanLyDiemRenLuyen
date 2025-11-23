@@ -135,7 +135,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                     OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2,
                         string.IsNullOrEmpty(model.CriterionId) ? (object)DBNull.Value : model.CriterionId),
                     OracleDbHelper.CreateParameter("Title", OracleDbType.Varchar2, model.Title),
-                    OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, model.Content)
+                    OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, EncryptionHelper.Encrypt(model.Content)) // Encrypt Content
                 };
 
                 OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
@@ -154,21 +154,24 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
         // POST: Student/Feedbacks/UploadAttachment
         [HttpPost]
-        public JsonResult UploadAttachment(string feedbackId, HttpPostedFileBase file)
+        public ActionResult UploadAttachment(string feedbackId, HttpPostedFileBase file)
         {
             try
             {
                 var authCheck = CheckAuth();
                 if (authCheck != null)
                 {
-                    return Json(new { success = false, message = "Chưa đăng nhập" });
+                    if (Request.IsAjaxRequest()) return Json(new { success = false, message = "Chưa đăng nhập" });
+                    return authCheck;
                 }
 
                 string mand = GetCurrentStudentId();
 
                 if (file == null || file.ContentLength == 0)
                 {
-                    return Json(new { success = false, message = "Vui lòng chọn file" });
+                    if (Request.IsAjaxRequest()) return Json(new { success = false, message = "Vui lòng chọn file" });
+                    TempData["ErrorMessage"] = "Vui lòng chọn file";
+                    return RedirectToAction("Detail", new { id = feedbackId });
                 }
 
                 // Validate file
@@ -176,12 +179,16 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 var fileExtension = Path.GetExtension(file.FileName).ToLower();
                 if (!allowedExtensions.Contains(fileExtension))
                 {
-                    return Json(new { success = false, message = "Chỉ chấp nhận file ảnh, PDF hoặc Word" });
+                    if (Request.IsAjaxRequest()) return Json(new { success = false, message = "Chỉ chấp nhận file ảnh, PDF hoặc Word" });
+                    TempData["ErrorMessage"] = "Chỉ chấp nhận file ảnh, PDF hoặc Word";
+                    return RedirectToAction("Detail", new { id = feedbackId });
                 }
 
                 if (file.ContentLength > 10 * 1024 * 1024) // 10MB
                 {
-                    return Json(new { success = false, message = "File không được vượt quá 10MB" });
+                    if (Request.IsAjaxRequest()) return Json(new { success = false, message = "File không được vượt quá 10MB" });
+                    TempData["ErrorMessage"] = "File không được vượt quá 10MB";
+                    return RedirectToAction("Detail", new { id = feedbackId });
                 }
 
                 // Create upload folder
@@ -208,7 +215,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 var insertParams = new[]
                 {
                     OracleDbHelper.CreateParameter("FeedbackId", OracleDbType.Varchar2, feedbackId),
-                    OracleDbHelper.CreateParameter("FileName", OracleDbType.Varchar2, file.FileName),
+                    OracleDbHelper.CreateParameter("FileName", OracleDbType.Varchar2, EncryptionHelper.Encrypt(file.FileName)), // Encrypt FileName
                     OracleDbHelper.CreateParameter("StoredPath", OracleDbType.Varchar2, relativePath),
                     OracleDbHelper.CreateParameter("ContentType", OracleDbType.Varchar2, file.ContentType),
                     OracleDbHelper.CreateParameter("FileSize", OracleDbType.Int32, file.ContentLength)
@@ -216,11 +223,19 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
 
-                return Json(new { success = true, fileName = file.FileName, filePath = relativePath });
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(new { success = true, fileName = file.FileName, filePath = relativePath });
+                }
+                
+                TempData["SuccessMessage"] = "Upload file thành công";
+                return RedirectToAction("Detail", new { id = feedbackId });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                if (Request.IsAjaxRequest()) return Json(new { success = false, message = ex.Message });
+                TempData["ErrorMessage"] = "Đã xảy ra lỗi: " + ex.Message;
+                return RedirectToAction("Detail", new { id = feedbackId });
             }
         }
 
@@ -367,7 +382,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 CriterionId = row["CRITERION_ID"] != DBNull.Value ? row["CRITERION_ID"].ToString() : null,
                 CriterionName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
                 Title = row["TITLE"].ToString(),
-                Content = row["CONTENT"].ToString(),
+                Content = EncryptionHelper.Decrypt(row["CONTENT"].ToString()), // Decrypt Content
                 Status = row["STATUS"].ToString(),
                 Response = row["RESPONSE"] != DBNull.Value ? row["RESPONSE"].ToString() : null,
                 CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
@@ -390,7 +405,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 viewModel.Attachments.Add(new FeedbackAttachmentItem
                 {
                     Id = attRow["ID"].ToString(),
-                    FileName = attRow["FILE_NAME"].ToString(),
+                    FileName = EncryptionHelper.Decrypt(attRow["FILE_NAME"].ToString()), // Decrypt FileName
                     StoredPath = attRow["STORED_PATH"].ToString(),
                     ContentType = attRow["CONTENT_TYPE"].ToString(),
                     FileSize = Convert.ToInt32(attRow["FILE_SIZE"]),

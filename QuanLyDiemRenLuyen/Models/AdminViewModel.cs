@@ -21,6 +21,16 @@ namespace QuanLyDiemRenLuyen.Models
         
         public List<RecentActivityItem> RecentActivities { get; set; }
         public List<PendingApprovalItem> PendingApprovals { get; set; }
+        public List<RecentFeedbackItem> RecentFeedbacks { get; set; }
+    }
+
+    public class RecentFeedbackItem
+    {
+        public string Id { get; set; }
+        public string Title { get; set; }
+        public string StudentName { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string Status { get; set; }
     }
 
     public class RecentActivityItem
@@ -134,6 +144,7 @@ namespace QuanLyDiemRenLuyen.Models
         public bool HasProof { get; set; }
         public string ProofStatus { get; set; }
         public string ProofFilePath { get; set; }
+        public string ProofFileName { get; set; }
         public DateTime? ProofUploadedAt { get; set; }
     }
 
@@ -146,6 +157,32 @@ namespace QuanLyDiemRenLuyen.Models
         public string Action { get; set; } // "APPROVE" or "REJECT"
         
         public string Note { get; set; }
+    }
+
+    // ==================== FEEDBACK MANAGEMENT ====================
+    public class AdminFeedbackListViewModel
+    {
+        public List<AdminFeedbackItem> Feedbacks { get; set; }
+        public string FilterStatus { get; set; }
+        public string SearchKeyword { get; set; }
+        public int CurrentPage { get; set; }
+        public int TotalPages { get; set; }
+        public int PageSize { get; set; }
+    }
+
+    public class AdminFeedbackItem
+    {
+        public string Id { get; set; }
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string StudentId { get; set; }
+        public string StudentName { get; set; }
+        public string TermName { get; set; }
+        public string Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? RespondedAt { get; set; }
+        public string Response { get; set; }
+        public string RespondedBy { get; set; }
     }
 }
 
