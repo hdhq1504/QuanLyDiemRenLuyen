@@ -1,0 +1,96 @@
+@model QuanLyDiemRenLuyen.Models.CreateFeedbackViewModel
+@{
+    ViewBag.Title = "Tạo phản hồi mới";
+}
+
+<div style="padding: 24px; max-width: 900px; margin: 0 auto;">
+    <!-- Header -->
+    <div style="margin-bottom: 24px;">
+        <a href="@Url.Action("Feedbacks")" style="color: #2563eb; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
+        <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #0f172a;">Tạo phản hồi mới</h2>
+        <p style="margin: 8px 0 0 0; color: #64748b;">Gửi phản hồi về điểm rèn luyện của bạn</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+    {
+        <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <i class="fas fa-exclamation-circle"></i> @ViewBag.ErrorMessage
+        </div>
+    }
+
+    <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        @using (Html.BeginForm("CreateFeedback", "Student", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a;">Học kỳ <span style="color: #dc2626;">*</span></label>
+                @Html.DropDownListFor(m => m.TermId, new SelectList(Model.AvailableTerms, "Id", "Name", Model.TermId), "-- Chọn học kỳ --", new { @class = "form-control", style = "width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" })
+                @Html.ValidationMessageFor(m => m.TermId, "", new { style = "color: #dc2626; font-size: 12px; margin-top: 4px; display: block;" })
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a;">Tiêu chí (Tùy chọn)</label>
+                @Html.DropDownListFor(m => m.CriterionId, new SelectList(Model.AvailableCriteria, "Id", "Name", Model.CriterionId), "-- Chọn tiêu chí --", new { @class = "form-control", style = "width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" })
+                <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">Để trống nếu phản hồi chung về điểm rèn luyện</small>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a;">Tiêu đề <span style="color: #dc2626;">*</span></label>
+                @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Nhập tiêu đề phản hồi", style = "width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" })
+                @Html.ValidationMessageFor(m => m.Title, "", new { style = "color: #dc2626; font-size: 12px; margin-top: 4px; display: block;" })
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a;">Nội dung phản hồi <span style="color: #dc2626;">*</span></label>
+                @Html.TextAreaFor(m => m.Content, new { @class = "form-control", placeholder = "Mô tả chi tiết nội dung phản hồi của bạn...", rows = 8, style = "width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; resize: vertical;" })
+                @Html.ValidationMessageFor(m => m.Content, "", new { style = "color: #dc2626; font-size: 12px; margin-top: 4px; display: block;" })
+                <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">Hãy mô tả rõ ràng lý do và yêu cầu của bạn</small>
+            </div>
+
+            <div style="margin-bottom: 32px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a;">File đính kèm (Tùy chọn)</label>
+                <div style="border: 2px dashed #e2e8f0; border-radius: 8px; padding: 24px; text-align: center; background: #f8fafc;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #cbd5e1; margin-bottom: 12px;"></i>
+                    <p style="margin: 0 0 12px 0; color: #64748b;">Kéo thả file vào đây hoặc click để chọn</p>
+                    <input type="file" name="attachments" multiple accept=".jpg,.jpeg,.png,.pdf" style="width: 100%;" onchange="displayFileNames(this)" />
+                    <div id="fileList" style="margin-top: 12px; text-align: left;"></div>
+                    <small style="color: #64748b; font-size: 12px; display: block; margin-top: 8px;">Chấp nhận: JPG, PNG, PDF. Tối đa 5MB/file</small>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="@Url.Action("Feedbacks")" style="padding: 12px 24px; background: #f1f5f9; color: #0f172a; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    Hủy
+                </a>
+                <button type="submit" style="padding: 12px 32px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-paper-plane"></i> Gửi phản hồi
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    function displayFileNames(input) {
+        var fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+        
+        if (input.files && input.files.length > 0) {
+            var html = '<div style="background: white; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;"><strong>Đã chọn ' + input.files.length + ' file:</strong><ul style="margin: 8px 0 0 0; padding-left: 20px;">';
+            for (var i = 0; i < input.files.length; i++) {
+                var file = input.files[i];
+                var fileSize = (file.size / 1024 / 1024).toFixed(2);
+                html += '<li style="margin: 4px 0;">' + file.name + ' (' + fileSize + ' MB)</li>';
+            }
+            html += '</ul></div>';
+            fileList.innerHTML = html;
+        }
+    }
+</script>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

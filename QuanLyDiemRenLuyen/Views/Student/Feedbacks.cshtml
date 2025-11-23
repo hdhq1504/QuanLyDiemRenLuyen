@@ -1,0 +1,141 @@
+@model QuanLyDiemRenLuyen.Models.StudentFeedbackListViewModel
+@{
+    ViewBag.Title = "Phản hồi điểm rèn luyện";
+}
+
+<div style="padding: 24px;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #0f172a;">Phản hồi điểm rèn luyện</h2>
+            <p style="margin: 8px 0 0 0; color: #64748b;">Gửi và theo dõi phản hồi về điểm rèn luyện của bạn</p>
+        </div>
+        <a href="@Url.Action("CreateFeedback")" class="btn btn-primary" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fas fa-plus"></i> Tạo phản hồi mới
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <form method="get" action="@Url.Action("Feedbacks")" style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a; font-size: 14px;">Trạng thái</label>
+                <select name="status" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                    <option value="SUBMITTED" @(Model.FilterStatus == "SUBMITTED" ? "selected" : "")>Đã gửi</option>
+                    <option value="RESPONDED" @(Model.FilterStatus == "RESPONDED" ? "selected" : "")>Đã phản hồi</option>
+                    <option value="CLOSED" @(Model.FilterStatus == "CLOSED" ? "selected" : "")>Đã đóng</option>
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a; font-size: 14px;">Học kỳ</label>
+                <select name="termId" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <option value="">Tất cả học kỳ</option>
+                    @foreach (var term in Model.AvailableTerms)
+                    {
+                        <option value="@term.Id" @(Model.FilterTermId == term.Id ? "selected" : "")>@term.Name</option>
+                    }
+                </select>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button type="submit" class="btn btn-primary" style="background: #2563eb; color: white; padding: 10px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-filter"></i> Lọc
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
+    {
+        <div style="background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(TempData["ErrorMessage"] as string))
+    {
+        <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Feedback List -->
+    @if (Model.Feedbacks.Count == 0)
+    {
+        <div style="background: white; padding: 60px 24px; border-radius: 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <i class="fas fa-comments" style="font-size: 64px; color: #cbd5e1; margin-bottom: 16px;"></i>
+            <h3 style="margin: 0 0 8px 0; color: #0f172a;">Chưa có phản hồi nào</h3>
+            <p style="color: #64748b; margin: 0 0 24px 0;">Bạn chưa gửi phản hồi nào về điểm rèn luyện</p>
+            <a href="@Url.Action("CreateFeedback")" class="btn btn-primary" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-plus"></i> Tạo phản hồi đầu tiên
+            </a>
+        </div>
+    }
+    else
+    {
+        <div style="display: grid; gap: 16px;">
+            @foreach (var feedback in Model.Feedbacks)
+            {
+                var statusColor = feedback.Status == "SUBMITTED" ? "#f59e0b" : feedback.Status == "RESPONDED" ? "#10b981" : "#6b7280";
+                var statusText = feedback.Status == "SUBMITTED" ? "Đã gửi" : feedback.Status == "RESPONDED" ? "Đã phản hồi" : "Đã đóng";
+                var statusIcon = feedback.Status == "SUBMITTED" ? "fa-clock" : feedback.Status == "RESPONDED" ? "fa-check-circle" : "fa-times-circle";
+
+                <a href="@Url.Action("FeedbackDetail", new { id = feedback.Id })" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-decoration: none; color: inherit; display: block; transition: all 0.2s;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #0f172a;">@feedback.Title</h3>
+                            <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; color: #64748b;">
+                                <span><i class="fas fa-calendar"></i> @feedback.TermName</span>
+                                <span><i class="fas fa-tag"></i> @feedback.CriterionName</span>
+                                <span><i class="fas fa-clock"></i> @feedback.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                        </div>
+                        <span style="background: @statusColor; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap;">
+                            <i class="fas @statusIcon"></i> @statusText
+                        </span>
+                    </div>
+                    @if (feedback.HasResponse)
+                    {
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 3px solid #10b981;">
+                            <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">
+                                <i class="fas fa-reply"></i> Đã có phản hồi @(feedback.RespondedAt.HasValue ? "- " + feedback.RespondedAt.Value.ToString("dd/MM/yyyy") : "")
+                            </div>
+                        </div>
+                    }
+                </a>
+            }
+        </div>
+
+        <!-- Pagination -->
+        if (Model.TotalPages > 1)
+        {
+            <div style="display: flex; justify-content: center; gap: 8px; margin-top: 24px;">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="@Url.Action("Feedbacks", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = Model.CurrentPage - 1 })" style="padding: 8px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #0f172a;">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                }
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <a href="@Url.Action("Feedbacks", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = i })" style="padding: 8px 16px; background: @(i == Model.CurrentPage ? "#2563eb" : "white"); color: @(i == Model.CurrentPage ? "white" : "#0f172a"); border: 1px solid @(i == Model.CurrentPage ? "#2563eb" : "#e2e8f0"); border-radius: 8px; text-decoration: none; font-weight: @(i == Model.CurrentPage ? "600" : "400");">
+                        @i
+                    </a>
+                }
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a href="@Url.Action("Feedbacks", new { status = Model.FilterStatus, termId = Model.FilterTermId, page = Model.CurrentPage + 1 })" style="padding: 8px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #0f172a;">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                }
+            </div>
+        }
+    }
+</div>
+
+<style>
+    a[href*="FeedbackDetail"]:hover {
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+</style>

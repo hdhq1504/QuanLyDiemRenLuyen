@@ -140,6 +140,7 @@
             text-decoration: none;
             border-left: 3px solid transparent;
             font-weight: 500;
+            cursor: pointer;
         }
 
         .sidebar.collapsed .nav-item {
@@ -301,14 +302,38 @@
                     <i class="fas fa-home"></i>
                     <span class="nav-text">Dashboard</span>
                 </a>
-                <a href="@Url.Action("Profile", "Student")" class="nav-item @(currentAction == "Profile" ? "active" : "")">
+                <a href="@Url.Action("Scores", "Student")" class="nav-item @(currentAction == "Scores" || currentAction == "ScoreDetail" ? "active" : "")">
+                    <i class="fas fa-star"></i>
+                    <span class="nav-text">Điểm rèn luyện</span>
+                </a>
+                <a href="@Url.Action("Feedbacks", "Student")" class="nav-item @(currentAction == "Feedbacks" || currentAction == "CreateFeedback" || currentAction == "FeedbackDetail" ? "active" : "")">
+                    <i class="fas fa-comment-dots"></i>
+                    <span class="nav-text">Phản hồi điểm</span>
+                </a>
+                <a href="@Url.Action("Activities", "Student")" class="nav-item @(currentAction == "Activities" || currentAction == "ActivityDetail" ? "active" : "")">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="nav-text">Hoạt động</span>
+                </a>
+                <a href="@Url.Action("Notifications", "Student")" class="nav-item @(currentAction == "Notifications" ? "active" : "")">
+                    <i class="fas fa-bell"></i>
+                    <span class="nav-text">Thông báo</span>
+                </a>
+                <a href="@Url.Action("Profile", "Student")" class="nav-item @(currentAction == "Profile" || currentAction == "EditProfile" ? "active" : "")">
                     <i class="fas fa-user"></i>
                     <span class="nav-text">Hồ sơ</span>
-                        <span class="nav-text">Đăng xuất</span>
-                    </button>
-                </form>
+                </a>
+                <div class="nav-divider"></div>
+                <a href="#" id="logoutLink" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="nav-text">Đăng xuất</span>
+                </a>
             </nav>
         </div>
+
+        <!-- Hidden Logout Form -->
+        <form id="logoutForm" action="@Url.Action("Logout", "Account")" method="post" style="display:none;">
+            @Html.AntiForgeryToken()
+        </form>
 
         <!-- Main Wrapper -->
         <div class="main-wrapper" id="mainWrapper">
@@ -336,6 +361,16 @@
                 const sidebar = document.getElementById('sidebar');
                 const mainWrapper = document.getElementById('mainWrapper');
                 const toggleBtn = document.getElementById('sidebarToggle');
+                const logoutLink = document.getElementById('logoutLink');
+                const logoutForm = document.getElementById('logoutForm');
+
+                // Logout functionality
+                if (logoutLink && logoutForm) {
+                    logoutLink.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        logoutForm.submit();
+                    });
+                }
 
                 // Load saved state
                 const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';

@@ -20,11 +20,98 @@ namespace QuanLyDiemRenLuyen
                 defaults: new { controller = "Account", action = "Login" }
             );
 
-            // Route cho Student
+            // Routes cho Student nested controllers
+            routes.MapRoute(
+                name: "StudentDashboard",
+                url: "Student/Dashboard/{action}/{id}",
+                defaults: new { controller = "Dashboard", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Student" }
+            );
+
+            routes.MapRoute(
+                name: "StudentProfile",
+                url: "Student/Profile/{action}/{id}",
+                defaults: new { controller = "Profile", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Student" }
+            );
+
+            routes.MapRoute(
+                name: "StudentActivities",
+                url: "Student/Activities/{action}/{id}",
+                defaults: new { controller = "Activities", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Student" }
+            );
+
+            routes.MapRoute(
+                name: "StudentScores",
+                url: "Student/Scores/{action}/{id}",
+                defaults: new { controller = "Scores", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Student" }
+            );
+
+            routes.MapRoute(
+                name: "StudentNotifications",
+                url: "Student/Notifications/{action}/{id}",
+                defaults: new { controller = "Notifications", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Student" }
+            );
+
+            routes.MapRoute(
+                name: "StudentFeedbacks",
+                url: "Student/Feedbacks/{action}/{id}",
+                defaults: new { controller = "Feedbacks", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Student" }
+            );
+
+            // Routes cho Admin nested controllers
+            routes.MapRoute(
+                name: "AdminDashboard",
+                url: "Admin/Dashboard/{action}/{id}",
+                defaults: new { controller = "Dashboard", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
+            routes.MapRoute(
+                name: "AdminActivities",
+                url: "Admin/Activities/{action}/{id}",
+                defaults: new { controller = "Activities", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
+            routes.MapRoute(
+                name: "AdminScores",
+                url: "Admin/Scores/{action}/{id}",
+                defaults: new { controller = "Scores", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
+            routes.MapRoute(
+                name: "AdminReviewRequests",
+                url: "Admin/ReviewRequests/{action}/{id}",
+                defaults: new { controller = "ReviewRequests", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
+            routes.MapRoute(
+                name: "AdminNotifications",
+                url: "Admin/Notifications/{action}/{id}",
+                defaults: new { controller = "Notifications", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
+            routes.MapRoute(
+                name: "AdminFeedbacks",
+                url: "Admin/Feedbacks/{action}/{id}",
+                defaults: new { controller = "Feedbacks", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
+            // Route cho Student (redirect to Dashboard)
             routes.MapRoute(
                 name: "Student",
                 url: "Student/{action}/{id}",
-                defaults: new { controller = "Student", action = "Dashboard", id = UrlParameter.Optional }
+                defaults: new { controller = "Dashboard", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Student" }
             );
 
             // Route mặc định - redirect đến trang đăng nhập

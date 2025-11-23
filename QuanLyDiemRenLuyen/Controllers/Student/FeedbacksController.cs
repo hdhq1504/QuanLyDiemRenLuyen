@@ -1,0 +1,406 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using Oracle.ManagedDataAccess.Client;
+using QuanLyDiemRenLuyen.Helpers;
+using QuanLyDiemRenLuyen.Models;
+
+namespace QuanLyDiemRenLuyen.Controllers.Student
+{
+    /// <summary>
+    /// Controller xử lý Feedbacks của sinh viên
+    /// </summary>
+    public class FeedbacksController : StudentBaseController
+    {
+        // GET: Student/Feedbacks
+        public ActionResult Index(string status, string termId, int page = 1)
+        {
+            try
+            {
+                var authCheck = CheckAuth();
+                if (authCheck != null) return authCheck;
+
+                string mand = GetCurrentStudentId();
+
+                var viewModel = new StudentFeedbackListViewModel
+                {
+                    FilterStatus = status ?? "ALL",
+                    FilterTermId = termId,
+                    CurrentPage = page,
+                    PageSize = 10
+                };
+
+                // Get available terms
+                viewModel.AvailableTerms = GetAvailableTerms();
+
+                // Get feedbacks
+                viewModel.Feedbacks = GetFeedbacksList(mand, status, termId, page, viewModel.PageSize, out int totalCount);
+                viewModel.TotalPages = (int)Math.Ceiling((double)totalCount / viewModel.PageSize);
+
+                return View("~/Views/Student/Feedbacks.cshtml", viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View("~/Views/Student/Feedbacks.cshtml", new StudentFeedbackListViewModel());
+            }
+        }
+
+        // GET: Student/Feedbacks/Detail
+        public ActionResult Detail(string id)
+        {
+            try
+            {
+                var authCheck = CheckAuth();
+                if (authCheck != null) return authCheck;
+
+                string mand = GetCurrentStudentId();
+                var viewModel = GetFeedbackDetail(id, mand);
+
+                if (viewModel == null)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy phản hồi";
+                    return RedirectToAction("Index");
+                }
+
+                return View("~/Views/Student/FeedbackDetail.cshtml", viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return RedirectToAction("Index");
+            }
+        }
+
+        // GET: Student/Feedbacks/Create
+        public ActionResult Create()
+        {
+            try
+            {
+                var authCheck = CheckAuth();
+                if (authCheck != null) return authCheck;
+
+                var model = new CreateFeedbackViewModel
+                {
+                    AvailableTerms = GetAvailableTerms(),
+                    AvailableCriteria = new List<CriterionOption>()
+                };
+
+                return View("~/Views/Student/CreateFeedback.cshtml", model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return RedirectToAction("Index");
+            }
+        }
+
+        // POST: Student/Feedbacks/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Create(CreateFeedbackViewModel model)
+        {
+            try
+            {
+                var authCheck = CheckAuth();
+                if (authCheck != null) return authCheck;
+
+                string mand = GetCurrentStudentId();
+
+                if (!ModelState.IsValid)
+                {
+                    model.AvailableTerms = GetAvailableTerms();
+                    model.AvailableCriteria = GetCriteriaByTerm(model.TermId);
+                    return View("~/Views/Student/CreateFeedback.cshtml", model);
+                }
+
+                // Tạo ID mới
+                string newId = "FB" + DateTime.Now.ToString("yyyyMMddHHmmss");
+
+                // Insert feedback
+                string insertQuery = @"INSERT INTO FEEDBACKS
+                                      (ID, STUDENT_ID, TERM_ID, CRITERION_ID, TITLE, CONTENT, STATUS, CREATED_AT)
+                                      VALUES
+                                      (:Id, :StudentId, :TermId, :CriterionId, :Title, :Content, 'SUBMITTED', SYSDATE)";
+
+                var insertParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, newId),
+                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, model.TermId),
+                    OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2,
+                        string.IsNullOrEmpty(model.CriterionId) ? (object)DBNull.Value : model.CriterionId),
+                    OracleDbHelper.CreateParameter("Title", OracleDbType.Varchar2, model.Title),
+                    OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, model.Content)
+                };
+
+                OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
+
+                TempData["SuccessMessage"] = "Gửi phản hồi thành công!";
+                return RedirectToAction("Detail", new { id = newId });
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                model.AvailableTerms = GetAvailableTerms();
+                model.AvailableCriteria = GetCriteriaByTerm(model.TermId);
+                return View("~/Views/Student/CreateFeedback.cshtml", model);
+            }
+        }
+
+        // POST: Student/Feedbacks/UploadAttachment
+        [HttpPost]
+        public JsonResult UploadAttachment(string feedbackId, HttpPostedFileBase file)
+        {
+            try
+            {
+                var authCheck = CheckAuth();
+                if (authCheck != null)
+                {
+                    return Json(new { success = false, message = "Chưa đăng nhập" });
+                }
+
+                string mand = GetCurrentStudentId();
+
+                if (file == null || file.ContentLength == 0)
+                {
+                    return Json(new { success = false, message = "Vui lòng chọn file" });
+                }
+
+                // Validate file
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx" };
+                var fileExtension = Path.GetExtension(file.FileName).ToLower();
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return Json(new { success = false, message = "Chỉ chấp nhận file ảnh, PDF hoặc Word" });
+                }
+
+                if (file.ContentLength > 10 * 1024 * 1024) // 10MB
+                {
+                    return Json(new { success = false, message = "File không được vượt quá 10MB" });
+                }
+
+                // Create upload folder
+                string uploadFolder = Server.MapPath("~/Uploads/Feedbacks");
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+
+                // Generate unique filename
+                string fileName = $"{mand}_{feedbackId}_{DateTime.Now:yyyyMMddHHmmss}{fileExtension}";
+                string filePath = Path.Combine(uploadFolder, fileName);
+                string relativePath = $"/Uploads/Feedbacks/{fileName}";
+
+                // Save file
+                file.SaveAs(filePath);
+
+                // Insert into database
+                string insertQuery = @"INSERT INTO FEEDBACK_ATTACHMENTS
+                                      (ID, FEEDBACK_ID, FILE_NAME, STORED_PATH, CONTENT_TYPE, FILE_SIZE, UPLOADED_AT)
+                                      VALUES
+                                      (RAWTOHEX(SYS_GUID()), :FeedbackId, :FileName, :StoredPath, :ContentType, :FileSize, SYSDATE)";
+
+                var insertParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("FeedbackId", OracleDbType.Varchar2, feedbackId),
+                    OracleDbHelper.CreateParameter("FileName", OracleDbType.Varchar2, file.FileName),
+                    OracleDbHelper.CreateParameter("StoredPath", OracleDbType.Varchar2, relativePath),
+                    OracleDbHelper.CreateParameter("ContentType", OracleDbType.Varchar2, file.ContentType),
+                    OracleDbHelper.CreateParameter("FileSize", OracleDbType.Int32, file.ContentLength)
+                };
+
+                OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
+
+                return Json(new { success = true, fileName = file.FileName, filePath = relativePath });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        #region Private Helper Methods
+
+        private List<TermOption> GetAvailableTerms()
+        {
+            var terms = new List<TermOption>();
+            string query = @"SELECT ID, NAME, YEAR
+                            FROM TERMS
+                            ORDER BY YEAR DESC";
+
+            DataTable dt = OracleDbHelper.ExecuteQuery(query, null);
+            foreach (DataRow row in dt.Rows)
+            {
+                terms.Add(new TermOption
+                {
+                    Id = row["ID"].ToString(),
+                    Name = row["NAME"].ToString(),
+                    Year = Convert.ToInt32(row["YEAR"])
+                });
+            }
+
+            return terms;
+        }
+
+        private List<CriterionOption> GetCriteriaByTerm(string termId)
+        {
+            var criteria = new List<CriterionOption>();
+            if (string.IsNullOrEmpty(termId)) return criteria;
+
+            string query = @"SELECT ID, NAME, GROUP_NO
+                            FROM CRITERIA
+                            WHERE TERM_ID = :TermId
+                            ORDER BY GROUP_NO";
+
+            var parameters = new[] { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
+            DataTable dt = OracleDbHelper.ExecuteQuery(query, parameters);
+
+            foreach (DataRow row in dt.Rows)
+            {
+                criteria.Add(new CriterionOption
+                {
+                    Id = row["ID"].ToString(),
+                    Name = row["NAME"].ToString(),
+                    GroupNo = row["GROUP_NO"] != DBNull.Value ? Convert.ToInt32(row["GROUP_NO"]) : 0
+                });
+            }
+
+            return criteria;
+        }
+
+        private List<StudentFeedbackItem> GetFeedbacksList(string mand, string status, string termId, int page, int pageSize, out int totalCount)
+        {
+            var feedbacks = new List<StudentFeedbackItem>();
+
+            // Build WHERE clause
+            string whereClause = "WHERE f.STUDENT_ID = :StudentId";
+            var parameters = new List<OracleParameter>
+            {
+                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
+            };
+
+            if (!string.IsNullOrEmpty(status) && status != "ALL")
+            {
+                whereClause += " AND f.STATUS = :Status";
+                parameters.Add(OracleDbHelper.CreateParameter("Status", OracleDbType.Varchar2, status));
+            }
+
+            if (!string.IsNullOrEmpty(termId))
+            {
+                whereClause += " AND f.TERM_ID = :TermId";
+                parameters.Add(OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId));
+            }
+
+            // Get total count
+            string countQuery = $"SELECT COUNT(*) FROM FEEDBACKS f {whereClause}";
+            totalCount = Convert.ToInt32(OracleDbHelper.ExecuteScalar(countQuery, parameters.ToArray()));
+
+            // Get paginated data
+            int offset = (page - 1) * pageSize;
+            string query = $@"SELECT * FROM (
+                                SELECT f.ID, f.TERM_ID, t.NAME as TERM_NAME, c.NAME as CRITERION_NAME,
+                                       f.TITLE, f.STATUS, f.CREATED_AT, f.RESPONDED_AT,
+                                       CASE WHEN f.RESPONSE IS NOT NULL THEN 1 ELSE 0 END as HAS_RESPONSE,
+                                       ROW_NUMBER() OVER (ORDER BY f.CREATED_AT DESC) AS RN
+                                FROM FEEDBACKS f
+                                INNER JOIN TERMS t ON f.TERM_ID = t.ID
+                                LEFT JOIN CRITERIA c ON f.CRITERION_ID = c.ID
+                                {whereClause}
+                            )
+                            WHERE RN > :Offset AND RN <= :EndRow";
+
+            parameters.Add(OracleDbHelper.CreateParameter("Offset", OracleDbType.Int32, offset));
+            parameters.Add(OracleDbHelper.CreateParameter("EndRow", OracleDbType.Int32, offset + pageSize));
+
+            DataTable dt = OracleDbHelper.ExecuteQuery(query, parameters.ToArray());
+
+            foreach (DataRow row in dt.Rows)
+            {
+                feedbacks.Add(new StudentFeedbackItem
+                {
+                    Id = row["ID"].ToString(),
+                    TermId = row["TERM_ID"].ToString(),
+                    TermName = row["TERM_NAME"].ToString(),
+                    CriterionName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
+                    Title = row["TITLE"].ToString(),
+                    Status = row["STATUS"].ToString(),
+                    CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
+                    RespondedAt = row["RESPONDED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["RESPONDED_AT"]) : null,
+                    HasResponse = Convert.ToInt32(row["HAS_RESPONSE"]) == 1
+                });
+            }
+
+            return feedbacks;
+        }
+
+        private StudentFeedbackDetailViewModel GetFeedbackDetail(string feedbackId, string mand)
+        {
+            string query = @"SELECT f.ID, f.STUDENT_ID, f.TERM_ID, t.NAME as TERM_NAME,
+                                   f.CRITERION_ID, c.NAME as CRITERION_NAME,
+                                   f.TITLE, f.CONTENT, f.STATUS, f.RESPONSE,
+                                   f.CREATED_AT, f.UPDATED_AT, f.RESPONDED_AT
+                            FROM FEEDBACKS f
+                            INNER JOIN TERMS t ON f.TERM_ID = t.ID
+                            LEFT JOIN CRITERIA c ON f.CRITERION_ID = c.ID
+                            WHERE f.ID = :FeedbackId AND f.STUDENT_ID = :StudentId";
+
+            var parameters = new[]
+            {
+                OracleDbHelper.CreateParameter("FeedbackId", OracleDbType.Varchar2, feedbackId),
+                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
+            };
+
+            DataTable dt = OracleDbHelper.ExecuteQuery(query, parameters);
+            if (dt.Rows.Count == 0) return null;
+
+            DataRow row = dt.Rows[0];
+            var viewModel = new StudentFeedbackDetailViewModel
+            {
+                Id = row["ID"].ToString(),
+                TermId = row["TERM_ID"].ToString(),
+                TermName = row["TERM_NAME"].ToString(),
+                CriterionId = row["CRITERION_ID"] != DBNull.Value ? row["CRITERION_ID"].ToString() : null,
+                CriterionName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
+                Title = row["TITLE"].ToString(),
+                Content = row["CONTENT"].ToString(),
+                Status = row["STATUS"].ToString(),
+                Response = row["RESPONSE"] != DBNull.Value ? row["RESPONSE"].ToString() : null,
+                CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
+                UpdatedAt = row["UPDATED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["UPDATED_AT"]) : null,
+                RespondedAt = row["RESPONDED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["RESPONDED_AT"]) : null,
+                Attachments = new List<FeedbackAttachmentItem>()
+            };
+
+            // Get attachments
+            string attachmentQuery = @"SELECT ID, FILE_NAME, STORED_PATH, CONTENT_TYPE, FILE_SIZE, UPLOADED_AT
+                                      FROM FEEDBACK_ATTACHMENTS
+                                      WHERE FEEDBACK_ID = :FeedbackId
+                                      ORDER BY UPLOADED_AT DESC";
+
+            var attachmentParams = new[] { OracleDbHelper.CreateParameter("FeedbackId", OracleDbType.Varchar2, feedbackId) };
+            DataTable attachmentDt = OracleDbHelper.ExecuteQuery(attachmentQuery, attachmentParams);
+
+            foreach (DataRow attRow in attachmentDt.Rows)
+            {
+                viewModel.Attachments.Add(new FeedbackAttachmentItem
+                {
+                    Id = attRow["ID"].ToString(),
+                    FileName = attRow["FILE_NAME"].ToString(),
+                    StoredPath = attRow["STORED_PATH"].ToString(),
+                    ContentType = attRow["CONTENT_TYPE"].ToString(),
+                    FileSize = Convert.ToInt32(attRow["FILE_SIZE"]),
+                    UploadedAt = Convert.ToDateTime(attRow["UPLOADED_AT"])
+                });
+            }
+
+            return viewModel;
+        }
+
+        #endregion
+    }
+}

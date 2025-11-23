@@ -278,15 +278,6 @@ namespace QuanLyDiemRenLuyen.Controllers
             return RedirectToAction("Login", "Account");
         }
 
-        // GET: Account/Logout (cho phép GET để dễ sử dụng)
-        public ActionResult LogoutGet()
-        {
-            FormsAuthentication.SignOut();
-            Session.Clear();
-            Session.Abandon();
-            return RedirectToAction("Login", "Account");
-        }
-
         // ==================== FORGOT PASSWORD ====================
 
         // GET: Account/ForgotPassword

@@ -1,0 +1,167 @@
+@model QuanLyDiemRenLuyen.Models.StudentFeedbackDetailViewModel
+@{
+    ViewBag.Title = "Chi tiết phản hồi";
+    var statusColor = Model.Status == "SUBMITTED" ? "#f59e0b" : Model.Status == "RESPONDED" ? "#10b981" : "#6b7280";
+    var statusText = Model.Status == "SUBMITTED" ? "Đã gửi" : Model.Status == "RESPONDED" ? "Đã phản hồi" : "Đã đóng";
+    var statusIcon = Model.Status == "SUBMITTED" ? "fa-clock" : Model.Status == "RESPONDED" ? "fa-check-circle" : "fa-times-circle";
+}
+
+<div style="padding: 24px; max-width: 1000px; margin: 0 auto;">
+    <!-- Header -->
+    <div style="margin-bottom: 24px;">
+        <a href="@Url.Action("Feedbacks")" style="color: #2563eb; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #0f172a;">@Model.Title</h2>
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; color: #64748b;">
+                    <span><i class="fas fa-calendar"></i> @Model.TermName</span>
+                    <span><i class="fas fa-tag"></i> @Model.CriterionName</span>
+                    <span><i class="fas fa-clock"></i> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            </div>
+            <span style="background: @statusColor; color: white; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; white-space: nowrap;">
+                <i class="fas @statusIcon"></i> @statusText
+            </span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
+    {
+        <div style="background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(TempData["ErrorMessage"] as string))
+    {
+        <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Status Timeline -->
+    <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px;">
+        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Trạng thái xử lý</h3>
+        <div style="display: flex; gap: 24px; position: relative;">
+            <!-- Submitted -->
+            <div style="flex: 1; position: relative;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-weight: 600; color: #0f172a; margin-bottom: 4px;">Đã gửi</div>
+                    <div style="font-size: 12px; color: #64748b;">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+            </div>
+
+            <!-- Responded -->
+            <div style="flex: 1; position: relative;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: @(Model.Status == "RESPONDED" || Model.Status == "CLOSED" ? "#10b981" : "#e2e8f0"); color: @(Model.Status == "RESPONDED" || Model.Status == "CLOSED" ? "white" : "#94a3b8"); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                    <i class="fas @(Model.Status == "RESPONDED" || Model.Status == "CLOSED" ? "fa-check" : "fa-clock")"></i>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-weight: 600; color: @(Model.Status == "RESPONDED" || Model.Status == "CLOSED" ? "#0f172a" : "#94a3b8"); margin-bottom: 4px;">Đã phản hồi</div>
+                    @if (Model.RespondedAt.HasValue)
+                    {
+                        <div style="font-size: 12px; color: #64748b;">@Model.RespondedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                    }
+                    else
+                    {
+                        <div style="font-size: 12px; color: #94a3b8;">Đang chờ</div>
+                    }
+                </div>
+            </div>
+
+            <!-- Closed -->
+            <div style="flex: 1; position: relative;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: @(Model.Status == "CLOSED" ? "#10b981" : "#e2e8f0"); color: @(Model.Status == "CLOSED" ? "white" : "#94a3b8"); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                    <i class="fas @(Model.Status == "CLOSED" ? "fa-check" : "fa-clock")"></i>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-weight: 600; color: @(Model.Status == "CLOSED" ? "#0f172a" : "#94a3b8"); margin-bottom: 4px;">Đã đóng</div>
+                    <div style="font-size: 12px; color: #94a3b8;">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px;">
+        <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Nội dung phản hồi</h3>
+        <div style="color: #0f172a; line-height: 1.6; white-space: pre-wrap;">@Model.Content</div>
+    </div>
+
+    <!-- Attachments -->
+    @if (Model.Attachments.Count > 0)
+    {
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">File đính kèm (@Model.Attachments.Count)</h3>
+            <div style="display: grid; gap: 12px;">
+                @foreach (var attachment in Model.Attachments)
+                {
+                    var fileIcon = attachment.ContentType.Contains("pdf") ? "fa-file-pdf" : "fa-file-image";
+                    var fileColor = attachment.ContentType.Contains("pdf") ? "#dc2626" : "#2563eb";
+                    var fileSizeMB = (attachment.FileSize / 1024.0 / 1024.0).ToString("0.00");
+
+                    <a href="@attachment.StoredPath" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: inherit; transition: all 0.2s;">
+                        <i class="fas @fileIcon" style="font-size: 32px; color: @fileColor;"></i>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #0f172a; margin-bottom: 4px;">@attachment.FileName</div>
+                            <div style="font-size: 12px; color: #64748b;">@fileSizeMB MB • @attachment.UploadedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                        <i class="fas fa-download" style="color: #64748b;"></i>
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Upload More Files (only if SUBMITTED) -->
+    @if (Model.Status == "SUBMITTED")
+    {
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px;">
+            <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Thêm file đính kèm</h3>
+            @using (Html.BeginForm("UploadFeedbackAttachment", "Student", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="feedbackId" value="@Model.Id" />
+                <div style="display: flex; gap: 12px; align-items: end;">
+                    <div style="flex: 1;">
+                        <input type="file" name="file" accept=".jpg,.jpeg,.png,.pdf" required style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;" />
+                        <small style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">Chấp nhận: JPG, PNG, PDF. Tối đa 5MB</small>
+                    </div>
+                    <button type="submit" style="padding: 12px 24px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Response -->
+    @if (!string.IsNullOrEmpty(Model.Response))
+    {
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <i class="fas fa-reply" style="font-size: 24px; color: #10b981;"></i>
+                <div>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #0f172a;">Phản hồi từ nhà trường</h3>
+                    @if (Model.RespondedAt.HasValue)
+                    {
+                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">@Model.RespondedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                    }
+                </div>
+            </div>
+            <div style="color: #0f172a; line-height: 1.6; white-space: pre-wrap;">@Model.Response</div>
+        </div>
+    }
+</div>
+
+<style>
+    a[href*="StoredPath"]:hover {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+    }
+</style>
