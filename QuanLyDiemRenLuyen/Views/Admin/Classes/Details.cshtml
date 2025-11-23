@@ -1,0 +1,195 @@
+@model QuanLyDiemRenLuyen.Models.ClassDetailsViewModel
+@{
+    ViewBag.Title = "Chi tiết Lớp";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 0;
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+
+    .card-header {
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 18px;
+        color: #2c3e50;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .info-item label {
+        display: block;
+        font-size: 13px;
+        color: #7f8c8d;
+        margin-bottom: 5px;
+    }
+
+    .info-item span {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #5a6c7d;
+        border-bottom: 2px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-secondary {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    .btn-secondary:hover {
+        background: #d6d8db;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+</style>
+
+<div class="page-header">
+    <div>
+        <h2><i class="fas fa-users-class"></i> Chi tiết Lớp</h2>
+        <p>Thông tin lớp học và danh sách sinh viên</p>
+    </div>
+    <div>
+        <a href="@Url.Action("Edit", new { id = Model.ClassInfo.Id })" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Chỉnh sửa
+        </a>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<!-- Class Info -->
+<div class="card">
+    <div class="card-header">
+        <h3>Thông tin chung</h3>
+    </div>
+    <div class="info-grid">
+        <div class="info-item">
+            <label>Mã lớp</label>
+            <span>@Model.ClassInfo.Code</span>
+        </div>
+        <div class="info-item">
+            <label>Tên lớp</label>
+            <span>@Model.ClassInfo.Name</span>
+        </div>
+        <div class="info-item">
+            <label>Khoa</label>
+            <span>@Model.ClassInfo.DepartmentName</span>
+        </div>
+        <div class="info-item">
+            <label>Sĩ số</label>
+            <span>@Model.ClassInfo.StudentCount sinh viên</span>
+        </div>
+    </div>
+</div>
+
+<!-- Students List -->
+<div class="card">
+    <div class="card-header">
+        <h3>Danh sách sinh viên (@Model.Students.Count)</h3>
+    </div>
+    
+    @if (Model.Students.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>MSSV</th>
+                    <th>Họ và tên</th>
+                    <th>Giới tính</th>
+                    <th>Ngày sinh</th>
+                    <th>Email</th>
+                    <th>Số điện thoại</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in Model.Students)
+                {
+                    <tr>
+                        <td><strong>@student.StudentCode</strong></td>
+                        <td>@student.FullName</td>
+                        <td>@student.Gender</td>
+                        <td>@(student.DateOfBirth.HasValue ? student.DateOfBirth.Value.ToString("dd/MM/yyyy") : "")</td>
+                        <td>@student.Email</td>
+                        <td>@student.Phone</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 40px; color: #999;">
+            <i class="fas fa-user-graduate" style="font-size: 32px; margin-bottom: 10px;"></i>
+            <p>Chưa có sinh viên nào trong lớp này</p>
+        </div>
+    }
+</div>

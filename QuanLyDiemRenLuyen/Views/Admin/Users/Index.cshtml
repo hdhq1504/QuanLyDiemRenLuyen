@@ -1,0 +1,334 @@
+@model QuanLyDiemRenLuyen.Models.UserIndexViewModel
+@{
+    ViewBag.Title = "Quản lý Người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .filter-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #5a6c7d;
+    }
+
+    .form-control {
+        padding: 10px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #5a6c7d;
+        border-bottom: 2px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 14px;
+    }
+
+    .table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .badge-student {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-lecturer {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-admin {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-active {
+        background: #c3e6cb;
+        color: #155724;
+    }
+
+    .badge-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 25px;
+        padding: 20px;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #5a6c7d;
+        transition: all 0.3s;
+    }
+
+    .pagination a:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .pagination .active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="content-header">
+    <div class="header-actions">
+        <div>
+            <h2><i class="fas fa-users"></i> Quản lý Người dùng</h2>
+            <p>Danh sách người dùng trong hệ thống</p>
+        </div>
+        <a href="@Url.Action("Create")" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Thêm mới
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <form method="get">
+        <div class="filter-row">
+            <div class="form-group">
+                <label>Tìm kiếm</label>
+                <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, email hoặc mã..." value="@Model.SearchKeyword">
+            </div>
+            <div class="form-group">
+                <label>Vai trò</label>
+                <select name="role" class="form-control">
+                    <option value="ALL" @(Model.FilterRole == "ALL" ? "selected" : "")>Tất cả</option>
+                    <option value="STUDENT" @(Model.FilterRole == "STUDENT" ? "selected" : "")>Sinh viên</option>
+                    <option value="LECTURER" @(Model.FilterRole == "LECTURER" ? "selected" : "")>Giảng viên</option>
+                    <option value="ADMIN" @(Model.FilterRole == "ADMIN" ? "selected" : "")>Quản trị viên</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Mã người dùng</th>
+                <th>Họ và tên</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th style="width: 150px;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Users != null && Model.Users.Any())
+            {
+                foreach (var item in Model.Users)
+                {
+                    <tr>
+                        <td><strong>@item.Id</strong></td>
+                        <td>@item.FullName</td>
+                        <td>@item.Email</td>
+                        <td>
+                            @if (item.Role == "STUDENT")
+                            {
+                                <span class="badge badge-student">Sinh viên</span>
+                            }
+                            else if (item.Role == "LECTURER")
+                            {
+                                <span class="badge badge-lecturer">Giảng viên</span>
+                            }
+                            else if (item.Role == "ADMIN")
+                            {
+                                <span class="badge badge-admin">Quản trị viên</span>
+                            }
+                            else
+                            {
+                                <span class="badge">@item.Role</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge badge-active">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive">Đã khóa</span>
+                            }
+                        </td>
+                        <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-primary btn-sm" title="Sửa">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="@Url.Action("Delete", new { id = item.Id })" method="post" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa người dùng @item.FullName (@item.Id)? Hành động này không thể hoàn tác.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-danger btn-sm" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-inbox" style="font-size: 32px; color: #ccc; margin-bottom: 10px;"></i>
+                        <p style="color: #999;">Không tìm thấy dữ liệu</p>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                if (i == Model.CurrentPage)
+                {
+                    <span class="active">@i</span>
+                }
+                else
+                {
+                    <a href="@Url.Action("Index", new { page = i, search = Model.SearchKeyword, role = Model.FilterRole })">@i</a>
+                }
+            }
+        </div>
+    }
+</div>

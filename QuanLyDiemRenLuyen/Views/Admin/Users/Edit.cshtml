@@ -1,0 +1,173 @@
+@model QuanLyDiemRenLuyen.Models.UserEditViewModel
+@{
+    ViewBag.Title = "Cập nhật Người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 30px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #5a6c7d;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .text-danger {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+
+    .btn-secondary {
+        background: #e2e3e5;
+        color: #383d41;
+        margin-left: 10px;
+    }
+
+    .btn-secondary:hover {
+        background: #d6d8db;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .page-header h2 {
+        font-size: 24px;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .checkbox-container input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+</style>
+
+<div class="page-header">
+    <h2>Cập nhật Người dùng</h2>
+    <p style="color: #6c757d;">Chỉnh sửa thông tin tài khoản</p>
+</div>
+
+<div class="card">
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.Id)
+
+        if (ViewData.ModelState.Keys.Any(k => ViewData.ModelState[k].Errors.Any()))
+        {
+            <div class="alert alert-danger" style="margin-bottom: 20px;">
+                <i class="fas fa-exclamation-circle"></i> Vui lòng kiểm tra lại thông tin nhập vào.
+                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            </div>
+        }
+
+        <div class="form-group">
+            <label>Mã người dùng</label>
+            <input type="text" class="form-control" value="@Model.Id" disabled style="background-color: #e9ecef;" />
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.FullName)
+            @Html.TextBoxFor(m => m.FullName, new { @class = "form-control", placeholder = "Nhập họ và tên" })
+            @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Email)
+            @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Nhập địa chỉ email" })
+            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Role)
+            @Html.DropDownListFor(m => m.Role, new List<SelectListItem>
+            {
+                new SelectListItem { Text = "Sinh viên", Value = "STUDENT" },
+                new SelectListItem { Text = "Giảng viên", Value = "LECTURER" },
+                new SelectListItem { Text = "Quản trị viên", Value = "ADMIN" }
+            }, "Chọn vai trò", new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Role, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group checkbox-container">
+            @Html.CheckBoxFor(m => m.IsActive)
+            @Html.LabelFor(m => m.IsActive, new { style = "margin-bottom: 0;" })
+        </div>
+
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e9ecef;" />
+        <h4 style="margin-bottom: 20px; color: #2c3e50;">Đổi mật khẩu (Tùy chọn)</h4>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.NewPassword)
+            @Html.PasswordFor(m => m.NewPassword, new { @class = "form-control", placeholder = "Nhập mật khẩu mới nếu muốn thay đổi" })
+            @Html.ValidationMessageFor(m => m.NewPassword, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group" style="margin-top: 30px; text-align: right;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Lưu thay đổi
+            </button>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    }
+</div>

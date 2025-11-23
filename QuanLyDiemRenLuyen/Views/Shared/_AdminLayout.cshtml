@@ -262,9 +262,13 @@
             <i class="fas fa-check-circle"></i>
             <span>Phê duyệt hoạt động</span>
         </a>
-        <a href="@Url.Action("Students", "Admin")" class="nav-item">
+        <a href="@Url.Action("Index", "Users")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Users" ? "active" : "")">
             <i class="fas fa-users"></i>
-            <span>Quản lý sinh viên</span>
+            <span>Quản lý người dùng</span>
+        </a>
+        <a href="@Url.Action("Index", "Classes")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Classes" ? "active" : "")">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>Quản lý Lớp</span>
         </a>
         <a href="@Url.Action("ClassScores", "Admin")" class="nav-item">
             <i class="fas fa-graduation-cap"></i>

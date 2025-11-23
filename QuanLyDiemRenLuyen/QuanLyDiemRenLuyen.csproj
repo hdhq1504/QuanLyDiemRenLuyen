@@ -172,9 +172,11 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\Admin\ActivitiesController.cs" />
     <Compile Include="Controllers\Admin\AdminBaseController.cs" />
+    <Compile Include="Controllers\Admin\ClassesController.cs" />
     <Compile Include="Controllers\Admin\DashboardController.cs" />
     <Compile Include="Controllers\Admin\ReviewRequestsController.cs" />
     <Compile Include="Controllers\Admin\ScoresController.cs" />
+    <Compile Include="Controllers\Admin\UsersController.cs" />
     <Compile Include="Controllers\Student\ActivitiesController.cs" />
     <Compile Include="Controllers\Student\DashboardController.cs" />
     <Compile Include="Controllers\Student\FeedbacksController.cs" />
@@ -188,6 +190,7 @@
     <Compile Include="Models\ActivityViewModel.cs" />
     <Compile Include="Models\AdminViewModel.cs" />
     <Compile Include="Models\ClassScoreViewModel.cs" />
+    <Compile Include="Models\ClassViewModel.cs" />
     <Compile Include="Models\EditStudentProfileViewModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />
     <Compile Include="Models\NotificationsViewModel.cs" />
@@ -198,6 +201,7 @@
     <Compile Include="Models\StudentDashboardViewModel.cs" />
     <Compile Include="Models\StudentProfileViewModel.cs" />
     <Compile Include="Models\User.cs" />
+    <Compile Include="Models\UserViewModel.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -267,6 +271,12 @@
     <Content Include="Views\Account\Login.cshtml" />
     <Content Include="Views\Account\Register.cshtml" />
     <Content Include="Views\Account\ResetPassword.cshtml" />
+    <Content Include="Views\Admin\Classes\Index.cshtml" />
+    <Content Include="Views\Admin\Classes\Create.cshtml" />
+    <Content Include="Views\Admin\Classes\Edit.cshtml" />
+    <Content Include="Views\Admin\Users\Index.cshtml" />
+    <Content Include="Views\Admin\Users\Create.cshtml" />
+    <Content Include="Views\Admin\Users\Edit.cshtml" />
     <Content Include="Views\Admin\Activities.cshtml" />
     <Content Include="Views\Admin\ApproveActivity.cshtml" />
     <Content Include="Views\Admin\ApproveScores.cshtml" />
