@@ -6,50 +6,50 @@
 
 <style>
     .activities-container {
-        max-width: 1200px;
-        margin: 0 auto;
         padding: 24px;
+        background: #f8fafc;
+        min-height: 100vh;
     }
 
     .page-header {
-        margin-bottom: 24px;
+        background: #2563eb;
+        color: white;
+        padding: 32px;
+        border-radius: 8px;
+        margin-bottom: 32px;
+        border: 1px solid #e2e8f0;
     }
 
     .page-header h1 {
-        color: #0f172a;
-        margin-bottom: 8px;
-        font-size: 24px;
+        margin: 0 0 8px 0;
+        font-size: 28px;
         font-weight: 600;
     }
 
     .page-header p {
-        color: #64748b;
+        margin: 0;
         font-size: 14px;
+        opacity: 0.9;
     }
 
     .search-filter-section {
         background: white;
-        padding: 20px;
+        padding: 24px;
         border-radius: 8px;
         border: 1px solid #e2e8f0;
-        margin-bottom: 20px;
+        margin-bottom: 32px;
     }
 
     .search-filter-form {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        align-items: flex-end;
-    }
-
-    .form-group {
-        flex: 1;
-        min-width: 200px;
+        display: grid;
+        grid-template-columns: 2fr 1fr auto;
+        gap: 20px;
+        align-items: end;
     }
 
     .form-group label {
         display: block;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         font-weight: 600;
         color: #64748b;
         font-size: 14px;
@@ -57,24 +57,31 @@
 
     .form-control {
         width: 100%;
-        padding: 10px 12px;
+        padding: 12px;
         border: 1px solid #e2e8f0;
         border-radius: 6px;
         font-size: 14px;
+        transition: all 0.2s;
     }
 
     .form-control:focus {
         outline: none;
         border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
     .btn {
-        padding: 10px 20px;
+        padding: 12px 24px;
         border: none;
         border-radius: 6px;
         cursor: pointer;
         font-size: 14px;
         font-weight: 500;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
     }
 
     .btn-primary {
@@ -87,129 +94,146 @@
     }
 
     .btn-secondary {
-        background: #64748b;
-        color: white;
+        background: #f1f5f9;
+        color: #475569;
     }
 
     .btn-secondary:hover {
-        background: #475569;
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+
+    .activities-grid {
+        display: grid;
+        gap: 20px;
     }
 
     .activity-card {
         background: white;
         border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 16px;
+        padding: 24px;
         border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+    }
+
+    .activity-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
     .activity-header {
         display: flex;
         justify-content: space-between;
         align-items: start;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
     }
 
     .activity-title {
         font-size: 18px;
         font-weight: 600;
         color: #0f172a;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
+        line-height: 1.4;
     }
 
     .activity-meta {
         display: flex;
-        gap: 16px;
+        gap: 24px;
         flex-wrap: wrap;
-        margin-bottom: 12px;
-        font-size: 13px;
+        margin-bottom: 16px;
+        font-size: 14px;
         color: #64748b;
     }
 
     .meta-item {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 8px;
+    }
+
+    .meta-item i {
+        color: #94a3b8;
     }
 
     .badge {
-        padding: 4px 12px;
+        padding: 6px 12px;
         border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
-    .badge-success {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .badge-warning {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .badge-info {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .badge-danger {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .badge-secondary {
-        background: #f1f5f9;
-        color: #475569;
-    }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-secondary { background: #f1f5f9; color: #475569; }
 
     .activity-description {
-        color: #64748b;
-        margin-bottom: 12px;
+        color: #475569;
+        margin-bottom: 20px;
         line-height: 1.6;
         font-size: 14px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .activity-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-top: 12px;
+        padding-top: 20px;
         border-top: 1px solid #f1f5f9;
     }
 
-    .btn-view {
-        background: #2563eb;
-        color: white;
-        padding: 8px 16px;
-        text-decoration: none;
-        border-radius: 6px;
-        font-weight: 500;
+    .participants-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #64748b;
         font-size: 14px;
     }
 
-    .btn-view:hover {
-        background: #1e40af;
-        text-decoration: none;
+    .progress-bar {
+        width: 100px;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: #2563eb;
+        border-radius: 3px;
     }
 
     .pagination {
         display: flex;
         justify-content: center;
         gap: 8px;
-        margin-top: 24px;
+        margin-top: 32px;
     }
 
-    .pagination a,
-    .pagination span {
-        padding: 8px 12px;
+    .pagination a, .pagination span {
+        padding: 8px 16px;
         border: 1px solid #e2e8f0;
         border-radius: 6px;
         text-decoration: none;
-        color: #2563eb;
+        color: #64748b;
         font-weight: 500;
         font-size: 14px;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .pagination a:hover {
+        border-color: #2563eb;
+        color: #2563eb;
     }
 
     .pagination .active {
@@ -220,57 +244,83 @@
 
     .no-activities {
         text-align: center;
-        padding: 48px;
-        color: #94a3b8;
+        padding: 64px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .no-activities i {
+        font-size: 48px;
+        color: #e2e8f0;
+        margin-bottom: 16px;
+    }
+
+    .no-activities h3 {
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+
+    .no-activities p {
+        color: #64748b;
+    }
+
+    @@media (max-width: 768px) {
+        .search-filter-form {
+            grid-template-columns: 1fr;
+        }
+        
+        .activity-meta {
+            gap: 16px;
+        }
     }
 </style>
 
 <div class="activities-container">
     <div class="page-header">
-        <h1>📋 Danh sách hoạt động</h1>
-        <p>Tìm kiếm và đăng ký các hoạt động rèn luyện</p>
+        <h1><i class="fas fa-calendar-alt"></i> Danh sách hoạt động</h1>
+        <p>Tìm kiếm và đăng ký tham gia các hoạt động rèn luyện</p>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-    }
-    @if (ViewBag.ErrorMessage != null)
-    {
-        <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
-    }
-    @if (ViewBag.DebugMessage != null)
-    {
-        <div class="alert alert-info">DEBUG: @ViewBag.DebugMessage</div>
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
     }
 
     <!-- Search and Filter Section -->
     <div class="search-filter-section">
-        @using (Html.BeginForm("Activities", "Student", FormMethod.Get))
+        @using (Html.BeginForm("Index", "Activities", FormMethod.Get))
         {
             <div class="search-filter-form">
                 <div class="form-group">
                     <label for="search">Tìm kiếm</label>
-                    <input type="text" name="search" id="search" class="form-control" placeholder="Nhập tên hoạt động..."
-                        value="@Model.SearchKeyword" />
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Nhập tên hoạt động..." value="@Model.SearchKeyword" />
                 </div>
                 <div class="form-group">
                     <label for="status">Trạng thái</label>
                     <select name="status" id="status" class="form-control">
-                        <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                        <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả trạng thái</option>
                         <option value="UPCOMING" @(Model.FilterStatus == "UPCOMING" ? "selected" : "")>Sắp diễn ra</option>
                         <option value="ONGOING" @(Model.FilterStatus == "ONGOING" ? "selected" : "")>Đang diễn ra</option>
-                        <option value="COMPLETED" @(Model.FilterStatus == "COMPLETED" ? "selected" : "")>Đã kết thúc
-                        </option>
+                        <option value="COMPLETED" @(Model.FilterStatus == "COMPLETED" ? "selected" : "")>Đã kết thúc</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary">🔍 Tìm kiếm</button>
-                    <a href="@Url.Action("Activities", "Student")" class="btn btn-secondary">🔄 Đặt lại</a>
+                <div class="form-group" style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </button>
+                    <a href="@Url.Action("Index", "Activities")" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Đặt lại
+                    </a>
                 </div>
             </div>
         }
@@ -279,81 +329,103 @@
     <!-- Activities List -->
     @if (Model.Activities != null && Model.Activities.Count > 0)
     {
-        foreach (var activity in Model.Activities)
-        {
-            <div class="activity-card">
-                <div class="activity-header">
-                    <div>
-                        <h3 class="activity-title">@activity.Title</h3>
-                        <div class="activity-meta">
-                            <span class="meta-item">📅 @activity.StartAt.ToString("dd/MM/yyyy HH:mm")</span>
-                            <span class="meta-item">📍 @activity.Location</span>
-                            <span class="meta-item">⭐ @(activity.Points ?? 0) điểm</span>
-                            @if (!string.IsNullOrEmpty(activity.CategoryName))
-                            {
-                                <span class="meta-item">🏷️ @activity.CategoryName</span>
-                            }
+        <div class="activities-grid">
+            @foreach (var activity in Model.Activities)
+            {
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <div>
+                            <h3 class="activity-title">@activity.Title</h3>
+                            <div class="activity-meta">
+                                <span class="meta-item">
+                                    <i class="far fa-calendar"></i> 
+                                    @activity.StartAt.ToString("dd/MM/yyyy HH:mm")
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-map-marker-alt"></i> 
+                                    @activity.Location
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-star"></i> 
+                                    @(activity.Points ?? 0) điểm
+                                </span>
+                                @if (!string.IsNullOrEmpty(activity.CategoryName))
+                                {
+                                    <span class="meta-item">
+                                        <i class="fas fa-tag"></i> 
+                                        @activity.CategoryName
+                                    </span>
+                                }
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        @if (activity.IsRegistered)
-                        {
-                            if (activity.RegistrationStatus == "PENDING")
+                        <div>
+                            @if (activity.IsRegistered)
                             {
-                                <span class="badge badge-warning">Chờ duyệt</span>
-                            }
-                            else if (activity.RegistrationStatus == "APPROVED")
-                            {
-                                <span class="badge badge-success">Đã duyệt</span>
-                            }
-                            else if (activity.RegistrationStatus == "CHECKED_IN")
-                            {
-                                <span class="badge badge-info">Đã tham gia</span>
-                            }
-                            else if (activity.RegistrationStatus == "REJECTED")
-                            {
-                                <span class="badge badge-danger">Bị từ chối</span>
-                            }
-                        }
-                        else
-                        {
-                            if (activity.Status == "ACTIVE")
-                            {
-                                if (activity.CurrentParticipants >= activity.MaxParticipants)
+                                if (activity.RegistrationStatus == "PENDING")
                                 {
-                                    <span class="badge badge-danger">Đã đủ người</span>
+                                    <span class="badge badge-warning"><i class="fas fa-clock"></i> Chờ duyệt</span>
                                 }
-                                else if (activity.RegistrationDeadline.HasValue && activity.RegistrationDeadline < DateTime.Now)
+                                else if (activity.RegistrationStatus == "APPROVED")
                                 {
-                                    <span class="badge badge-secondary">Hết hạn ĐK</span>
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Đã duyệt</span>
                                 }
-                                else
+                                else if (activity.RegistrationStatus == "CHECKED_IN")
                                 {
-                                    <span class="badge badge-success">Có thể đăng ký</span>
+                                    <span class="badge badge-info"><i class="fas fa-user-check"></i> Đã tham gia</span>
+                                }
+                                else if (activity.RegistrationStatus == "REJECTED")
+                                {
+                                    <span class="badge badge-danger"><i class="fas fa-times"></i> Bị từ chối</span>
                                 }
                             }
                             else
                             {
-                                <span class="badge badge-secondary">@activity.Status</span>
+                                if (activity.Status == "ACTIVE")
+                                {
+                                    if (activity.CurrentParticipants >= activity.MaxParticipants)
+                                    {
+                                        <span class="badge badge-danger"><i class="fas fa-users-slash"></i> Đã đủ người</span>
+                                    }
+                                    else if (activity.RegistrationDeadline.HasValue && activity.RegistrationDeadline < DateTime.Now)
+                                    {
+                                        <span class="badge badge-secondary"><i class="fas fa-clock"></i> Hết hạn ĐK</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> Có thể đăng ký</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">@activity.Status</span>
+                                }
                             }
-                        }
+                        </div>
+                    </div>
+
+                    <p class="activity-description">
+                        @(activity.Description.Length > 200 ? activity.Description.Substring(0, 200) + "..." : activity.Description)
+                    </p>
+
+                    <div class="activity-footer">
+                        <div class="participants-info">
+                            @{
+                                var percent = activity.MaxParticipants > 0 
+                                    ? (double)activity.CurrentParticipants / activity.MaxParticipants * 100 
+                                    : 0;
+                            }
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: @percent%"></div>
+                            </div>
+                            <span>@activity.CurrentParticipants/@activity.MaxParticipants người tham gia</span>
+                        </div>
+                        <a href="@Url.Action("Detail", "Activities", new { id = activity.Id })" class="btn btn-primary">
+                            Xem chi tiết <i class="fas fa-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
-
-                <p class="activity-description">
-                    @(activity.Description.Length > 200 ? activity.Description.Substring(0, 200) + "..." : activity.Description)
-                </p>
-
-                <div class="activity-footer">
-                    <div>
-                        <small>👥 @activity.CurrentParticipants/@activity.MaxParticipants người tham gia</small>
-                    </div>
-                    <a href="@Url.Action("ActivityDetail", "Student", new { id = activity.Id })" class="btn-view">
-                        Xem chi tiết →
-                    </a>
-                </div>
-            </div>
-        }
+            }
+        </div>
 
         <!-- Pagination -->
         if (Model.TotalPages > 1)
@@ -361,9 +433,8 @@
             <div class="pagination">
                 @if (Model.CurrentPage > 1)
                 {
-                    <a
-                        href="@Url.Action("Activities", "Student", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = Model.CurrentPage - 1 })">
-                        ← Trước
+                    <a href="@Url.Action("Index", "Activities", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = Model.CurrentPage - 1 })">
+                        <i class="fas fa-chevron-left"></i> Trước
                     </a>
                 }
 
@@ -375,16 +446,14 @@
                     }
                     else
                     {
-                        <a
-                            href="@Url.Action("Activities", "Student", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = i })">@i</a>
+                        <a href="@Url.Action("Index", "Activities", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = i })">@i</a>
                     }
                 }
 
                 @if (Model.CurrentPage < Model.TotalPages)
                 {
-                    <a
-                        href="@Url.Action("Activities", "Student", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = Model.CurrentPage + 1 })">
-                        Sau →
+                    <a href="@Url.Action("Index", "Activities", new { search = Model.SearchKeyword, status = Model.FilterStatus, page = Model.CurrentPage + 1 })">
+                        Sau <i class="fas fa-chevron-right"></i>
                     </a>
                 }
             </div>
@@ -393,6 +462,7 @@
     else
     {
         <div class="no-activities">
+            <i class="fas fa-search"></i>
             <h3>Không tìm thấy hoạt động nào</h3>
             <p>Vui lòng thử lại với từ khóa khác hoặc thay đổi bộ lọc</p>
         </div>

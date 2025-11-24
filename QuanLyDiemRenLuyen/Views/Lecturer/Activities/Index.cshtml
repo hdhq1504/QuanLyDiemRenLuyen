@@ -1,0 +1,414 @@
+@model QuanLyDiemRenLuyen.Models.LecturerActivityListViewModel
+@{
+    ViewBag.Title = "Quản lý hoạt động";
+    Layout = "~/Views/Shared/_LecturerLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <style>
+        .filter-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #5a6c7d;
+        }
+
+        .form-control {
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-block;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-outline-primary {
+            border: 1px solid #667eea;
+            color: #667eea;
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-outline-danger {
+            border: 1px solid #dc3545;
+            color: #dc3545;
+            background: transparent;
+        }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #5a6c7d;
+            border-bottom: 2px solid #e9ecef;
+            font-size: 14px;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-open {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .badge-closed {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .badge-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 25px;
+            padding: 20px;
+        }
+
+        .pagination a,
+        .pagination span {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #5a6c7d;
+            transition: all 0.3s;
+        }
+
+        .pagination a:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination .active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .activity-meta {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+    </style>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0 text-gray-800">Quản lý hoạt động của tôi</h2>
+        <a href="@Url.RouteUrl("LecturerActivities", new { action = "Create" })" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Tạo hoạt động mới
+        </a>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        @using (Html.BeginRouteForm("LecturerActivities", new { action = "Index" }, FormMethod.Get))
+        {
+            <div class="filter-row">
+                <div class="form-group">
+                    <label>Tìm kiếm</label>
+                    <input type="text" name="search" class="form-control" placeholder="Tìm theo tiêu đề..." value="@Model.SearchKeyword">
+                </div>
+                <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select name="status" class="form-control" onchange="this.form.submit()">
+                        <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả trạng thái</option>
+                        <option value="OPEN" @(Model.FilterStatus == "OPEN" ? "selected" : "")>Đang mở đăng ký</option>
+                        <option value="CLOSED" @(Model.FilterStatus == "CLOSED" ? "selected" : "")>Đã đóng đăng ký</option>
+                        <option value="CANCELLED" @(Model.FilterStatus == "CANCELLED" ? "selected" : "")>Đã hủy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Lọc
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Activities List -->
+    <div class="card">
+        @if (Model.Activities.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Hoạt động</th>
+                        <th>Thời gian</th>
+                        <th>Địa điểm</th>
+                        <th>Đăng ký</th>
+                        <th>Trạng thái</th>
+                        <th>Duyệt</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Activities)
+                    {
+                        <tr>
+                            <td>
+                                <div class="activity-title">@item.Title</div>
+                                <div class="activity-meta">Tạo ngày: @item.CreatedAt.ToString("dd/MM/yyyy")</div>
+                            </td>
+                            <td>
+                                <div>@item.StartAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                <div class="activity-meta">đến @item.EndAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            </td>
+                            <td>@item.Location</td>
+                            <td>
+                                <div>@item.CurrentParticipants / @item.MaxSeats</div>
+                                <div class="progress-bar">
+                                    @{
+                                        var percent = item.MaxSeats > 0 ? (item.CurrentParticipants * 100.0 / item.MaxSeats) : 0;
+                                    }
+                                    <div class="progress-fill" style="width: @percent%"></div>
+                                </div>
+                            </td>
+                            <td>
+                                @if (item.Status == "OPEN")
+                                {
+                                    <span class="badge badge-open">Đang mở</span>
+                                }
+                                else if (item.Status == "CLOSED")
+                                {
+                                    <span class="badge badge-closed">Đã đóng</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-cancelled">Đã hủy</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.ApprovalStatus == "APPROVED")
+                                {
+                                    <span class="badge badge-approved"><i class="fas fa-check"></i> Đã duyệt</span>
+                                }
+                                else if (item.ApprovalStatus == "REJECTED")
+                                {
+                                    <span class="badge badge-rejected"><i class="fas fa-times"></i> Từ chối</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-pending"><i class="fas fa-clock"></i> Chờ duyệt</span>
+                                }
+                            </td>
+                            <td>
+                                <a href="@Url.RouteUrl("LecturerActivities", new { action = "Edit", id = item.Id })" class="btn btn-sm btn-outline-primary me-1" title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="Xóa" 
+                                        onclick="confirmDelete('@item.Id', '@item.Title')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            if (Model.TotalPages > 1)
+            {
+                <div class="pagination">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index", page = Model.CurrentPage - 1, search = Model.SearchKeyword, status = Model.FilterStatus })">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    }
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        if (i == Model.CurrentPage)
+                        {
+                            <span class="active">@i</span>
+                        }
+                        else
+                        {
+                            <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index", page = i, search = Model.SearchKeyword, status = Model.FilterStatus })">@i</a>
+                        }
+                    }
+
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index", page = Model.CurrentPage + 1, search = Model.SearchKeyword, status = Model.FilterStatus })">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div style="text-align: center; padding: 60px 20px; color: #999;">
+                <i class="fas fa-folder-open" style="font-size: 48px; margin-bottom: 15px;"></i>
+                <p style="font-size: 16px;">Chưa có hoạt động nào</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa hoạt động <strong id="deleteItemName"></strong> không?</p>
+                <p class="text-danger small"><i class="fas fa-exclamation-triangle"></i> Nếu đã có sinh viên đăng ký, hoạt động sẽ chuyển sang trạng thái HỦY thay vì xóa hoàn toàn.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteForm" method="post" action="">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        function confirmDelete(id, title) {
+            document.getElementById('deleteItemName').textContent = title;
+            document.getElementById('deleteForm').action = '/Lecturer/Activities/Delete/' + id;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

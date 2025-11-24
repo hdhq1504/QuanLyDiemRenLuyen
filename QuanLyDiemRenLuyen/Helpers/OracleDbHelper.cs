@@ -38,6 +38,7 @@ namespace QuanLyDiemRenLuyen.Helpers
             {
                 using (var command = new OracleCommand(query, connection))
                 {
+                    command.BindByName = true;
                     if (parameters != null && parameters.Length > 0)
                     {
                         command.Parameters.AddRange(parameters);
@@ -62,6 +63,7 @@ namespace QuanLyDiemRenLuyen.Helpers
             {
                 using (var command = new OracleCommand(query, connection))
                 {
+                    command.BindByName = true;
                     if (parameters != null && parameters.Length > 0)
                     {
                         command.Parameters.AddRange(parameters);
@@ -81,6 +83,7 @@ namespace QuanLyDiemRenLuyen.Helpers
             {
                 using (var command = new OracleCommand(query, connection))
                 {
+                    command.BindByName = true;
                     if (parameters != null && parameters.Length > 0)
                     {
                         command.Parameters.AddRange(parameters);

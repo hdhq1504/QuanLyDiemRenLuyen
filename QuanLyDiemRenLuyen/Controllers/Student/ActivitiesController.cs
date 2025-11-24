@@ -454,7 +454,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
         private ActivityDetailViewModel GetActivityDetail(string activityId, string mand)
         {
-            string query = @"SELECT a.ID, a.TITLE, a.DESCRIPTION, a.START_AT, a.END_AT, a.LOCATION,
+            string query = @"SELECT a.ID, a.TITLE, a.DESCRIPTION, a.REQUIREMENTS, a.BENEFITS, 
+                                   a.START_AT, a.END_AT, a.LOCATION,
                                    a.POINTS, a.MAX_SEATS, a.STATUS, a.CREATED_AT,
                                    cr.NAME as CRITERION_NAME, u.FULL_NAME as ORGANIZER_NAME,
                                    (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STATUS != 'CANCELLED') as CURRENT_PARTICIPANTS,
@@ -500,8 +501,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 RegistrationDeadline = null,
                 CategoryName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
                 OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
-                Requirements = "",
-                Benefits = "",
+                Requirements = row["REQUIREMENTS"] != DBNull.Value ? row["REQUIREMENTS"].ToString() : "",
+                Benefits = row["BENEFITS"] != DBNull.Value ? row["BENEFITS"].ToString() : "",
                 CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
                 IsRegistered = row["REG_STATUS"] != DBNull.Value && row["REG_STATUS"].ToString() != "CANCELLED",
                 RegistrationStatus = row["REG_STATUS"] != DBNull.Value ? row["REG_STATUS"].ToString() : "",
@@ -516,7 +517,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             // Xác định các quyền
             DateTime now = DateTime.Now;
             viewModel.CanRegister = !viewModel.IsRegistered &&
-                                   viewModel.Status == "ACTIVE" &&
+                                   viewModel.Status == "OPEN" &&
                                    (viewModel.RegistrationDeadline == null || viewModel.RegistrationDeadline > now) &&
                                    viewModel.CurrentParticipants < viewModel.MaxParticipants;
 

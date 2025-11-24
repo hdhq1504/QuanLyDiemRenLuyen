@@ -317,7 +317,7 @@
     {
         <div class="approval-form">
             <h4><i class="fas fa-clipboard-check"></i> Phê duyệt hoạt động</h4>
-            @using (Html.BeginForm("ApproveActivity", "Admin", FormMethod.Post))
+            @using (Html.BeginRouteForm("AdminActivities", new { action = "Approve" }, FormMethod.Post))
             {
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="ActivityId" value="@Model.Id" />
@@ -334,7 +334,7 @@
                     <button type="submit" name="Action" value="REJECT" class="btn btn-danger">
                         <i class="fas fa-times"></i> Từ chối
                     </button>
-                    <a href="@Url.Action("Activities", "Admin")" class="btn btn-secondary">
+                    <a href="@Url.RouteUrl("AdminActivities", new { action = "Index" })" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Quay lại
                     </a>
                 </div>
@@ -344,12 +344,12 @@
     else
     {
         <div class="btn-group">
-            <a href="@Url.Action("Activities", "Admin")" class="btn btn-secondary">
+            <a href="@Url.RouteUrl("AdminActivities", new { action = "Index" })" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Quay lại
             </a>
             @if (Model.CurrentRegistrations > 0)
             {
-                <a href="@Url.Action("ViewRegistrations", "Admin", new { id = Model.Id })" class="btn btn-success">
+                <a href="@Url.Action("Registrations", "Activities", new { id = Model.Id })" class="btn btn-success">
                     <i class="fas fa-users"></i> Xem danh sách đăng ký
                 </a>
             }

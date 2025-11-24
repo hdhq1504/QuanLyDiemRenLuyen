@@ -51,7 +51,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 if (viewModel == null)
                 {
                     TempData["ErrorMessage"] = "Không tìm thấy hoạt động";
-                    return RedirectToAction("Index");
+                    return RedirectToRoute("AdminActivities", new { action = "Index" });
                 }
 
                 return View("~/Views/Admin/ApproveActivity.cshtml", viewModel);
@@ -59,7 +59,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Đã xảy ra lỗi: " + ex.Message;
-                return RedirectToAction("Index");
+                return RedirectToRoute("AdminActivities", new { action = "Index" });
             }
         }
 
@@ -74,7 +74,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] = "Dữ liệu không hợp lệ";
-                return RedirectToAction("Approve", new { id = model.ActivityId });
+                return RedirectToRoute("AdminActivities", new { action = "Approve", id = model.ActivityId });
             }
 
             try
@@ -108,12 +108,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     TempData["ErrorMessage"] = "Không thể cập nhật trạng thái";
                 }
 
-                return RedirectToAction("Index");
+                return RedirectToRoute("AdminActivities", new { action = "Index" });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Đã xảy ra lỗi: " + ex.Message;
-                return RedirectToAction("Approve", new { id = model.ActivityId });
+                return RedirectToRoute("AdminActivities", new { action = "Approve", id = model.ActivityId });
             }
         }
 

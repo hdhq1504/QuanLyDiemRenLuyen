@@ -179,6 +179,9 @@
     <Compile Include="Controllers\Admin\ReviewRequestsController.cs" />
     <Compile Include="Controllers\Admin\ScoresController.cs" />
     <Compile Include="Controllers\Admin\UsersController.cs" />
+    <Compile Include="Controllers\Lecturer\ActivitiesController.cs" />
+    <Compile Include="Controllers\Lecturer\DashboardController.cs" />
+    <Compile Include="Controllers\Lecturer\LecturerBaseController.cs" />
     <Compile Include="Controllers\Student\ActivitiesController.cs" />
     <Compile Include="Controllers\Student\DashboardController.cs" />
     <Compile Include="Controllers\Student\FeedbacksController.cs" />
@@ -195,6 +198,7 @@
     <Compile Include="Models\ClassScoreViewModel.cs" />
     <Compile Include="Models\ClassViewModel.cs" />
     <Compile Include="Models\EditStudentProfileViewModel.cs" />
+    <Compile Include="Models\LecturerViewModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />
     <Compile Include="Models\NotificationsViewModel.cs" />
     <Compile Include="Models\PasswordViewModel.cs" />
@@ -292,6 +296,9 @@
     <Content Include="Views\Admin\Dashboard.cshtml" />
     <Content Include="Views\Admin\ReviewRequests.cshtml" />
     <Content Include="Views\Admin\ViewRegistrations.cshtml" />
+    <Content Include="Views\Lecturer\Activities\Form.cshtml" />
+    <Content Include="Views\Lecturer\Activities\Index.cshtml" />
+    <Content Include="Views\Lecturer\Dashboard\Index.cshtml" />
     <Content Include="Views\Student\Activities.cshtml" />
     <Content Include="Views\Student\ActivityDetail.cshtml" />
     <Content Include="Views\Student\ChangePassword.cshtml" />

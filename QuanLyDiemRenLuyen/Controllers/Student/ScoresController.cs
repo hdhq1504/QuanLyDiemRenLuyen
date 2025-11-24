@@ -82,7 +82,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 }
 
                 // Kiểm tra xem điểm có tồn tại và thuộc về sinh viên này không
-                string checkQuery = @"SELECT s.ID, s.TERM_ID, t.NAME as TERM_NAME, s.TOTAL as TOTAL_SCORE
+                string checkQuery = @"SELECT s.ID, s.TERM_ID, t.NAME as TERM_NAME, s.TOTAL_SCORE
                                      FROM SCORES s
                                      INNER JOIN TERMS t ON s.TERM_ID = t.ID
                                      WHERE s.ID = :ScoreId AND s.STUDENT_ID = :StudentId";
@@ -197,7 +197,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             // Lấy thông tin sinh viên
             string studentQuery = @"SELECT u.FULL_NAME, s.STUDENT_CODE, c.NAME as CLASS_NAME
                                    FROM USERS u
-                                   INNER JOIN STUDENTS s ON u.MAND = s.USER_ID
+                                   LEFT JOIN STUDENTS s ON u.MAND = s.USER_ID
                                    LEFT JOIN CLASSES c ON s.CLASS_ID = c.ID
                                    WHERE u.MAND = :MAND";
 
@@ -208,13 +208,13 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             {
                 viewModel.StudentId = mand;
                 viewModel.StudentName = studentDt.Rows[0]["FULL_NAME"].ToString();
-                viewModel.StudentCode = studentDt.Rows[0]["STUDENT_CODE"].ToString();
-                viewModel.ClassName = studentDt.Rows[0]["CLASS_NAME"] != DBNull.Value ? studentDt.Rows[0]["CLASS_NAME"].ToString() : "";
+                viewModel.StudentCode = studentDt.Rows[0]["STUDENT_CODE"] != DBNull.Value ? studentDt.Rows[0]["STUDENT_CODE"].ToString() : "Chưa cập nhật";
+                viewModel.ClassName = studentDt.Rows[0]["CLASS_NAME"] != DBNull.Value ? studentDt.Rows[0]["CLASS_NAME"].ToString() : "Chưa cập nhật";
             }
 
             // Lấy danh sách điểm theo học kỳ
             string scoresQuery = @"SELECT s.ID, s.TERM_ID, t.NAME as TERM_NAME, t.YEAR as TERM_YEAR,
-                                         t.TERM_NUMBER, s.TOTAL, s.STATUS, s.APPROVED_BY,
+                                         t.TERM_NUMBER, s.TOTAL_SCORE, s.STATUS, s.APPROVED_BY,
                                          u.FULL_NAME as APPROVED_BY_NAME, s.APPROVED_AT, s.CREATED_AT
                                   FROM SCORES s
                                   INNER JOIN TERMS t ON s.TERM_ID = t.ID
@@ -228,7 +228,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             viewModel.TermScores = new List<TermScoreItem>();
             foreach (DataRow row in scoresDt.Rows)
             {
-                decimal total = Convert.ToDecimal(row["TOTAL"]);
+                decimal total = Convert.ToDecimal(row["TOTAL_SCORE"]);
                 string classification = GetClassification(total);
                 string scoreId = row["ID"].ToString();
                 string status = row["STATUS"].ToString();
@@ -284,7 +284,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
         {
             // Lấy thông tin điểm cơ bản
             string scoreQuery = @"SELECT s.ID, s.STUDENT_ID, s.TERM_ID, t.NAME as TERM_NAME,
-                                        t.YEAR as TERM_YEAR, t.TERM_NUMBER, s.TOTAL, s.STATUS,
+                                        t.YEAR as TERM_YEAR, t.TERM_NUMBER, s.TOTAL_SCORE, s.STATUS,
                                         s.APPROVED_BY, u.FULL_NAME as APPROVED_BY_NAME,
                                         s.APPROVED_AT, s.CREATED_AT,
                                         st.STUDENT_CODE, us.FULL_NAME as STUDENT_NAME,
@@ -307,7 +307,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             if (scoreDt.Rows.Count == 0) return null;
 
             DataRow scoreRow = scoreDt.Rows[0];
-            decimal total = Convert.ToDecimal(scoreRow["TOTAL"]);
+            decimal total = Convert.ToDecimal(scoreRow["TOTAL_SCORE"]);
 
             var viewModel = new ScoreDetailViewModel
             {

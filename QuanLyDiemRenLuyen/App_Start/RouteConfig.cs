@@ -63,6 +63,21 @@ namespace QuanLyDiemRenLuyen
                 namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Student" }
             );
 
+            // Routes cho Lecturer nested controllers
+            routes.MapRoute(
+                name: "LecturerDashboard",
+                url: "Lecturer/Dashboard/{action}/{id}",
+                defaults: new { controller = "Dashboard", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Lecturer" }
+            );
+
+            routes.MapRoute(
+                name: "LecturerActivities",
+                url: "Lecturer/Activities/{action}/{id}",
+                defaults: new { controller = "Activities", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Lecturer" }
+            );
+
             // Routes cho Admin nested controllers
             routes.MapRoute(
                 name: "AdminDashboard",

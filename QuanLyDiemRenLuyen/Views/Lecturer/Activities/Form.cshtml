@@ -1,0 +1,123 @@
+@model QuanLyDiemRenLuyen.Models.ActivityFormViewModel
+@{
+    ViewBag.Title = string.IsNullOrEmpty(Model.Id) ? "Tạo hoạt động mới" : "Chỉnh sửa hoạt động";
+    Layout = "~/Views/Shared/_LecturerLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0 text-gray-800">@ViewBag.Title</h2>
+        <a href="@Url.RouteUrl("LecturerActivities")" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            @using (Html.BeginRouteForm("LecturerActivities", new { action = "Save" }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Id)
+
+                if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+                    </div>
+                }
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.Title, new { @class = "form-label fw-bold" })
+                            @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Nhập tên hoạt động" })
+                            @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.Description, new { @class = "form-label fw-bold" })
+                            @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "4", placeholder = "Mô tả chi tiết về hoạt động..." })
+                            @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                @Html.LabelFor(m => m.Requirements, new { @class = "form-label fw-bold" })
+                                @Html.TextAreaFor(m => m.Requirements, new { @class = "form-control", rows = "3", placeholder = "Yêu cầu đối với sinh viên..." })
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                @Html.LabelFor(m => m.Benefits, new { @class = "form-label fw-bold" })
+                                @Html.TextAreaFor(m => m.Benefits, new { @class = "form-control", rows = "3", placeholder = "Quyền lợi khi tham gia..." })
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card bg-light border-0 mb-3">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">Thông tin tổ chức</h6>
+                                
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.TermId, new { @class = "form-label" })
+                                    @Html.DropDownListFor(m => m.TermId, (SelectList)ViewBag.Terms, "Chọn học kỳ", new { @class = "form-select" })
+                                    @Html.ValidationMessageFor(m => m.TermId, "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.CriterionId, new { @class = "form-label" })
+                                    @Html.DropDownListFor(m => m.CriterionId, (SelectList)ViewBag.Criteria, "Chọn tiêu chí đánh giá", new { @class = "form-select" })
+                                </div>
+
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.Points, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.Points, new { @class = "form-control", type = "number", step = "0.1" })
+                                    @Html.ValidationMessageFor(m => m.Points, "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.MaxSeats, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.MaxSeats, new { @class = "form-control", type = "number" })
+                                    @Html.ValidationMessageFor(m => m.MaxSeats, "", new { @class = "text-danger small" })
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">Thời gian & Địa điểm</h6>
+
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.StartAt, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.StartAt, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+                                    @Html.ValidationMessageFor(m => m.StartAt, "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.EndAt, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.EndAt, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+                                    @Html.ValidationMessageFor(m => m.EndAt, "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.Location, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.Location, new { @class = "form-control", placeholder = "VD: Hội trường A" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                    <a href="@Url.RouteUrl("LecturerActivities")" class="btn btn-secondary me-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-save"></i> Lưu hoạt động
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+}

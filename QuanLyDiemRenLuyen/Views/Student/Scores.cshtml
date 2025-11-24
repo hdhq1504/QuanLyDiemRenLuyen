@@ -201,8 +201,8 @@
         <h1><i class="fas fa-chart-line"></i> Điểm Rèn Luyện</h1>
         <div class="student-info">
             <span><i class="fas fa-user"></i> @Model.StudentName</span>
-            <span><i class="fas fa-id-card"></i> MSSV: @Model.StudentCode</span>
-            <span><i class="fas fa-users"></i> Lớp: @Model.ClassName</span>
+            <span><i class="fas fa-id-card"></i> MSSV: @(string.IsNullOrEmpty(Model.StudentCode) ? "Chưa cập nhật" : Model.StudentCode)</span>
+            <span><i class="fas fa-users"></i> Lớp: @(string.IsNullOrEmpty(Model.ClassName) ? "Chưa cập nhật" : Model.ClassName)</span>
         </div>
     </div>
 

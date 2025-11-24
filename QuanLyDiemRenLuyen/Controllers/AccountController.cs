@@ -148,9 +148,13 @@ namespace QuanLyDiemRenLuyen.Controllers
                 {
                     return RedirectToAction("Dashboard", "Student");
                 }
-                else if (roleName == "ADMIN" || roleName == "LECTURER")
+                else if (roleName == "ADMIN")
                 {
                     return RedirectToAction("Dashboard", "Admin");
+                }
+                else if (roleName == "LECTURER")
+                {
+                    return Redirect("/Lecturer/Dashboard");
                 }
                 else
                 {

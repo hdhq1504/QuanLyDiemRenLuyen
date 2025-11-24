@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - Quản Lý Điểm Rèn Luyện</title>
+    <title>@ViewBag.Title - Giảng Viên - Quản Lý Điểm Rèn Luyện</title>
 
     <!-- Google Fonts - Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,7 +33,7 @@
 
         /* Header */
         .admin-header {
-            background: #2563eb;
+            background: #0ea5e9; /* Light blue for Lecturer */
             color: white;
             padding: 16px 32px;
             border-bottom: 1px solid #e2e8f0;
@@ -102,7 +102,7 @@
         .brand {
             font-size: 18px;
             font-weight: 700;
-            color: #2563eb;
+            color: #0ea5e9;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -192,14 +192,14 @@
         }
 
         .nav-item:hover {
-            background: #f1f5f9;
-            color: #2563eb;
+            background: #f0f9ff;
+            color: #0ea5e9;
         }
 
         .nav-item.active {
-            background: #eff6ff;
-            color: #2563eb;
-            border-left-color: #2563eb;
+            background: #e0f2fe;
+            color: #0ea5e9;
+            border-left-color: #0ea5e9;
             font-weight: 600;
         }
 
@@ -307,8 +307,8 @@
     <div class="admin-sidebar" id="adminSidebar">
         <div class="sidebar-header">
             <div class="brand">
-                <i class="fas fa-shield-alt"></i>
-                <span>ADMIN PANEL</span>
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span>GIẢNG VIÊN</span>
             </div>
             <div class="user-info">
                 <div class="user-avatar">
@@ -316,57 +316,21 @@
                 </div>
                 <div class="user-details">
                     <span class="user-name">@Session["FullName"]</span>
-                    <span class="user-role">Administrator</span>
+                    <span class="user-role">Lecturer</span>
                 </div>
             </div>
         </div>
 
         <div class="sidebar-menu">
-            <a href="@Url.Action("Dashboard", "Admin")"
-                class="nav-item @(ViewContext.RouteData.Values["action"].ToString() == "Dashboard" ? "active" : "")">
+            <a href="@Url.Action("Index", "Dashboard", new { area = "" })"
+                class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Dashboard" ? "active" : "")">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="@Url.Action("Activities", "Admin")"
-                class="nav-item @(ViewContext.RouteData.Values["action"].ToString() == "Activities" ? "active" : "")">
+            <a href="@Url.RouteUrl("LecturerActivities")"
+                class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Activities" ? "active" : "")">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Quản lý hoạt động</span>
-            </a>
-            <a href="@Url.Action("Activities", "Admin", new { approvalStatus = "PENDING" })" class="nav-item">
-                <i class="fas fa-check-circle"></i>
-                <span>Phê duyệt hoạt động</span>
-            </a>
-            <a href="@Url.Action("Index", "Proofs")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Proofs" ? "active" : "")">
-                <i class="fas fa-file-contract"></i>
-                <span>Quản lý minh chứng</span>
-            </a>
-            <a href="@Url.Action("Index", "Users")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Users" ? "active" : "")">
-                <i class="fas fa-users"></i>
-                <span>Quản lý người dùng</span>
-            </a>
-            <a href="@Url.Action("Index", "Classes")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Classes" ? "active" : "")">
-                <i class="fas fa-chalkboard-teacher"></i>
-                <span>Quản lý Lớp</span>
-            </a>
-            <a href="@Url.Action("ClassScores", "Admin")" class="nav-item">
-                <i class="fas fa-graduation-cap"></i>
-                <span>Quản lý điểm lớp</span>
-            </a>
-            <a href="@Url.Action("ApproveScores", "Admin")" class="nav-item">
-                <i class="fas fa-check-double"></i>
-                <span>Xét duyệt điểm</span>
-            </a>
-            <a href="@Url.Action("ReviewRequests", "Admin")" class="nav-item">
-                <i class="fas fa-file-signature"></i>
-                <span>Phúc khảo điểm</span>
-            </a>
-            <a href="@Url.Action("Reports", "Admin")" class="nav-item">
-                <i class="fas fa-chart-bar"></i>
-                <span>Báo cáo thống kê</span>
-            </a>
-            <a href="@Url.Action("Settings", "Admin")" class="nav-item">
-                <i class="fas fa-cog"></i>
-                <span>Cài đặt</span>
             </a>
         </div>
 
@@ -419,11 +383,11 @@
                 
                 // Save state to localStorage
                 const isCollapsed = $('#adminSidebar').hasClass('collapsed');
-                localStorage.setItem('adminSidebarCollapsed', isCollapsed);
+                localStorage.setItem('lecturerSidebarCollapsed', isCollapsed);
             });
 
             // Restore state from localStorage
-            const isCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
+            const isCollapsed = localStorage.getItem('lecturerSidebarCollapsed') === 'true';
             if (isCollapsed) {
                 $('#adminSidebar').addClass('collapsed');
                 $('#adminHeader').addClass('sidebar-collapsed');

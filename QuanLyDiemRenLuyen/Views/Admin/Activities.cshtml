@@ -331,13 +331,13 @@
                             }
                         </td>
                         <td>
-                            <a href="@Url.Action("ApproveActivity", "Admin", new { id = activity.Id })"
+                            <a href="@Url.RouteUrl("AdminActivities", new { action = "Approve", id = activity.Id })"
                                 class="btn btn-primary btn-sm">
                                 <i class="fas fa-eye"></i> Xem
                             </a>
                             @if (activity.CurrentParticipants > 0)
                             {
-                                <a href="@Url.Action("ViewRegistrations", "Admin", new { id = activity.Id })"
+                                <a href="@Url.Action("Registrations", "Activities", new { id = activity.Id })"
                                     class="btn btn-success btn-sm">
                                     <i class="fas fa-users"></i> DS
                                 </a>
