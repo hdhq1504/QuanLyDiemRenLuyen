@@ -35,7 +35,7 @@ namespace QuanLyDiemRenLuyen.Models
         public int ScoredStudents { get; set; }
         public int ApprovedStudents { get; set; }
         public int PendingApproval { get; set; }
-        public decimal AverageScore { get; set; }
+        public int AverageScore { get; set; }
         public string AdvisorName { get; set; }
         public bool CanEdit { get; set; }
     }
@@ -73,7 +73,7 @@ namespace QuanLyDiemRenLuyen.Models
         public string StudentId { get; set; }
         public string StudentCode { get; set; }
         public string StudentName { get; set; }
-        public decimal Total { get; set; }
+        public int Total { get; set; }
         public string Status { get; set; }
         public string Classification { get; set; }
         public DateTime? ApprovedAt { get; set; }
@@ -91,9 +91,9 @@ namespace QuanLyDiemRenLuyen.Models
         public int TotalStudents { get; set; }
         public int ScoredStudents { get; set; }
         public int ApprovedStudents { get; set; }
-        public decimal AverageScore { get; set; }
-        public decimal HighestScore { get; set; }
-        public decimal LowestScore { get; set; }
+        public int AverageScore { get; set; }
+        public int HighestScore { get; set; }
+        public int LowestScore { get; set; }
         public Dictionary<string, int> ClassificationDistribution { get; set; }
 
         public ClassScoreStatistics()
@@ -120,27 +120,9 @@ namespace QuanLyDiemRenLuyen.Models
 
         [Required]
         [Range(0, 100, ErrorMessage = "Điểm phải từ 0 đến 100")]
-        public decimal Total { get; set; }
+        public int Total { get; set; }
 
         public string Reason { get; set; }
-
-        public List<CriterionScoreEdit> CriterionScores { get; set; }
-
-        public EditScoreViewModel()
-        {
-            CriterionScores = new List<CriterionScoreEdit>();
-        }
-    }
-
-    /// <summary>
-    /// Chỉnh sửa điểm theo tiêu chí
-    /// </summary>
-    public class CriterionScoreEdit
-    {
-        public string CriterionId { get; set; }
-        public string CriterionName { get; set; }
-        public decimal MaxPoints { get; set; }
-        public decimal EarnedPoints { get; set; }
     }
 
     /// <summary>

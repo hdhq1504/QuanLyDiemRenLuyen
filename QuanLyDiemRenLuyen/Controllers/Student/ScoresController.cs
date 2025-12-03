@@ -105,7 +105,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                     ScoreId = scoreId,
                     TermId = dt.Rows[0]["TERM_ID"].ToString(),
                     TermName = dt.Rows[0]["TERM_NAME"].ToString(),
-                    CurrentScore = Convert.ToDecimal(dt.Rows[0]["TOTAL_SCORE"])
+                    CurrentScore = Convert.ToInt32(dt.Rows[0]["TOTAL_SCORE"])
                 };
 
                 return View("~/Views/Student/CreateReviewRequest.cshtml", model);
@@ -158,10 +158,10 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 // Thêm đơn phúc khảo
                 string insertQuery = @"INSERT INTO FEEDBACKS
-                                      (ID, STUDENT_ID, TERM_ID, CRITERION_ID, TITLE, CONTENT,
+                                      (ID, STUDENT_ID, TERM_ID, TITLE, CONTENT,
                                        REQUESTED_SCORE, STATUS, CREATED_AT)
                                       VALUES
-                                      (:Id, :StudentId, :TermId, :CriterionId, :Title, :Content,
+                                      (:Id, :StudentId, :TermId, :Title, :Content,
                                        :RequestedScore, 'SUBMITTED', SYSDATE)";
 
                 var insertParams = new[]
@@ -169,8 +169,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                     OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, newId),
                     OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
                     OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, model.TermId),
-                    OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2,
-                        string.IsNullOrEmpty(model.CriterionId) ? (object)DBNull.Value : model.CriterionId),
                     OracleDbHelper.CreateParameter("Title", OracleDbType.Varchar2, model.Title),
                     OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, model.Content),
                     OracleDbHelper.CreateParameter("RequestedScore", OracleDbType.Decimal, model.RequestedScore)
@@ -228,7 +226,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             viewModel.TermScores = new List<TermScoreItem>();
             foreach (DataRow row in scoresDt.Rows)
             {
-                decimal total = Convert.ToDecimal(row["TOTAL_SCORE"]);
+                int total = Convert.ToInt32(row["TOTAL_SCORE"]);
                 string classification = GetClassification(total);
                 string scoreId = row["ID"].ToString();
                 string status = row["STATUS"].ToString();
@@ -307,7 +305,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             if (scoreDt.Rows.Count == 0) return null;
 
             DataRow scoreRow = scoreDt.Rows[0];
-            decimal total = Convert.ToDecimal(scoreRow["TOTAL_SCORE"]);
+            int total = Convert.ToInt32(scoreRow["TOTAL_SCORE"]);
 
             var viewModel = new ScoreDetailViewModel
             {
@@ -328,72 +326,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 ApprovedAt = scoreRow["APPROVED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(scoreRow["APPROVED_AT"]) : null,
                 CreatedAt = Convert.ToDateTime(scoreRow["CREATED_AT"])
             };
-
-            // Lấy điểm theo tiêu chí
-            string criteriaQuery = @"SELECT c.ID, c.NAME, c.MAX_POINTS,
-                                           COALESCE(SUM(a.POINTS), 0) as EARNED_POINTS,
-                                           COUNT(DISTINCT r.ACTIVITY_ID) as ACTIVITY_COUNT
-                                    FROM CRITERIA c
-                                    LEFT JOIN ACTIVITIES a ON c.ID = a.CRITERION_ID
-                                    LEFT JOIN REGISTRATIONS r ON a.ID = r.ACTIVITY_ID
-                                        AND r.STUDENT_ID = :StudentId
-                                        AND r.STATUS = 'CHECKED_IN'
-                                    WHERE c.TERM_ID = :TermId
-                                    GROUP BY c.ID, c.NAME, c.MAX_POINTS
-                                    ORDER BY c.ID";
-
-            var criteriaParams = new[]
-            {
-                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
-                OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, viewModel.TermId)
-            };
-
-            DataTable criteriaDt = OracleDbHelper.ExecuteQuery(criteriaQuery, criteriaParams);
-            viewModel.CriterionScores = new List<CriterionScoreItem>();
-
-            foreach (DataRow row in criteriaDt.Rows)
-            {
-                string criterionId = row["ID"].ToString();
-                var criterionItem = new CriterionScoreItem
-                {
-                    CriterionId = criterionId,
-                    CriterionName = row["NAME"].ToString(),
-                    MaxPoints = Convert.ToDecimal(row["MAX_POINTS"]),
-                    EarnedPoints = Convert.ToDecimal(row["EARNED_POINTS"]),
-                    ActivityCount = Convert.ToInt32(row["ACTIVITY_COUNT"]),
-                    Activities = new List<ActivityScoreItem>()
-                };
-
-                // Lấy danh sách hoạt động của tiêu chí này
-                string activitiesQuery = @"SELECT a.ID, a.TITLE, a.POINTS, a.START_AT, r.STATUS
-                                          FROM ACTIVITIES a
-                                          INNER JOIN REGISTRATIONS r ON a.ID = r.ACTIVITY_ID
-                                          WHERE a.CRITERION_ID = :CriterionId
-                                          AND r.STUDENT_ID = :StudentId
-                                          AND r.STATUS = 'CHECKED_IN'
-                                          ORDER BY a.START_AT DESC";
-
-                var activityParams = new[]
-                {
-                    OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2, criterionId),
-                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
-                };
-
-                DataTable activitiesDt = OracleDbHelper.ExecuteQuery(activitiesQuery, activityParams);
-                foreach (DataRow actRow in activitiesDt.Rows)
-                {
-                    criterionItem.Activities.Add(new ActivityScoreItem
-                    {
-                        ActivityId = actRow["ID"].ToString(),
-                        ActivityTitle = actRow["TITLE"].ToString(),
-                        Points = actRow["POINTS"] != DBNull.Value ? Convert.ToDecimal(actRow["POINTS"]) : 0,
-                        Date = Convert.ToDateTime(actRow["START_AT"]),
-                        Status = actRow["STATUS"].ToString()
-                    });
-                }
-
-                viewModel.CriterionScores.Add(criterionItem);
-            }
 
             // Lấy lịch sử thay đổi điểm
             string historyQuery = @"SELECT ACTION, OLD_VALUE, NEW_VALUE, CHANGED_BY,
@@ -446,7 +378,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                     Id = fbRow["ID"].ToString(),
                     Title = fbRow["TITLE"].ToString(),
                     Content = fbRow["CONTENT"].ToString(),
-                    RequestedScore = Convert.ToDecimal(fbRow["REQUESTED_SCORE"]),
+                    RequestedScore = Convert.ToInt32(fbRow["REQUESTED_SCORE"]),
                     Status = fbRow["STATUS"].ToString(),
                     Response = fbRow["RESPONSE"] != DBNull.Value ? fbRow["RESPONSE"].ToString() : null,
                     RespondedBy = fbRow["RESPONDED_BY"] != DBNull.Value ? fbRow["RESPONDED_BY"].ToString() : null,

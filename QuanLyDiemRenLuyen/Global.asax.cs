@@ -22,6 +22,15 @@ namespace QuanLyDiemRenLuyen
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+
+            try
+            {
+                QuanLyDiemRenLuyen.Helpers.RsaKeyManager.InitializeSystemKey();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("❌ RSA Key Initialization Error: " + ex.Message);
+            }
         }
     }
 }

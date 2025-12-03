@@ -79,12 +79,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                     // CREATE
                     string insertQuery = @"INSERT INTO ACTIVITIES 
                                           (ID, TITLE, DESCRIPTION, REQUIREMENTS, BENEFITS, 
-                                           TERM_ID, CRITERION_ID, START_AT, END_AT, 
+                                           TERM_ID, START_AT, END_AT, 
                                            STATUS, MAX_SEATS, LOCATION, POINTS, 
                                            APPROVAL_STATUS, ORGANIZER_ID, CREATED_AT)
                                           VALUES 
                                           (RAWTOHEX(SYS_GUID()), :Title, :Description, :Requirements, :Benefits,
-                                           :TermId, :CriterionId, :StartAt, :EndAt,
+                                           :TermId, :StartAt, :EndAt,
                                            'OPEN', :MaxSeats, :Location, :Points,
                                            'PENDING', :OrganizerId, SYSTIMESTAMP)";
 
@@ -95,7 +95,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                         OracleDbHelper.CreateParameter("Requirements", OracleDbType.Clob, model.Requirements ?? ""),
                         OracleDbHelper.CreateParameter("Benefits", OracleDbType.Clob, model.Benefits ?? ""),
                         OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, model.TermId),
-                        OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2, model.CriterionId),
                         OracleDbHelper.CreateParameter("StartAt", OracleDbType.TimeStamp, model.StartAt),
                         OracleDbHelper.CreateParameter("EndAt", OracleDbType.TimeStamp, model.EndAt),
                         OracleDbHelper.CreateParameter("MaxSeats", OracleDbType.Int32, model.MaxSeats),
@@ -123,13 +122,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                                               REQUIREMENTS = :Requirements,
                                               BENEFITS = :Benefits,
                                               TERM_ID = :TermId,
-                                              CRITERION_ID = :CriterionId,
                                               START_AT = :StartAt,
                                               END_AT = :EndAt,
                                               MAX_SEATS = :MaxSeats,
                                               LOCATION = :Location,
                                               POINTS = :Points,
-                                              APPROVAL_STATUS = 'PENDING' -- Reset approval on edit
+                                              APPROVAL_STATUS = 'PENDING'
                                           WHERE ID = :Id AND ORGANIZER_ID = :OrganizerId";
 
                     var parameters = new[]
@@ -139,7 +137,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                         OracleDbHelper.CreateParameter("Requirements", OracleDbType.Clob, model.Requirements ?? ""),
                         OracleDbHelper.CreateParameter("Benefits", OracleDbType.Clob, model.Benefits ?? ""),
                         OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, model.TermId),
-                        OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2, model.CriterionId),
                         OracleDbHelper.CreateParameter("StartAt", OracleDbType.TimeStamp, model.StartAt),
                         OracleDbHelper.CreateParameter("EndAt", OracleDbType.TimeStamp, model.EndAt),
                         OracleDbHelper.CreateParameter("MaxSeats", OracleDbType.Int32, model.MaxSeats),
@@ -201,7 +198,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                     return RedirectToRoute("LecturerActivities", new { action = "Index" });
                 }
 
-                // Soft delete or hard delete? Let's use status CANCELLED for now, or DELETE if no registrations
                 // Check registrations
                 string checkRegQuery = "SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = :Id";
                 var checkParams = new[] { OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, id) };
@@ -239,11 +235,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
             string termQuery = "SELECT ID, NAME FROM TERMS ORDER BY START_DATE DESC";
             DataTable dtTerms = OracleDbHelper.ExecuteQuery(termQuery);
             ViewBag.Terms = new SelectList(dtTerms.DefaultView, "ID", "NAME");
-
-            // Load Criteria
-            string critQuery = "SELECT ID, NAME FROM CRITERIA ORDER BY GROUP_NO, NAME";
-            DataTable dtCrit = OracleDbHelper.ExecuteQuery(critQuery);
-            ViewBag.Criteria = new SelectList(dtCrit.DefaultView, "ID", "NAME");
         }
 
         private bool IsMyActivity(string activityId, string organizerId)
@@ -341,7 +332,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 Requirements = row["REQUIREMENTS"] != DBNull.Value ? row["REQUIREMENTS"].ToString() : "",
                 Benefits = row["BENEFITS"] != DBNull.Value ? row["BENEFITS"].ToString() : "",
                 TermId = row["TERM_ID"].ToString(),
-                CriterionId = row["CRITERION_ID"] != DBNull.Value ? row["CRITERION_ID"].ToString() : "",
+
                 StartAt = Convert.ToDateTime(row["START_AT"]),
                 EndAt = Convert.ToDateTime(row["END_AT"]),
                 MaxSeats = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,

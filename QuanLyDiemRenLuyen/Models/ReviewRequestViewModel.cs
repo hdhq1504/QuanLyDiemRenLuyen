@@ -48,7 +48,6 @@ namespace QuanLyDiemRenLuyen.Models
         public DateTime CreatedAt { get; set; }
         public decimal CurrentScore { get; set; }
         public decimal RequestedScore { get; set; }
-        public string CriterionName { get; set; }
     }
 
     /// <summary>
@@ -63,8 +62,6 @@ namespace QuanLyDiemRenLuyen.Models
         public string ClassName { get; set; }
         public string TermId { get; set; }
         public string TermName { get; set; }
-        public string CriterionId { get; set; }
-        public string CriterionName { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
         public string Status { get; set; }
@@ -112,8 +109,6 @@ namespace QuanLyDiemRenLuyen.Models
         public string TermId { get; set; }
 
         public string TermName { get; set; }
-
-        public string CriterionId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập tiêu đề")]
         [StringLength(255, ErrorMessage = "Tiêu đề không được vượt quá 255 ký tự")]
@@ -179,7 +174,6 @@ namespace QuanLyDiemRenLuyen.Models
         public string Id { get; set; }
         public string TermId { get; set; }
         public string TermName { get; set; }
-        public string CriterionName { get; set; }
         public string Title { get; set; }
         public string Status { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -195,8 +189,6 @@ namespace QuanLyDiemRenLuyen.Models
         public string Id { get; set; }
         public string TermId { get; set; }
         public string TermName { get; set; }
-        public string CriterionId { get; set; }
-        public string CriterionName { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
         public string Status { get; set; }
@@ -235,8 +227,6 @@ namespace QuanLyDiemRenLuyen.Models
 
         public string TermName { get; set; }
 
-        public string CriterionId { get; set; }
-
         [Required(ErrorMessage = "Vui lòng nhập tiêu đề")]
         [StringLength(255, ErrorMessage = "Tiêu đề không được vượt quá 255 ký tự")]
         public string Title { get; set; }
@@ -245,12 +235,10 @@ namespace QuanLyDiemRenLuyen.Models
         public string Content { get; set; }
 
         public List<TermOption> AvailableTerms { get; set; }
-        public List<CriterionOption> AvailableCriteria { get; set; }
 
         public CreateFeedbackViewModel()
         {
             AvailableTerms = new List<TermOption>();
-            AvailableCriteria = new List<CriterionOption>();
         }
     }
 
@@ -263,16 +251,4 @@ namespace QuanLyDiemRenLuyen.Models
         public string Name { get; set; }
         public int Year { get; set; }
     }
-
-    /// <summary>
-    /// Option cho dropdown tiêu chí
-    /// </summary>
-    public class CriterionOption
-    {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public int GroupNo { get; set; }
-    }
-
 }
-

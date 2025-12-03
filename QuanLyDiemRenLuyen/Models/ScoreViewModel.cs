@@ -32,7 +32,7 @@ namespace QuanLyDiemRenLuyen.Models
         public string TermName { get; set; }
         public int TermYear { get; set; }
         public int TermNumber { get; set; }
-        public decimal Total { get; set; }
+        public int Total { get; set; }
         public string Status { get; set; } // PROVISIONAL, APPROVED
         public string Classification { get; set; } // Xuất sắc, Giỏi, Khá, Trung bình, Yếu
         public string ApprovedBy { get; set; }
@@ -48,9 +48,9 @@ namespace QuanLyDiemRenLuyen.Models
     /// </summary>
     public class ScoreStatistics
     {
-        public decimal AverageScore { get; set; }
-        public decimal HighestScore { get; set; }
-        public decimal LowestScore { get; set; }
+        public int AverageScore { get; set; }
+        public int HighestScore { get; set; }
+        public int LowestScore { get; set; }
         public int TotalTerms { get; set; }
         public int ApprovedTerms { get; set; }
         public int ProvisionalTerms { get; set; }
@@ -76,16 +76,13 @@ namespace QuanLyDiemRenLuyen.Models
         public string TermName { get; set; }
         public int TermYear { get; set; }
         public int TermNumber { get; set; }
-        public decimal Total { get; set; }
+        public int Total { get; set; }
         public string Status { get; set; }
         public string Classification { get; set; }
         public string ApprovedBy { get; set; }
         public string ApprovedByName { get; set; }
         public DateTime? ApprovedAt { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        // Chi tiết điểm theo tiêu chí
-        public List<CriterionScoreItem> CriterionScores { get; set; }
 
         // Lịch sử thay đổi
         public List<ScoreHistoryItem> History { get; set; }
@@ -95,27 +92,7 @@ namespace QuanLyDiemRenLuyen.Models
 
         public ScoreDetailViewModel()
         {
-            CriterionScores = new List<CriterionScoreItem>();
             History = new List<ScoreHistoryItem>();
-        }
-    }
-
-    /// <summary>
-    /// Điểm theo tiêu chí
-    /// </summary>
-    public class CriterionScoreItem
-    {
-        public string CriterionId { get; set; }
-        public string CriterionName { get; set; }
-        public string CriterionCode { get; set; }
-        public decimal MaxPoints { get; set; }
-        public decimal EarnedPoints { get; set; }
-        public int ActivityCount { get; set; }
-        public List<ActivityScoreItem> Activities { get; set; }
-
-        public CriterionScoreItem()
-        {
-            Activities = new List<ActivityScoreItem>();
         }
     }
 
@@ -154,7 +131,7 @@ namespace QuanLyDiemRenLuyen.Models
         public string Id { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
-        public decimal RequestedScore { get; set; }
+        public int RequestedScore { get; set; }
         public string Status { get; set; }
         public string Response { get; set; }
         public string RespondedBy { get; set; }

@@ -112,7 +112,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 {
                     TermId = row["TERM_ID"].ToString(),
                     TermName = row["TERM_NAME"].ToString(),
-                    Total = Convert.ToDecimal(row["TOTAL_SCORE"]),
+                    Total = Convert.ToInt32(row["TOTAL_SCORE"]),
                     Status = row["STATUS"].ToString(),
                     ApprovedAt = row["APPROVED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["APPROVED_AT"]) : null
                 });

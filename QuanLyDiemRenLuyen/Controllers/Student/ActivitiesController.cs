@@ -368,12 +368,11 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 string countQuery = @"SELECT COUNT(*) FROM ACTIVITIES a WHERE a.APPROVAL_STATUS = 'APPROVED' AND a.STATUS = 'OPEN'";
                 string dataQuery = @"SELECT a.ID, a.TITLE, a.DESCRIPTION, a.START_AT, a.END_AT, a.LOCATION,
                                        a.POINTS, a.MAX_SEATS, a.STATUS,
-                                       cr.NAME as CRITERION_NAME, u.FULL_NAME as ORGANIZER_NAME,
+                                       u.FULL_NAME as ORGANIZER_NAME,
                                        (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STATUS != 'CANCELLED') as CURRENT_PARTICIPANTS,
                                        (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STUDENT_ID = :StudentId AND STATUS != 'CANCELLED') as IS_REGISTERED,
                                        (SELECT STATUS FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STUDENT_ID = :StudentId AND ROWNUM = 1) as REG_STATUS
                                 FROM ACTIVITIES a
-                                LEFT JOIN CRITERIA cr ON a.CRITERION_ID = cr.ID
                                 LEFT JOIN USERS u ON a.ORGANIZER_ID = u.MAND
                                 WHERE a.APPROVAL_STATUS = 'APPROVED' AND a.STATUS = 'OPEN'";
 
@@ -431,12 +430,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                         StartAt = Convert.ToDateTime(row["START_AT"]),
                         EndAt = Convert.ToDateTime(row["END_AT"]),
                         Location = row["LOCATION"] != DBNull.Value ? row["LOCATION"].ToString() : "",
-                        Points = row["POINTS"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["POINTS"]) : null,
+                        Points = row["POINTS"] != DBNull.Value ? Convert.ToInt32(row["POINTS"]) : 0,
                         MaxParticipants = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,
                         CurrentParticipants = row["CURRENT_PARTICIPANTS"] != DBNull.Value ? Convert.ToInt32(row["CURRENT_PARTICIPANTS"]) : 0,
                         Status = row["STATUS"].ToString(),
                         RegistrationDeadline = null,
-                        CategoryName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
+
                         OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
                         IsRegistered = row["IS_REGISTERED"] != DBNull.Value && Convert.ToInt32(row["IS_REGISTERED"]) > 0,
                         RegistrationStatus = row["REG_STATUS"] != DBNull.Value ? row["REG_STATUS"].ToString() : ""
@@ -457,13 +456,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             string query = @"SELECT a.ID, a.TITLE, a.DESCRIPTION, a.REQUIREMENTS, a.BENEFITS, 
                                    a.START_AT, a.END_AT, a.LOCATION,
                                    a.POINTS, a.MAX_SEATS, a.STATUS, a.CREATED_AT,
-                                   cr.NAME as CRITERION_NAME, u.FULL_NAME as ORGANIZER_NAME,
+                                   u.FULL_NAME as ORGANIZER_NAME,
                                    (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STATUS != 'CANCELLED') as CURRENT_PARTICIPANTS,
                                    r.STATUS as REG_STATUS, r.REGISTERED_AT,
                                    p.STATUS as PROOF_STATUS, p.STORED_PATH as PROOF_FILE_PATH,
                                    p.NOTE as PROOF_NOTE, p.CREATED_AT_UTC as PROOF_UPLOADED_AT
                             FROM ACTIVITIES a
-                            LEFT JOIN CRITERIA cr ON a.CRITERION_ID = cr.ID
                             LEFT JOIN USERS u ON a.ORGANIZER_ID = u.MAND
                             LEFT JOIN REGISTRATIONS r ON a.ID = r.ACTIVITY_ID AND r.STUDENT_ID = :StudentId
                             LEFT JOIN (
@@ -494,12 +492,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 StartAt = Convert.ToDateTime(row["START_AT"]),
                 EndAt = Convert.ToDateTime(row["END_AT"]),
                 Location = row["LOCATION"] != DBNull.Value ? row["LOCATION"].ToString() : "",
-                Points = row["POINTS"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["POINTS"]) : null,
+                Points = row["POINTS"] != DBNull.Value ? Convert.ToInt32(row["POINTS"]) : 0,
                 MaxParticipants = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,
                 CurrentParticipants = row["CURRENT_PARTICIPANTS"] != DBNull.Value ? Convert.ToInt32(row["CURRENT_PARTICIPANTS"]) : 0,
                 Status = row["STATUS"].ToString(),
                 RegistrationDeadline = null,
-                CategoryName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
+
                 OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
                 Requirements = row["REQUIREMENTS"] != DBNull.Value ? row["REQUIREMENTS"].ToString() : "",
                 Benefits = row["BENEFITS"] != DBNull.Value ? row["BENEFITS"].ToString() : "",

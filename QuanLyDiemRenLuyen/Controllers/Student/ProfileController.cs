@@ -5,6 +5,7 @@ using System.Web.Mvc;
 using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
 using QuanLyDiemRenLuyen.Models;
+using QuanLyDiemRenLuyen.Services;
 
 namespace QuanLyDiemRenLuyen.Controllers.Student
 {
@@ -88,16 +89,44 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 OracleDbHelper.ExecuteNonQuery(updateUserQuery, userParams);
 
-                // Cập nhật thông tin sinh viên
+                // ⭐ MÃ HÓA thông tin nhạy cảm bằng RSA
+                string encryptedPhone = null;
+                string encryptedAddress = null;
+                string encryptedIdCard = null;
+
+                if (!string.IsNullOrEmpty(model.Phone))
+                {
+                    encryptedPhone = SensitiveDataService.EncryptStudentPhone(model.Phone);
+                }
+                if (!string.IsNullOrEmpty(model.Address))
+                {
+                    encryptedAddress = SensitiveDataService.EncryptStudentAddress(model.Address);
+                }
+                if (!string.IsNullOrEmpty(model.IdCardNumber))
+                {
+                    encryptedIdCard = SensitiveDataService.EncryptIdCard(model.IdCardNumber);
+                }
+
+                // Lấy encryption key ID
+                string keyId = GetCurrentEncryptionKeyId();
+
+                // Cập nhật thông tin sinh viên (VỪA plaintext VỪA encrypted để backward compatibility)
                 string updateStudentQuery = @"UPDATE STUDENTS
                                              SET PHONE = :Phone,
                                                  DATE_OF_BIRTH = :DateOfBirth,
                                                  GENDER = :Gender,
-                                                 ADDRESS = :Address
+                                                 ADDRESS = :Address,
+                                                 ID_CARD_NUMBER = :IdCard,
+                                                 PHONE_ENCRYPTED = :PhoneEnc,
+                                                 ADDRESS_ENCRYPTED = :AddressEnc,
+                                                 ID_CARD_ENCRYPTED = :IdCardEnc,
+                                                 ENCRYPTED_AT = SYSTIMESTAMP,
+                                                 ENCRYPTION_KEY_ID = :KeyId
                                              WHERE USER_ID = :MAND";
 
                 var studentParams = new[]
                 {
+                    // Plaintext (backward compatibility)
                     OracleDbHelper.CreateParameter("Phone", OracleDbType.Varchar2,
                         string.IsNullOrEmpty(model.Phone) ? (object)DBNull.Value : model.Phone),
                     OracleDbHelper.CreateParameter("DateOfBirth", OracleDbType.Date,
@@ -106,6 +135,18 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                         string.IsNullOrEmpty(model.Gender) ? (object)DBNull.Value : model.Gender),
                     OracleDbHelper.CreateParameter("Address", OracleDbType.Varchar2,
                         string.IsNullOrEmpty(model.Address) ? (object)DBNull.Value : model.Address),
+                    OracleDbHelper.CreateParameter("IdCard", OracleDbType.Varchar2,
+                        string.IsNullOrEmpty(model.IdCardNumber) ? (object)DBNull.Value : model.IdCardNumber),
+                    
+                    // Encrypted (RSA)
+                    OracleDbHelper.CreateParameter("PhoneEnc", OracleDbType.Clob,
+                        encryptedPhone != null ? (object)encryptedPhone : DBNull.Value),
+                    OracleDbHelper.CreateParameter("AddressEnc", OracleDbType.Clob,
+                        encryptedAddress != null ? (object)encryptedAddress : DBNull.Value),
+                    OracleDbHelper.CreateParameter("IdCardEnc", OracleDbType.Clob,
+                        encryptedIdCard != null ? (object)encryptedIdCard : DBNull.Value),
+                    OracleDbHelper.CreateParameter("KeyId", OracleDbType.Varchar2,
+                        keyId != null ? (object)keyId : DBNull.Value),
                     OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand)
                 };
 
@@ -115,7 +156,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 Session["FullName"] = model.FullName;
                 Session["Email"] = model.Email;
 
-                TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
+                TempData["SuccessMessage"] = "Cập nhật thông tin thành công! Dữ liệu nhạy cảm đã được mã hóa RSA-2048.";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
@@ -207,6 +248,96 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             {
                 ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
                 return View("~/Views/Student/ChangePassword.cshtml", model);
+            }
+        }
+
+        // GET: Student/Profile/EditSensitiveInfo
+        /// <summary>
+        /// Hiển thị form chỉnh sửa thông tin nhạy cảm (đã mã hóa RSA)
+        /// </summary>
+        public ActionResult EditSensitiveInfo()
+        {
+            try
+            {
+                var authCheck = CheckAuth();
+                if (authCheck != null) return authCheck;
+
+                string mand = GetCurrentStudentId();
+                var model = GetSensitiveInfoData(mand);
+                
+                return View("~/Views/Student/EditSensitiveInfo.cshtml", model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return RedirectToAction("Index");
+            }
+        }
+
+        // POST: Student/Profile/EditSensitiveInfo
+        /// <summary>
+        /// Cập nhật thông tin nhạy cảm và mã hóa RSA trước khi lưu vào database
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EditSensitiveInfo(EditSensitiveInfoViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return View("~/Views/Student/EditSensitiveInfo.cshtml", model);
+                }
+
+                string mand = GetCurrentStudentId();
+                if (string.IsNullOrEmpty(mand))
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Mã hóa dữ liệu nhạy cảm bằng RSA
+                string encryptedPhone = SensitiveDataService.EncryptStudentPhone(model.Phone);
+                string encryptedAddress = SensitiveDataService.EncryptStudentAddress(model.Address);
+                string encryptedIdCard = SensitiveDataService.EncryptIdCard(model.IdCardNumber);
+
+                // Lấy encryption key ID
+                string keyId = GetCurrentEncryptionKeyId();
+
+                // Cập nhật vào database
+                string updateQuery = @"UPDATE STUDENTS
+                                      SET PHONE_ENCRYPTED = :PhoneEnc,
+                                          ADDRESS_ENCRYPTED = :AddressEnc,
+                                          ID_CARD_ENCRYPTED = :IdCardEnc,
+                                          ENCRYPTED_AT = SYSTIMESTAMP,
+                                          ENCRYPTION_KEY_ID = :KeyId
+                                      WHERE USER_ID = :MAND";
+
+                var parameters = new[]
+                {
+                    OracleDbHelper.CreateParameter("PhoneEnc", OracleDbType.Clob, encryptedPhone),
+                    OracleDbHelper.CreateParameter("AddressEnc", OracleDbType.Clob, encryptedAddress),
+                    OracleDbHelper.CreateParameter("IdCardEnc", OracleDbType.Clob, encryptedIdCard),
+                    OracleDbHelper.CreateParameter("KeyId", OracleDbType.Varchar2, keyId),
+                    OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(updateQuery, parameters);
+
+                if (result > 0)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật thông tin nhạy cảm thành công! Dữ liệu đã được mã hóa bảo mật.";
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    ViewBag.ErrorMessage = "Cập nhật thất bại";
+                    return View("~/Views/Student/EditSensitiveInfo.cshtml", model);
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View("~/Views/Student/EditSensitiveInfo.cshtml", model);
             }
         }
 
@@ -321,7 +452,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             var model = new EditStudentProfileViewModel();
 
             string query = @"SELECT u.MAND, u.EMAIL, u.FULL_NAME, u.AVATAR_URL,
-                                   s.STUDENT_CODE, s.PHONE, s.DATE_OF_BIRTH, s.GENDER, s.ADDRESS,
+                                   s.STUDENT_CODE, s.PHONE, s.DATE_OF_BIRTH, s.GENDER, s.ADDRESS, s.ID_CARD_NUMBER,
+                                   s.PHONE_ENCRYPTED, s.ADDRESS_ENCRYPTED, s.ID_CARD_ENCRYPTED,
                                    c.NAME as CLASS_NAME, d.NAME as DEPARTMENT_NAME
                             FROM USERS u
                             INNER JOIN STUDENTS s ON u.MAND = s.USER_ID
@@ -340,15 +472,111 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 model.FullName = row["FULL_NAME"].ToString();
                 model.AvatarUrl = row["AVATAR_URL"] != DBNull.Value ? row["AVATAR_URL"].ToString() : null;
                 model.StudentCode = row["STUDENT_CODE"].ToString();
-                model.Phone = row["PHONE"] != DBNull.Value ? row["PHONE"].ToString() : null;
                 model.DateOfBirth = row["DATE_OF_BIRTH"] != DBNull.Value ? Convert.ToDateTime(row["DATE_OF_BIRTH"]) : (DateTime?)null;
                 model.Gender = row["GENDER"] != DBNull.Value ? row["GENDER"].ToString() : null;
-                model.Address = row["ADDRESS"] != DBNull.Value ? row["ADDRESS"].ToString() : null;
                 model.ClassName = row["CLASS_NAME"] != DBNull.Value ? row["CLASS_NAME"].ToString() : null;
                 model.DepartmentName = row["DEPARTMENT_NAME"] != DBNull.Value ? row["DEPARTMENT_NAME"].ToString() : null;
+
+                // ⭐ GIẢI MÃ dữ liệu nhạy cảm (ưu tiên encrypted columns)
+                string phoneEnc = row["PHONE_ENCRYPTED"] != DBNull.Value ? row["PHONE_ENCRYPTED"].ToString() : null;
+                string addressEnc = row["ADDRESS_ENCRYPTED"] != DBNull.Value ? row["ADDRESS_ENCRYPTED"].ToString() : null;
+                string idCardEnc = row["ID_CARD_ENCRYPTED"] != DBNull.Value ? row["ID_CARD_ENCRYPTED"].ToString() : null;
+
+                // Phone: Decrypt nếu có encrypted, fallback về plaintext
+                if (!string.IsNullOrEmpty(phoneEnc))
+                {
+                    model.Phone = SensitiveDataService.DecryptStudentPhone(phoneEnc);
+                }
+                else
+                {
+                    model.Phone = row["PHONE"] != DBNull.Value ? row["PHONE"].ToString() : null;
+                }
+
+                // Address: Decrypt nếu có encrypted, fallback về plaintext
+                if (!string.IsNullOrEmpty(addressEnc))
+                {
+                    model.Address = SensitiveDataService.DecryptStudentAddress(addressEnc);
+                }
+                else
+                {
+                    model.Address = row["ADDRESS"] != DBNull.Value ? row["ADDRESS"].ToString() : null;
+                }
+
+                // ID Card: Decrypt nếu có encrypted, fallback về plaintext
+                if (!string.IsNullOrEmpty(idCardEnc))
+                {
+                    model.IdCardNumber = SensitiveDataService.DecryptIdCard(idCardEnc);
+                }
+                else
+                {
+                    model.IdCardNumber = row["ID_CARD_NUMBER"] != DBNull.Value ? row["ID_CARD_NUMBER"].ToString() : null;
+                }
             }
 
             return model;
+        }
+
+        /// <summary>
+        /// Lấy thông tin nhạy cảm của sinh viên (giải mã để edit)
+        /// </summary>
+        private EditSensitiveInfoViewModel GetSensitiveInfoData(string mand)
+        {
+            var model = new EditSensitiveInfoViewModel();
+
+            string query = @"SELECT u.FULL_NAME,
+                                   s.STUDENT_CODE, 
+                                   s.PHONE_ENCRYPTED, 
+                                   s.ADDRESS_ENCRYPTED, 
+                                   s.ID_CARD_ENCRYPTED
+                            FROM USERS u
+                            INNER JOIN STUDENTS s ON u.MAND = s.USER_ID
+                            WHERE u.MAND = :MAND";
+
+            var parameters = new[] { OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand) };
+            var table = OracleDbHelper.ExecuteQuery(query, parameters);
+
+            if (table.Rows.Count > 0)
+            {
+                var row = table.Rows[0];
+                model.FullName = row["FULL_NAME"].ToString();
+                model.StudentCode = row["STUDENT_CODE"].ToString();
+
+                // Giải mã dữ liệu nhạy cảm (nếu có)
+                model.CurrentEncryptedPhone = row["PHONE_ENCRYPTED"] != DBNull.Value ? row["PHONE_ENCRYPTED"].ToString() : null;
+                model.CurrentEncryptedAddress = row["ADDRESS_ENCRYPTED"] != DBNull.Value ? row["ADDRESS_ENCRYPTED"].ToString() : null;
+                model.CurrentEncryptedIdCard = row["ID_CARD_ENCRYPTED"] != DBNull.Value ? row["ID_CARD_ENCRYPTED"].ToString() : null;
+
+                // Decrypt để hiển thị trong form
+                if (!string.IsNullOrEmpty(model.CurrentEncryptedPhone))
+                {
+                    model.Phone = SensitiveDataService.DecryptStudentPhone(model.CurrentEncryptedPhone);
+                }
+                
+                if (!string.IsNullOrEmpty(model.CurrentEncryptedAddress))
+                {
+                    model.Address = SensitiveDataService.DecryptStudentAddress(model.CurrentEncryptedAddress);
+                }
+                
+                if (!string.IsNullOrEmpty(model.CurrentEncryptedIdCard))
+                {
+                    model.IdCardNumber = SensitiveDataService.DecryptIdCard(model.CurrentEncryptedIdCard);
+                }
+            }
+
+            return model;
+        }
+
+        /// <summary>
+        /// Lấy ID của encryption key hiện tại
+        /// </summary>
+        private string GetCurrentEncryptionKeyId()
+        {
+            string query = @"SELECT ID FROM ENCRYPTION_KEYS 
+                            WHERE KEY_NAME = 'SYSTEM_MAIN_KEY' 
+                            AND IS_ACTIVE = 1";
+
+            var result = OracleDbHelper.ExecuteScalar(query, null);
+            return result != null ? result.ToString() : null;
         }
 
         #endregion

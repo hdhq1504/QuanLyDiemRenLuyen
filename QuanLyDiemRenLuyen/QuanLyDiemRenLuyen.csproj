@@ -180,7 +180,6 @@
     <Compile Include="Controllers\Admin\ScoresController.cs" />
     <Compile Include="Controllers\Admin\UsersController.cs" />
     <Compile Include="Controllers\Lecturer\ActivitiesController.cs" />
-    <Compile Include="Controllers\Lecturer\DashboardController.cs" />
     <Compile Include="Controllers\Lecturer\LecturerBaseController.cs" />
     <Compile Include="Controllers\Student\ActivitiesController.cs" />
     <Compile Include="Controllers\Student\DashboardController.cs" />
@@ -193,11 +192,15 @@
     <Compile Include="Helpers\EncryptionHelper.cs" />
     <Compile Include="Helpers\OracleDbHelper.cs" />
     <Compile Include="Helpers\PasswordHelper.cs" />
+    <Compile Include="Helpers\RsaHelper.cs" />
+    <Compile Include="Helpers\RsaKeyManager.cs" />
     <Compile Include="Models\ActivityViewModel.cs" />
     <Compile Include="Models\AdminViewModel.cs" />
     <Compile Include="Models\ClassScoreViewModel.cs" />
     <Compile Include="Models\ClassViewModel.cs" />
     <Compile Include="Models\EditStudentProfileViewModel.cs" />
+    <Compile Include="Models\EncryptedFeedbackViewModel.cs" />
+    <Compile Include="Models\EncryptedStudentViewModel.cs" />
     <Compile Include="Models\LecturerViewModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />
     <Compile Include="Models\NotificationsViewModel.cs" />
@@ -205,11 +208,15 @@
     <Compile Include="Models\ProofViewModel.cs" />
     <Compile Include="Models\RegisterViewModel.cs" />
     <Compile Include="Models\ReviewRequestViewModel.cs" />
+    <Compile Include="Models\ScoreSignatureViewModel.cs" />
     <Compile Include="Models\ScoreViewModel.cs" />
     <Compile Include="Models\StudentDashboardViewModel.cs" />
     <Compile Include="Models\StudentProfileViewModel.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\UserViewModel.cs" />
+    <Compile Include="Services\DigitalSignatureService.cs" />
+    <Compile Include="Services\EncryptedFeedbackService.cs" />
+    <Compile Include="Services\SensitiveDataService.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -305,6 +312,7 @@
     <Content Include="Views\Student\CreateFeedback.cshtml" />
     <Content Include="Views\Student\Dashboard.cshtml" />
     <Content Include="Views\Student\EditProfile.cshtml" />
+    <Content Include="Views\Student\EditSensitiveInfo.cshtml" />
     <Content Include="Views\Student\FeedbackDetail.cshtml" />
     <Content Include="Views\Student\Feedbacks.cshtml" />
     <Content Include="Views\Student\MyRegistrations.cshtml" />

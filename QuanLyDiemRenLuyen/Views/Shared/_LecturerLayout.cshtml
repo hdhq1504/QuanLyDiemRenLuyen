@@ -322,8 +322,8 @@
         </div>
 
         <div class="sidebar-menu">
-            <a href="@Url.Action("Index", "Dashboard", new { area = "" })"
-                class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Dashboard" ? "active" : "")">
+            <a href="@Url.Action("Dashboard", "Lecturer")"
+                class="nav-item @(ViewContext.RouteData.Values["action"].ToString() == "Dashboard" ? "active" : "")">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>

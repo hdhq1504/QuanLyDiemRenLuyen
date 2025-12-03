@@ -191,7 +191,7 @@
             Vui lòng liên hệ phòng Đào tạo nếu cần thay đổi.
         </div>
 
-        @using (Html.BeginForm("EditProfile", "Student", FormMethod.Post, new { @class = "edit-form" }))
+        @using (Html.BeginForm("Edit", "Profile", FormMethod.Post, new { @class = "edit-form" }))
         {
             @Html.AntiForgeryToken()
             @Html.HiddenFor(m => m.MAND)
@@ -281,7 +281,7 @@
 
         <!-- Form Actions -->
         <div class="form-actions">
-            <a href="@Url.Action("Profile", "Student")" class="btn btn-secondary">❌ Hủy</a>
+            <a href="@Url.Action("Index", "Profile")" class="btn btn-secondary">❌ Hủy</a>
             <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
         </div>
                 }

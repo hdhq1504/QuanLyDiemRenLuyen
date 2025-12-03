@@ -77,7 +77,6 @@ namespace QuanLyDiemRenLuyen.Models
         public int CurrentParticipants { get; set; }
         public string Status { get; set; }
         public string ApprovalStatus { get; set; }
-        public string CriterionName { get; set; }
         public string OrganizerName { get; set; }
         public DateTime CreatedAt { get; set; }
     }
@@ -95,7 +94,6 @@ namespace QuanLyDiemRenLuyen.Models
         public int MaxSeats { get; set; }
         public string Status { get; set; }
         public string ApprovalStatus { get; set; }
-        public string CriterionName { get; set; }
         public string OrganizerName { get; set; }
         public string OrganizerEmail { get; set; }
         public DateTime CreatedAt { get; set; }

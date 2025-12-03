@@ -6,6 +6,7 @@ using System.Web.Mvc;
 using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
 using QuanLyDiemRenLuyen.Models;
+using QuanLyDiemRenLuyen.Services;
 
 namespace QuanLyDiemRenLuyen.Controllers.Admin
 {
@@ -150,15 +151,54 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             {
                 string mand = Session["MAND"].ToString();
 
+                string getScoreQuery = @"SELECT STUDENT_ID, TERM_ID, TOTAL_SCORE, CLASSIFICATION
+                                        FROM SCORES WHERE ID = :ScoreId";
+                var getParams = new[] { OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId) };
+                DataTable scoreTable = OracleDbHelper.ExecuteQuery(getScoreQuery, getParams);
+
+                if (scoreTable.Rows.Count == 0)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy điểm" });
+                }
+
+                DataRow scoreRow = scoreTable.Rows[0];
+                string studentId = scoreRow["STUDENT_ID"].ToString();
+                string termId = scoreRow["TERM_ID"].ToString();
+                int totalScore = Convert.ToInt32(scoreRow["TOTAL_SCORE"]);
+                string classification = scoreRow["CLASSIFICATION"] != DBNull.Value ? scoreRow["CLASSIFICATION"].ToString() : "";
+
+                string dataToSign = DigitalSignatureService.CreateScoreDataString(
+                    studentId,
+                    termId,
+                    totalScore,
+                    classification,
+                    "APPROVED"
+                );
+
+                string signature = DigitalSignatureService.SignScoreData(dataToSign);
+                string dataHash = DigitalSignatureService.CreateScoreDataHash(dataToSign);
+                string keyId = RsaKeyManager.GetCurrentEncryptionKeyId();
+
                 string updateQuery = @"UPDATE SCORES
                                       SET STATUS = 'APPROVED',
                                           APPROVED_BY = :ApprovedBy,
-                                          APPROVED_AT = SYSDATE
+                                          APPROVED_AT = SYSTIMESTAMP,
+                                          DIGITAL_SIGNATURE = :Signature,
+                                          SIGNED_DATA_HASH = :DataHash,
+                                          SIGNATURE_KEY_ID = :KeyId,
+                                          SIGNATURE_ALGORITHM = 'RSA-SHA256',
+                                          SIGNATURE_VERIFIED = 1,
+                                          SIGNED_BY = :SignedBy,
+                                          SIGNED_AT = SYSTIMESTAMP
                                       WHERE ID = :ScoreId";
 
                 var parameters = new[]
                 {
                     OracleDbHelper.CreateParameter("ApprovedBy", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("Signature", OracleDbType.Clob, signature),
+                    OracleDbHelper.CreateParameter("DataHash", OracleDbType.Varchar2, dataHash),
+                    OracleDbHelper.CreateParameter("KeyId", OracleDbType.Varchar2, keyId),
+                    OracleDbHelper.CreateParameter("SignedBy", OracleDbType.Varchar2, mand),
                     OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId)
                 };
 
@@ -166,12 +206,32 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
                 if (result > 0)
                 {
-                    // Thêm vào lịch sử
+                    // ⭐ Step 5: Log to SCORE_AUDIT_SIGNATURES table
+                    string insertAuditQuery = @"INSERT INTO SCORE_AUDIT_SIGNATURES
+                                               (ID, SCORE_ID, ACTION_TYPE, PERFORMED_BY, 
+                                                SIGNATURE_VALUE, VERIFICATION_RESULT, 
+                                                DATA_HASH_AFTER, NOTES)
+                                               VALUES
+                                               (RAWTOHEX(SYS_GUID()), :ScoreId, 'SIGN', :PerformedBy,
+                                                :Signature, 'SUCCESS',
+                                                :DataHash, 'Auto-signed on approval')";
+
+                    var auditParams = new[]
+                    {
+                        OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Int32, int.Parse(scoreId)),
+                        OracleDbHelper.CreateParameter("PerformedBy", OracleDbType.Varchar2, mand),
+                        OracleDbHelper.CreateParameter("Signature", OracleDbType.Clob, signature),
+                        OracleDbHelper.CreateParameter("DataHash", OracleDbType.Varchar2, dataHash)
+                    };
+
+                    OracleDbHelper.ExecuteNonQuery(insertAuditQuery, auditParams);
+
+                    // Step 6: Traditional history log
                     string historyId = "SH" + DateTime.Now.ToString("yyyyMMddHHmmss");
                     string insertHistoryQuery = @"INSERT INTO SCORE_HISTORY
                                                  (ID, SCORE_ID, ACTION, CHANGED_BY, CHANGED_AT)
                                                  VALUES
-                                                 (:Id, :ScoreId, 'APPROVE', :ChangedBy, SYSDATE)";
+                                                 (:Id, :ScoreId, 'APPROVE_WITH_SIGNATURE', :ChangedBy, SYSTIMESTAMP)";
 
                     var historyParams = new[]
                     {
@@ -182,7 +242,10 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
                     OracleDbHelper.ExecuteNonQuery(insertHistoryQuery, historyParams);
 
-                    return Json(new { success = true, message = "Phê duyệt điểm thành công" });
+                    return Json(new { 
+                        success = true, 
+                        message = "✅ Phê duyệt và ký điện tử thành công!" 
+                    });
                 }
 
                 return Json(new { success = false, message = "Không thể phê duyệt điểm" });
@@ -323,7 +386,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             foreach (DataRow row in studentsDt.Rows)
             {
-                decimal total = row["TOTAL"] != DBNull.Value ? Convert.ToDecimal(row["TOTAL"]) : 0;
+                int total = row["TOTAL"] != DBNull.Value ? Convert.ToInt32(row["TOTAL"]) : 0;
                 string status = row["STATUS"] != DBNull.Value ? row["STATUS"].ToString() : "PROVISIONAL";
 
                 viewModel.Students.Add(new StudentScoreItem
@@ -346,7 +409,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             {
                 TotalStudents = viewModel.Students.Count,
                 ApprovedStudents = viewModel.Students.Count(x => x.Status == "APPROVED"),
-                AverageScore = viewModel.Students.Count > 0 ? viewModel.Students.Average(x => x.Total) : 0,
+                AverageScore = viewModel.Students.Count > 0 ? (int)viewModel.Students.Average(x => x.Total) : 0,
                 HighestScore = viewModel.Students.Count > 0 ? viewModel.Students.Max(x => x.Total) : 0
             };
 
@@ -431,7 +494,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     TotalStudents = Convert.ToInt32(row["TOTAL_STUDENTS"]),
                     PendingApproval = Convert.ToInt32(row["PENDING_APPROVAL"]),
                     ApprovedStudents = Convert.ToInt32(row["APPROVED_STUDENTS"]),
-                    AverageScore = row["AVG_SCORE"] != DBNull.Value ? Convert.ToDecimal(row["AVG_SCORE"]) : 0
+                    AverageScore = row["AVG_SCORE"] != DBNull.Value ? Convert.ToInt32(row["AVG_SCORE"]) : 0
                 });
             }
 

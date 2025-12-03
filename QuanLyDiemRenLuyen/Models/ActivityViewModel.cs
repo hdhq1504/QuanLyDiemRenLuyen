@@ -37,7 +37,7 @@ namespace QuanLyDiemRenLuyen.Models
         public DateTime StartAt { get; set; }
         public DateTime EndAt { get; set; }
         public string Location { get; set; }
-        public decimal? Points { get; set; }
+        public int? Points { get; set; }
         public int MaxParticipants { get; set; }
         public int CurrentParticipants { get; set; }
         public string Status { get; set; } // UPCOMING, ONGOING, COMPLETED, CANCELLED
@@ -59,7 +59,7 @@ namespace QuanLyDiemRenLuyen.Models
         public DateTime StartAt { get; set; }
         public DateTime EndAt { get; set; }
         public string Location { get; set; }
-        public decimal? Points { get; set; }
+        public int? Points { get; set; }
         public int MaxParticipants { get; set; }
         public int CurrentParticipants { get; set; }
         public string Status { get; set; }
@@ -78,7 +78,7 @@ namespace QuanLyDiemRenLuyen.Models
         public string ProofFilePath { get; set; }
         public string ProofNote { get; set; }
         public DateTime? ProofUploadedAt { get; set; }
-        public decimal? ApprovedPoints { get; set; }
+        public int? ApprovedPoints { get; set; }
 
         // Kiểm tra có thể đăng ký không
         public bool CanRegister { get; set; }

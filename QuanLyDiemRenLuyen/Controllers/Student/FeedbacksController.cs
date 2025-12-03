@@ -86,8 +86,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 var model = new CreateFeedbackViewModel
                 {
-                    AvailableTerms = GetAvailableTerms(),
-                    AvailableCriteria = new List<CriterionOption>()
+                    AvailableTerms = GetAvailableTerms()
                 };
 
                 return View("~/Views/Student/CreateFeedback.cshtml", model);
@@ -114,7 +113,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 if (!ModelState.IsValid)
                 {
                     model.AvailableTerms = GetAvailableTerms();
-                    model.AvailableCriteria = GetCriteriaByTerm(model.TermId);
                     return View("~/Views/Student/CreateFeedback.cshtml", model);
                 }
 
@@ -123,17 +121,15 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 // Insert feedback
                 string insertQuery = @"INSERT INTO FEEDBACKS
-                                      (ID, STUDENT_ID, TERM_ID, CRITERION_ID, TITLE, CONTENT, STATUS, CREATED_AT)
+                                      (ID, STUDENT_ID, TERM_ID, TITLE, CONTENT, STATUS, CREATED_AT)
                                       VALUES
-                                      (:Id, :StudentId, :TermId, :CriterionId, :Title, :Content, 'SUBMITTED', SYSDATE)";
+                                      (:Id, :StudentId, :TermId, :Title, :Content, 'SUBMITTED', SYSDATE)";
 
                 var insertParams = new[]
                 {
                     OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, newId),
                     OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
                     OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, model.TermId),
-                    OracleDbHelper.CreateParameter("CriterionId", OracleDbType.Varchar2,
-                        string.IsNullOrEmpty(model.CriterionId) ? (object)DBNull.Value : model.CriterionId),
                     OracleDbHelper.CreateParameter("Title", OracleDbType.Varchar2, model.Title),
                     OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, EncryptionHelper.Encrypt(model.Content)) // Encrypt Content
                 };
@@ -147,7 +143,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             {
                 ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
                 model.AvailableTerms = GetAvailableTerms();
-                model.AvailableCriteria = GetCriteriaByTerm(model.TermId);
                 return View("~/Views/Student/CreateFeedback.cshtml", model);
             }
         }
@@ -262,31 +257,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             return terms;
         }
 
-        private List<CriterionOption> GetCriteriaByTerm(string termId)
-        {
-            var criteria = new List<CriterionOption>();
-            if (string.IsNullOrEmpty(termId)) return criteria;
-
-            string query = @"SELECT ID, NAME, GROUP_NO
-                            FROM CRITERIA
-                            WHERE TERM_ID = :TermId
-                            ORDER BY GROUP_NO";
-
-            var parameters = new[] { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
-            DataTable dt = OracleDbHelper.ExecuteQuery(query, parameters);
-
-            foreach (DataRow row in dt.Rows)
-            {
-                criteria.Add(new CriterionOption
-                {
-                    Id = row["ID"].ToString(),
-                    Name = row["NAME"].ToString(),
-                    GroupNo = row["GROUP_NO"] != DBNull.Value ? Convert.ToInt32(row["GROUP_NO"]) : 0
-                });
-            }
-
-            return criteria;
-        }
 
         private List<StudentFeedbackItem> GetFeedbacksList(string mand, string status, string termId, int page, int pageSize, out int totalCount)
         {
@@ -318,13 +288,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             // Get paginated data
             int offset = (page - 1) * pageSize;
             string query = $@"SELECT * FROM (
-                                SELECT f.ID, f.TERM_ID, t.NAME as TERM_NAME, c.NAME as CRITERION_NAME,
+                                SELECT f.ID, f.TERM_ID, t.NAME as TERM_NAME,
                                        f.TITLE, f.STATUS, f.CREATED_AT, f.RESPONDED_AT,
                                        CASE WHEN f.RESPONSE IS NOT NULL THEN 1 ELSE 0 END as HAS_RESPONSE,
                                        ROW_NUMBER() OVER (ORDER BY f.CREATED_AT DESC) AS RN
                                 FROM FEEDBACKS f
                                 INNER JOIN TERMS t ON f.TERM_ID = t.ID
-                                LEFT JOIN CRITERIA c ON f.CRITERION_ID = c.ID
                                 {whereClause}
                             )
                             WHERE RN > :Offset AND RN <= :EndRow";
@@ -341,7 +310,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                     Id = row["ID"].ToString(),
                     TermId = row["TERM_ID"].ToString(),
                     TermName = row["TERM_NAME"].ToString(),
-                    CriterionName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
                     Title = row["TITLE"].ToString(),
                     Status = row["STATUS"].ToString(),
                     CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
@@ -356,12 +324,10 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
         private StudentFeedbackDetailViewModel GetFeedbackDetail(string feedbackId, string mand)
         {
             string query = @"SELECT f.ID, f.STUDENT_ID, f.TERM_ID, t.NAME as TERM_NAME,
-                                   f.CRITERION_ID, c.NAME as CRITERION_NAME,
                                    f.TITLE, f.CONTENT, f.STATUS, f.RESPONSE,
                                    f.CREATED_AT, f.UPDATED_AT, f.RESPONDED_AT
                             FROM FEEDBACKS f
                             INNER JOIN TERMS t ON f.TERM_ID = t.ID
-                            LEFT JOIN CRITERIA c ON f.CRITERION_ID = c.ID
                             WHERE f.ID = :FeedbackId AND f.STUDENT_ID = :StudentId";
 
             var parameters = new[]
@@ -379,8 +345,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 Id = row["ID"].ToString(),
                 TermId = row["TERM_ID"].ToString(),
                 TermName = row["TERM_NAME"].ToString(),
-                CriterionId = row["CRITERION_ID"] != DBNull.Value ? row["CRITERION_ID"].ToString() : null,
-                CriterionName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
                 Title = row["TITLE"].ToString(),
                 Content = EncryptionHelper.Decrypt(row["CONTENT"].ToString()), // Decrypt Content
                 Status = row["STATUS"].ToString(),

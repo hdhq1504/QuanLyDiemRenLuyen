@@ -155,10 +155,9 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 string countQuery = @"SELECT COUNT(*) FROM ACTIVITIES a WHERE 1=1";
                 string dataQuery = @"SELECT a.ID, a.TITLE, a.DESCRIPTION, a.START_AT, a.END_AT, a.LOCATION,
                                            a.POINTS, a.MAX_SEATS, a.STATUS, a.APPROVAL_STATUS, a.CREATED_AT,
-                                           cr.NAME as CRITERION_NAME, u.FULL_NAME as ORGANIZER_NAME,
+                                           u.FULL_NAME as ORGANIZER_NAME,
                                            (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STATUS != 'CANCELLED') as CURRENT_PARTICIPANTS
                                     FROM ACTIVITIES a
-                                    LEFT JOIN CRITERIA cr ON a.CRITERION_ID = cr.ID
                                     LEFT JOIN USERS u ON a.ORGANIZER_ID = u.MAND
                                     WHERE 1=1";
 
@@ -211,7 +210,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                         CurrentParticipants = row["CURRENT_PARTICIPANTS"] != DBNull.Value ? Convert.ToInt32(row["CURRENT_PARTICIPANTS"]) : 0,
                         Status = row["STATUS"].ToString(),
                         ApprovalStatus = row["APPROVAL_STATUS"].ToString(),
-                        CriterionName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
+
                         OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
                         CreatedAt = Convert.ToDateTime(row["CREATED_AT"])
                     });
@@ -231,13 +230,11 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             string query = @"SELECT a.ID, a.TITLE, a.DESCRIPTION, a.START_AT, a.END_AT, a.LOCATION,
                                    a.POINTS, a.MAX_SEATS, a.STATUS, a.APPROVAL_STATUS, a.CREATED_AT,
                                    a.APPROVED_AT, a.APPROVED_BY,
-                                   cr.NAME as CRITERION_NAME,
                                    u.FULL_NAME as ORGANIZER_NAME, u.EMAIL as ORGANIZER_EMAIL,
                                    approver.FULL_NAME as APPROVER_NAME,
                                    (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STATUS != 'CANCELLED') as CURRENT_REGISTRATIONS,
                                    (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STATUS = 'CHECKED_IN') as CURRENT_CHECKINS
                             FROM ACTIVITIES a
-                            LEFT JOIN CRITERIA cr ON a.CRITERION_ID = cr.ID
                             LEFT JOIN USERS u ON a.ORGANIZER_ID = u.MAND
                             LEFT JOIN USERS approver ON a.APPROVED_BY = approver.MAND
                             WHERE a.ID = :ActivityId";
@@ -264,7 +261,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 MaxSeats = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,
                 Status = row["STATUS"].ToString(),
                 ApprovalStatus = row["APPROVAL_STATUS"].ToString(),
-                CriterionName = row["CRITERION_NAME"] != DBNull.Value ? row["CRITERION_NAME"].ToString() : "",
+
                 OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
                 OrganizerEmail = row["ORGANIZER_EMAIL"] != DBNull.Value ? row["ORGANIZER_EMAIL"].ToString() : "",
                 CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),

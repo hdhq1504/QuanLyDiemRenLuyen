@@ -36,6 +36,11 @@ namespace QuanLyDiemRenLuyen.Models
         [Display(Name = "Địa chỉ")]
         public string Address { get; set; }
 
+        [Display(Name = "Số CMND/CCCD")]
+        [RegularExpression(@"^\d{9}(\d{3})?$", ErrorMessage = "Số CMND/CCCD phải là 9 hoặc 12 chữ số")]
+        [StringLength(12, ErrorMessage = "Số CMND/CCCD tối đa 12 chữ số")]
+        public string IdCardNumber { get; set; }
+
         [Display(Name = "URL Avatar")]
         [Url(ErrorMessage = "URL không hợp lệ")]
         public string AvatarUrl { get; set; }
@@ -46,4 +51,3 @@ namespace QuanLyDiemRenLuyen.Models
         public string DepartmentName { get; set; }
     }
 }
-

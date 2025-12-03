@@ -1,0 +1,139 @@
+@model QuanLyDiemRenLuyen.Models.EditSensitiveInfoViewModel
+
+@{
+    ViewBag.Title = "Chỉnh sửa thông tin nhạy cảm";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt"></i> Chỉnh sửa thông tin nhạy cảm
+                    </h4>
+                    <small>Dữ liệu sẽ được mã hóa bằng RSA-2048 trước khi lưu vào database</small>
+                </div>
+
+                <div class="card-body">
+                    @if (ViewBag.ErrorMessage != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            <i class="fas fa-exclamation-circle"></i> @ViewBag.ErrorMessage
+                        </div>
+                    }
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Thông tin bảo mật:</strong>
+                        <ul class="mb-0">
+                            <li>Dữ liệu nhạy cảm sẽ được mã hóa bằng <strong>RSA-2048 bit</strong></li>
+                            <li>Chỉ bạn và quản trị viên mới có quyền xem thông tin này</li>
+                            <li>Dữ liệu được lưu trữ an toàn trong database</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Họ tên:</strong> @Model.FullName
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Mã sinh viên:</strong> @Model.StudentCode
+                            </div>
+                        </div>
+                    </div>
+
+                    @using (Html.BeginForm("EditSensitiveInfo", "Profile", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(m => m.StudentCode)
+                        @Html.HiddenFor(m => m.FullName)
+
+                        <div class="form-group">
+                            <label for="Phone">
+                                <i class="fas fa-phone"></i> @Html.DisplayNameFor(m => m.Phone) <span class="text-danger">*</span>
+                            </label>
+                            @Html.TextBoxFor(m => m.Phone, new { @class = "form-control", placeholder = "Ví dụ: 0123456789", maxlength = "15" })
+                            @Html.ValidationMessageFor(m => m.Phone, "", new { @class = "text-danger" })
+                            <small class="form-text text-muted">
+                                <i class="fas fa-lock text-success"></i> Dữ liệu này sẽ được mã hóa RSA
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Address">
+                                <i class="fas fa-map-marker-alt"></i> @Html.DisplayNameFor(m => m.Address) <span class="text-danger">*</span>
+                            </label>
+                            @Html.TextAreaFor(m => m.Address, new { @class = "form-control", rows = "3", placeholder = "Nhập địa chỉ đầy đủ", maxlength = "500" })
+                            @Html.ValidationMessageFor(m => m.Address, "", new { @class = "text-danger" })
+                            <small class="form-text text-muted">
+                                <i class="fas fa-lock text-success"></i> Dữ liệu này sẽ được mã hóa RSA
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="IdCardNumber">
+                                <i class="fas fa-id-card"></i> @Html.DisplayNameFor(m => m.IdCardNumber) <span class="text-danger">*</span>
+                            </label>
+                            @Html.TextBoxFor(m => m.IdCardNumber, new { @class = "form-control", placeholder = "9 hoặc 12 chữ số", maxlength = "12" })
+                            @Html.ValidationMessageFor(m => m.IdCardNumber, "", new { @class = "text-danger" })
+                            <small class="form-text text-muted">
+                                <i class="fas fa-lock text-success"></i> Dữ liệu này sẽ được mã hóa RSA (Chỉ nhập số, không có ký tự đặc biệt)
+                            </small>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Lưu ý:</strong> Sau khi lưu, dữ liệu sẽ ngay lập tức được mã hóa. Bạn có thể quay lại trang này để chỉnh sửa khi cần.
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Lưu thông tin (Mã hóa RSA)
+                            </button>
+                            <a href="@Url.Action("Index", "Profile")" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <div class="card-footer text-muted">
+                    <i class="fas fa-shield-alt text-success"></i>
+                    <small>
+                        Hệ thống sử dụng mã hóa RSA-2048 bit để bảo vệ thông tin nhạy cảm của bạn.
+                        Dữ liệu được lưu trữ an toàn và chỉ được giải mã khi cần thiết.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(document).ready(function () {
+            // Phone validation
+            $('#Phone').on('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            // ID Card validation
+            $('#IdCardNumber').on('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            // Form submission confirmation
+            $('form').submit(function (e) {
+                if (!confirm('Bạn có chắc chắn muốn lưu thông tin nhạy cảm? Dữ liệu sẽ được mã hóa RSA-2048.')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+    </script>
+}

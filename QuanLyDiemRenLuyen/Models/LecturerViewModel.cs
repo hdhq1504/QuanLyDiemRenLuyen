@@ -50,9 +50,6 @@ namespace QuanLyDiemRenLuyen.Models
         [Display(Name = "Học kỳ")]
         public string TermId { get; set; }
 
-        [Display(Name = "Tiêu chí")]
-        public string CriterionId { get; set; }
-
         [Required(ErrorMessage = "Vui lòng nhập thời gian bắt đầu")]
         [Display(Name = "Thời gian bắt đầu")]
         public DateTime StartAt { get; set; }
