@@ -1,0 +1,161 @@
+@model QuanLyDiemRenLuyen.Models.SessionListViewModel
+@{
+    ViewBag.Title = "Sessions";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div style="padding: 24px;">
+    <div style="margin-bottom: 24px;">
+        <a href="@Url.Action("Index", "Database")" style="color: #64748b; text-decoration: none; font-weight: 500;">
+            <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+        </a>
+    </div>
+
+    <h2 style="margin-bottom: 24px; font-size: 28px; font-weight: 700; color: #0f172a;">
+        <i class="fas fa-users"></i> Quản lý Sessions
+    </h2>
+
+    <!-- Statistics -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div style="color: #64748b; font-size: 14px; margin-bottom: 8px;">Total Sessions</div>
+            <div style="font-size: 28px; font-weight: 700; color: #2563eb;">@Model.TotalSessions</div>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div style="color: #64748b; font-size: 14px; margin-bottom: 8px;">Active</div>
+            <div style="font-size: 28px; font-weight: 700; color: #10b981;">@Model.ActiveSessions</div>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <div style="color: #64748b; font-size: 14px; margin-bottom: 8px;">Inactive</div>
+            <div style="font-size: 28px; font-weight: 700; color: #6b7280;">@Model.InactiveSessions</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;">
+        @using (Html.BeginForm("Sessions", "Database", FormMethod.Get, new { style = "display: flex; gap: 12px; align-items: center;" }))
+        {
+            <select name="filterStatus" style="padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                <option value="ACTIVE" @(Model.FilterStatus == "ACTIVE" ? "selected" : "")>Active</option>
+                <option value="INACTIVE" @(Model.FilterStatus == "INACTIVE" ? "selected" : "")>Inactive</option>
+            </select>
+
+            <input type="text" name="search" value="@Model.SearchKeyword"
+                   placeholder="Tìm theo username, machine, program..."
+                   style="flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px;" />
+
+            <button type="submit" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                <i class="fas fa-search"></i> Tìm kiếm
+            </button>
+        }
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: #d1fae5; border: 1px solid #10b981; color: #065f46; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Sessions Table -->
+    <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+        @if (Model.Sessions != null && Model.Sessions.Any())
+        {
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <tr>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">SID</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Serial#</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Username</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Status</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Machine</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Program</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 700; color: #0f172a;">Logon Time</th>
+                        <th style="padding: 16px; text-align: right; font-weight: 700; color: #0f172a;">Duration</th>
+                        <th style="padding: 16px; text-align: center; font-weight: 700; color: #0f172a; width: 100px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var session in Model.Sessions)
+                    {
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 16px; font-weight: 600;">@session.Sid</td>
+                            <td style="padding: 16px; font-weight: 600;">@session.Serial</td>
+                            <td style="padding: 16px;">
+                                <strong>@session.Username</strong>
+                                @if (!string.IsNullOrEmpty(session.SchemaName) && session.SchemaName != session.Username)
+                                {
+                                    <div style="font-size: 12px; color: #64748b;">Schema: @session.SchemaName</div>
+                                }
+                            </td>
+                            <td style="padding: 16px;">
+                                <span style="background: @(session.Status == "ACTIVE" ? "#d1fae5" : "#e5e7eb"); color: @(session.Status == "ACTIVE" ? "#065f46" : "#374151"); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+                                    @session.Status
+                                </span>
+                                @if (session.IsIdle)
+                                {
+                                    <div style="margin-top: 4px; font-size: 11px; color: #f59e0b;">
+                                        <i class="fas fa-clock"></i> Idle
+                                    </div>
+                                }
+                            </td>
+                            <td style="padding: 16px; font-size: 13px; color: #64748b;">
+                                @session.Machine
+                                @if (!string.IsNullOrEmpty(session.OsUser))
+                                {
+                                    <div style="font-size: 11px;">@session.OsUser</div>
+                                }
+                            </td>
+                            <td style="padding: 16px; font-size: 13px; color: #64748b; max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="@session.Program">
+                                @session.Program
+                            </td>
+                            <td style="padding: 16px; text-align: right; font-size: 13px; color: #64748b;">
+                                @session.LogonTime.ToString("dd/MM HH:mm")
+                            </td>
+                            <td style="padding: 16px; text-align: right;">
+                                @if (session.MinutesConnected >= 60)
+                                {
+                                    <span style="color: #f59e0b; font-weight: 600;">
+                                        @((int)(session.MinutesConnected / 60))h @(session.MinutesConnected % 60)m
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color: #64748b;">@session.MinutesConnected min</span>
+                                }
+                            </td>
+                            <td style="padding: 16px; text-align: center;">
+                                @using (Html.BeginForm("KillSession", "Database", FormMethod.Post, new { style = "display: inline;" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="sid" value="@session.Sid" />
+                                    <input type="hidden" name="serial" value="@session.Serial" />
+                                    <button type="submit"
+                                            style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;"
+                                            onclick="return confirm('Bạn có chắc muốn kill session @session.Sid,@session.Serial (@session.Username)?\n\nCảnh báo: Thao tác này có thể làm mất dữ liệu uncommitted!')">
+                                        <i class="fas fa-times"></i> Kill
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div style="text-align: center; padding: 60px; color: #9ca3af;">
+                <i class="fas fa-users" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                <p style="font-size: 16px; margin: 0;">Không có session nào</p>
+            </div>
+        }
+    </div>
+</div>

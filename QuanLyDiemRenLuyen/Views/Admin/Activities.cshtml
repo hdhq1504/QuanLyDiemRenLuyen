@@ -208,11 +208,6 @@
     }
 </style>
 
-<div class="content-header">
-    <h2><i class="fas fa-calendar-alt"></i> Quản lý hoạt động</h2>
-    <p>Danh sách tất cả các hoạt động trong hệ thống</p>
-</div>
-
 <!-- Filter Bar -->
 <div class="filter-bar">
     @using (Html.BeginForm("Activities", "Admin", FormMethod.Get))
@@ -259,7 +254,6 @@
                 <tr>
                     <th>Hoạt động</th>
                     <th>Thời gian</th>
-                    <th>Tiêu chí</th>
                     <th>Điểm</th>
                     <th>Đăng ký</th>
                     <th>Trạng thái</th>
@@ -281,7 +275,7 @@
                             <div>@activity.StartAt.ToString("dd/MM/yyyy HH:mm")</div>
                             <div class="activity-meta">đến @activity.EndAt.ToString("dd/MM/yyyy HH:mm")</div>
                         </td>
-                        <td>@activity.CriterionName</td>
+
                         <td>
                             @if (activity.Points.HasValue)
                             {
@@ -340,6 +334,10 @@
                                 <a href="@Url.Action("Registrations", "Activities", new { id = activity.Id })"
                                     class="btn btn-success btn-sm">
                                     <i class="fas fa-users"></i> DS
+                                </a>
+                                <a href="@Url.Action("Participants", "Activities", new { id = activity.Id })"
+                                    class="btn btn-primary btn-sm" style="background: #2563eb;">
+                                    <i class="fas fa-user-check"></i> Điểm danh
                                 </a>
                             }
                         </td>

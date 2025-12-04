@@ -268,7 +268,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             viewModel.Statistics = new ScoreStatistics();
             if (viewModel.TermScores.Count > 0)
             {
-                viewModel.Statistics.AverageScore = viewModel.TermScores.Average(x => x.Total);
+                viewModel.Statistics.AverageScore = (int)viewModel.TermScores.Average(x => x.Total);
                 viewModel.Statistics.HighestScore = viewModel.TermScores.Max(x => x.Total);
                 viewModel.Statistics.LowestScore = viewModel.TermScores.Min(x => x.Total);
                 viewModel.Statistics.TotalTerms = viewModel.TermScores.Count;
@@ -326,6 +326,36 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 ApprovedAt = scoreRow["APPROVED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(scoreRow["APPROVED_AT"]) : null,
                 CreatedAt = Convert.ToDateTime(scoreRow["CREATED_AT"])
             };
+
+            // Lấy danh sách hoạt động đã tham gia
+            string activitiesQuery = @"SELECT a.ID, a.TITLE, r.CHECKED_IN_AT, a.POINTS
+                                     FROM REGISTRATIONS r
+                                     INNER JOIN ACTIVITIES a ON r.ACTIVITY_ID = a.ID
+                                     WHERE r.STUDENT_ID = :StudentId 
+                                     AND a.TERM_ID = :TermId
+                                     AND r.STATUS = 'CHECKED_IN'
+                                     ORDER BY r.CHECKED_IN_AT DESC";
+
+            var activityParams = new[]
+            {
+                OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
+                OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, viewModel.TermId)
+            };
+
+            DataTable activitiesDt = OracleDbHelper.ExecuteQuery(activitiesQuery, activityParams);
+            viewModel.Activities = new List<ActivityScoreItem>();
+
+            foreach (DataRow row in activitiesDt.Rows)
+            {
+                viewModel.Activities.Add(new ActivityScoreItem
+                {
+                    ActivityId = row["ID"].ToString(),
+                    ActivityTitle = row["TITLE"].ToString(),
+                    Date = row["CHECKED_IN_AT"] != DBNull.Value ? Convert.ToDateTime(row["CHECKED_IN_AT"]) : DateTime.MinValue,
+                    Points = row["POINTS"] != DBNull.Value ? Convert.ToDecimal(row["POINTS"]) : 0,
+                    Status = "CHECKED_IN"
+                });
+            }
 
             // Lấy lịch sử thay đổi điểm
             string historyQuery = @"SELECT ACTION, OLD_VALUE, NEW_VALUE, CHANGED_BY,

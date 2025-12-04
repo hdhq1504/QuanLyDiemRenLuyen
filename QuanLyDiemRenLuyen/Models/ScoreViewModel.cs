@@ -84,6 +84,9 @@ namespace QuanLyDiemRenLuyen.Models
         public DateTime? ApprovedAt { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        // Danh sách hoạt động
+        public List<ActivityScoreItem> Activities { get; set; }
+
         // Lịch sử thay đổi
         public List<ScoreHistoryItem> History { get; set; }
 

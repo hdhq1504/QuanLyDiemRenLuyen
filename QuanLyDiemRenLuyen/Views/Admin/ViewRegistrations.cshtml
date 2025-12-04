@@ -6,7 +6,7 @@
 
 <style>
     .activity-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #2563eb;
         color: white;
         padding: 25px 30px;
         border-radius: 12px;
@@ -60,7 +60,7 @@
 
     .form-control:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: #2563eb;
     }
 
     .btn {
@@ -75,7 +75,7 @@
     }
 
     .btn-primary {
-        background: #667eea;
+        background: #2563eb;
         color: white;
     }
 
@@ -187,27 +187,31 @@
     }
 
     .pagination a:hover {
-        background: #667eea;
+        background: #2563eb;
         color: white;
-        border-color: #667eea;
+        border-color: #2563eb;
     }
 
     .pagination .active {
-        background: #667eea;
+        background: #2563eb;
         color: white;
-        border-color: #667eea;
+        border-color: #2563eb;
     }
 </style>
 
-<div class="content-header">
-    <h2><i class="fas fa-users"></i> Danh sách đăng ký</h2>
-    <p>Theo dõi sinh viên đăng ký và tham gia hoạt động</p>
-</div>
-
 <!-- Activity Header -->
 <div class="activity-header">
-    <h3><i class="fas fa-calendar-check"></i> @Model.ActivityTitle</h3>
-    <p>Tổng số đăng ký: @Model.Registrations.Count</p>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3><i class="fas fa-calendar-check"></i> @Model.ActivityTitle</h3>
+            <p>Tổng số đăng ký: @Model.Registrations.Count</p>
+        </div>
+        <a href="@Url.Action("Participants", "Activities", new { id = Model.ActivityId })" 
+           class="btn btn-primary" 
+           style="background: white; color: #2563eb; border: 2px solid white;">
+            <i class="fas fa-user-check"></i> Điểm danh
+        </a>
+    </div>
 </div>
 
 <!-- Filter Bar -->

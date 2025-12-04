@@ -27,6 +27,8 @@ namespace QuanLyDiemRenLuyen.Models
         public string Status { get; set; }
         public string ApprovalStatus { get; set; }
         public DateTime CreatedAt { get; set; }
+        public int TotalRegistered { get; set; }
+        public int TotalCheckedIn { get; set; }
     }
 
     public class ActivityFormViewModel
@@ -70,5 +72,22 @@ namespace QuanLyDiemRenLuyen.Models
         [Display(Name = "Điểm rèn luyện")]
         [Range(0, 100, ErrorMessage = "Điểm phải từ 0 đến 100")]
         public decimal Points { get; set; }
+    }
+
+    public class LecturerDashboardViewModel
+    {
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public LecturerStatistics Statistics { get; set; }
+        public List<LecturerActivityItem> RecentActivities { get; set; }
+        public List<PendingApprovalItem> PendingApprovals { get; set; }
+    }
+
+    public class LecturerStatistics
+    {
+        public int TotalActivities { get; set; }
+        public int PendingActivities { get; set; }
+        public int ApprovedActivities { get; set; }
+        public int TotalStudentsRegistered { get; set; }
     }
 }

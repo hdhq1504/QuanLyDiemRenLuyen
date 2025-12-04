@@ -364,6 +364,243 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             return viewModel;
         }
 
+        // GET: Admin/Activities/Participants/activityId
+        public ActionResult Participants(string id, string filterStatus, string search, int page = 1)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                var viewModel = GetParticipants(id, filterStatus, search, page, 20, out int totalCount);
+                viewModel.CurrentPage = page;
+                viewModel.TotalPages = (int)Math.Ceiling((double)totalCount / viewModel.PageSize);
+                viewModel.FilterStatus = filterStatus ?? "ALL";
+                viewModel.SearchKeyword = search;
+
+                return View("~/Views/Admin/Participants.cshtml", viewModel);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                return View("~/Views/Admin/Participants.cshtml", new ParticipantsViewModel
+                {
+                    Participants = new List<ParticipantItem>()
+                });
+            }
+        }
+
+        // POST: Admin/Activities/CheckIn
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult CheckIn(string registrationId, string activityId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                string updateQuery = @"UPDATE REGISTRATIONS 
+                                       SET STATUS = 'CHECKED_IN', 
+                                           CHECKED_IN_AT = SYSTIMESTAMP
+                                       WHERE ID = :RegId AND STATUS = 'REGISTERED'";
+
+                var parameters = new[] {
+                    OracleDbHelper.CreateParameter("RegId", OracleDbType.Varchar2, registrationId)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(updateQuery, parameters);
+
+                if (result > 0)
+                {
+                    TempData["SuccessMessage"] = "Điểm danh thành công!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Không thể điểm danh. Sinh viên có thể đã được điểm danh hoặc đã hủy đăng ký.";
+                }
+
+                return RedirectToAction("Participants", new { id = activityId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("Participants", new { id = activityId });
+            }
+        }
+
+        // POST: Admin/Activities/BulkCheckIn
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult BulkCheckIn(string activityId, string registrationIds)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            if (string.IsNullOrEmpty(registrationIds))
+            {
+                TempData["ErrorMessage"] = "Vui lòng chọn ít nhất một sinh viên để điểm danh.";
+                return RedirectToAction("Participants", new { id = activityId });
+            }
+
+            try
+            {
+                var regIdList = registrationIds.Split(',');
+                int successCount = 0;
+
+                foreach (var regId in regIdList)
+                {
+                    if (string.IsNullOrWhiteSpace(regId)) continue;
+
+                    string updateQuery = @"UPDATE REGISTRATIONS 
+                                           SET STATUS = 'CHECKED_IN', 
+                                               CHECKED_IN_AT = SYSTIMESTAMP
+                                           WHERE ID = :RegId AND STATUS = 'REGISTERED'";
+
+                    var parameters = new[] {
+                        OracleDbHelper.CreateParameter("RegId", OracleDbType.Varchar2, regId.Trim())
+                    };
+
+                    int result = OracleDbHelper.ExecuteNonQuery(updateQuery, parameters);
+                    if (result > 0) successCount++;
+                }
+
+                TempData["SuccessMessage"] = $"Đã điểm danh thành công {successCount}/{regIdList.Length} sinh viên.";
+                return RedirectToAction("Participants", new { id = activityId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("Participants", new { id = activityId });
+            }
+        }
+
+        private ParticipantsViewModel GetParticipants(string activityId, string filterStatus,
+                                                      string search, int page, int pageSize,
+                                                      out int totalCount)
+        {
+            totalCount = 0;
+
+            // Get activity info
+            string activityQuery = @"SELECT TITLE, START_AT, END_AT FROM ACTIVITIES WHERE ID = :ActivityId";
+            var activityParams = new[] { OracleDbHelper.CreateParameter("ActivityId", OracleDbType.Varchar2, activityId) };
+            DataTable activityTable = OracleDbHelper.ExecuteQuery(activityQuery, activityParams);
+
+            if (activityTable.Rows.Count == 0)
+            {
+                return new ParticipantsViewModel
+                {
+                    ActivityId = activityId,
+                    Participants = new List<ParticipantItem>(),
+                    PageSize = pageSize
+                };
+            }
+
+            var viewModel = new ParticipantsViewModel
+            {
+                ActivityId = activityId,
+                ActivityTitle = activityTable.Rows[0]["TITLE"].ToString(),
+                ActivityStartAt = Convert.ToDateTime(activityTable.Rows[0]["START_AT"]),
+                ActivityEndAt = Convert.ToDateTime(activityTable.Rows[0]["END_AT"]),
+                Participants = new List<ParticipantItem>(),
+                PageSize = pageSize
+            };
+
+            // Build query for participants
+            string countQuery = @"SELECT COUNT(*) FROM REGISTRATIONS r
+                                  INNER JOIN USERS u ON r.STUDENT_ID = u.MAND
+                                  INNER JOIN STUDENTS s ON u.MAND = s.USER_ID
+                                  WHERE r.ACTIVITY_ID = :ActivityId AND r.STATUS != 'CANCELLED'";
+
+            string dataQuery = @"SELECT r.ID as REG_ID, r.STUDENT_ID, r.STATUS, 
+                                        r.REGISTERED_AT, r.CHECKED_IN_AT,
+                                        u.FULL_NAME as STUDENT_NAME, u.EMAIL as STUDENT_EMAIL,
+                                        s.STUDENT_CODE, c.NAME as CLASS_NAME,
+                                        p.ID as PROOF_ID, p.STATUS as PROOF_STATUS
+                                 FROM REGISTRATIONS r
+                                 INNER JOIN USERS u ON r.STUDENT_ID = u.MAND
+                                 INNER JOIN STUDENTS s ON u.MAND = s.USER_ID
+                                 LEFT JOIN CLASSES c ON s.CLASS_ID = c.ID
+                                 LEFT JOIN (
+                                     SELECT REGISTRATION_ID, ID, STATUS,
+                                            ROW_NUMBER() OVER (PARTITION BY REGISTRATION_ID ORDER BY CREATED_AT_UTC DESC) as rn
+                                     FROM PROOFS
+                                 ) p ON r.ID = p.REGISTRATION_ID AND p.rn = 1
+                                 WHERE r.ACTIVITY_ID = :ActivityId AND r.STATUS != 'CANCELLED'";
+
+            var parameters = new List<OracleParameter>
+            {
+                OracleDbHelper.CreateParameter("ActivityId", OracleDbType.Varchar2, activityId)
+            };
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(filterStatus) && filterStatus != "ALL")
+            {
+                countQuery += " AND r.STATUS = :Status";
+                dataQuery += " AND r.STATUS = :Status";
+                parameters.Add(OracleDbHelper.CreateParameter("Status", OracleDbType.Varchar2, filterStatus));
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                countQuery += " AND (UPPER(u.FULL_NAME) LIKE :Search OR UPPER(s.STUDENT_CODE) LIKE :Search)";
+                dataQuery += " AND (UPPER(u.FULL_NAME) LIKE :Search OR UPPER(s.STUDENT_CODE) LIKE :Search)";
+                parameters.Add(OracleDbHelper.CreateParameter("Search", OracleDbType.Varchar2, "%" + search.ToUpper() + "%"));
+            }
+
+            totalCount = Convert.ToInt32(OracleDbHelper.ExecuteScalar(countQuery, parameters.ToArray()));
+
+            // Pagination
+            dataQuery += " ORDER BY r.REGISTERED_AT DESC";
+            int offset = (page - 1) * pageSize;
+            dataQuery = $@"SELECT * FROM (
+                            SELECT a.*, ROWNUM rnum FROM ({dataQuery}) a
+                            WHERE ROWNUM <= {offset + pageSize}
+                           ) WHERE rnum > {offset}";
+
+            DataTable dt = OracleDbHelper.ExecuteQuery(dataQuery, parameters.ToArray());
+
+            foreach (DataRow row in dt.Rows)
+            {
+                viewModel.Participants.Add(new ParticipantItem
+                {
+                    RegistrationId = row["REG_ID"].ToString(),
+                    StudentId = row["STUDENT_ID"].ToString(),
+                    StudentCode = row["STUDENT_CODE"].ToString(),
+                    StudentName = row["STUDENT_NAME"].ToString(),
+                    StudentEmail = row["STUDENT_EMAIL"].ToString(),
+                    ClassName = row["CLASS_NAME"] != DBNull.Value ? row["CLASS_NAME"].ToString() : "",
+                    Status = row["STATUS"].ToString(),
+                    RegisteredAt = Convert.ToDateTime(row["REGISTERED_AT"]),
+                    CheckedInAt = row["CHECKED_IN_AT"] != DBNull.Value
+                        ? (DateTime?)Convert.ToDateTime(row["CHECKED_IN_AT"])
+                        : null,
+                    HasProof = row["PROOF_ID"] != DBNull.Value,
+                    ProofStatus = row["PROOF_STATUS"] != DBNull.Value ? row["PROOF_STATUS"].ToString() : ""
+                });
+            }
+
+            // Calculate statistics
+            string statsQuery = @"SELECT 
+                                    COUNT(*) as TOTAL_REGISTERED,
+                                    SUM(CASE WHEN STATUS = 'CHECKED_IN' THEN 1 ELSE 0 END) as TOTAL_CHECKED_IN
+                                  FROM REGISTRATIONS
+                                  WHERE ACTIVITY_ID = :ActivityId AND STATUS != 'CANCELLED'";
+
+            DataTable statsTable = OracleDbHelper.ExecuteQuery(statsQuery, new[] { activityParams[0] });
+
+            if (statsTable.Rows.Count > 0)
+            {
+                viewModel.TotalRegistered = Convert.ToInt32(statsTable.Rows[0]["TOTAL_REGISTERED"]);
+                viewModel.TotalCheckedIn = Convert.ToInt32(statsTable.Rows[0]["TOTAL_CHECKED_IN"]);
+                viewModel.AttendanceRate = viewModel.TotalRegistered > 0
+                    ? (decimal)viewModel.TotalCheckedIn / viewModel.TotalRegistered * 100
+                    : 0;
+            }
+
+            return viewModel;
+        }
+
         #endregion
     }
 }

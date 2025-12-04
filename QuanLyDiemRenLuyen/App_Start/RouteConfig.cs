@@ -135,6 +135,13 @@ namespace QuanLyDiemRenLuyen
                 namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
             );
 
+            routes.MapRoute(
+                name: "AdminDatabase",
+                url: "Admin/Database/{action}/{id}",
+                defaults: new { controller = "Database", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
             // Route cho Student (redirect to Dashboard)
             routes.MapRoute(
                 name: "Student",

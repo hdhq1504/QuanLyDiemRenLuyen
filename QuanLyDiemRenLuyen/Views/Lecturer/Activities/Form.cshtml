@@ -64,11 +64,6 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    @Html.LabelFor(m => m.CriterionId, new { @class = "form-label" })
-                                    @Html.DropDownListFor(m => m.CriterionId, (SelectList)ViewBag.Criteria, "Chọn tiêu chí đánh giá", new { @class = "form-select" })
-                                </div>
-
-                                <div class="mb-3">
                                     @Html.LabelFor(m => m.Points, new { @class = "form-label" })
                                     @Html.TextBoxFor(m => m.Points, new { @class = "form-control", type = "number", step = "0.1" })
                                     @Html.ValidationMessageFor(m => m.Points, "", new { @class = "text-danger small" })

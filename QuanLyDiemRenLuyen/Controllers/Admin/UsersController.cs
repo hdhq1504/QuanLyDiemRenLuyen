@@ -229,6 +229,49 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             }
         }
 
+        // GET: Admin/Users/Details/id (AJAX)
+        public JsonResult Details(string id)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return Json(new { success = false, message = "Unauthorized" }, JsonRequestBehavior.AllowGet);
+
+            try
+            {
+                string query = "SELECT * FROM USERS WHERE MAND = :Id";
+                var parameters = new[] { OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, id) };
+                DataTable dt = OracleDbHelper.ExecuteQuery(query, parameters);
+
+                if (dt.Rows.Count == 0)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy người dùng" }, JsonRequestBehavior.AllowGet);
+                }
+
+                DataRow row = dt.Rows[0];
+                var userDetails = new
+                {
+                    success = true,
+                    data = new
+                    {
+                        Id = row["MAND"].ToString(),
+                        FullName = row["FULL_NAME"].ToString(),
+                        Email = row["EMAIL"].ToString(),
+                        Role = row["ROLE_NAME"].ToString(),
+                        IsActive = Convert.ToInt32(row["IS_ACTIVE"]) == 1,
+                        CreatedAt = Convert.ToDateTime(row["CREATED_AT"]).ToString("dd/MM/yyyy HH:mm:ss"),
+                        UpdatedAt = row["UPDATED_AT"] != DBNull.Value 
+                            ? Convert.ToDateTime(row["UPDATED_AT"]).ToString("dd/MM/yyyy HH:mm:ss") 
+                            : "Chưa cập nhật"
+                    }
+                };
+
+                return Json(userDetails, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         // POST: Admin/Users/Delete/id
         [HttpPost]
         [ValidateAntiForgeryToken]

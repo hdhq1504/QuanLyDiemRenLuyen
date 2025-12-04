@@ -11,20 +11,6 @@
         padding: 0 20px;
     }
 
-    .edit-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        text-align: center;
-    }
-
-    .edit-header h1 {
-        margin: 0;
-        font-size: 28px;
-    }
-
     .edit-card {
         background: white;
         padding: 40px;
@@ -172,10 +158,6 @@
 </style>
 
 <div class="edit-profile-container">
-    <div class="edit-header">
-        <h1>✏️ Chỉnh Sửa Thông Tin Cá Nhân</h1>
-    </div>
-
     @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
     {
         <div class="validation-summary-errors">

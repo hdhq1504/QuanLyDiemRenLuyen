@@ -334,70 +334,42 @@
 
     <!-- Content Grid -->
     <div class="content-grid">
-        <!-- Left Column: Criterion Scores -->
+        <!-- Left Column: Activity List -->
         <div>
             <div class="card">
                 <div class="card-header">
-                    <h2><i class="fas fa-list-check"></i> Chi Tiết Điểm Theo Tiêu Chí</h2>
+                    <h2><i class="fas fa-list-check"></i> Chi Tiết Hoạt Động</h2>
                 </div>
                 <div class="card-body">
-                    @if (Model.CriterionScores != null && Model.CriterionScores.Count > 0)
+                    @if (Model.Activities != null && Model.Activities.Count > 0)
                     {
-                        foreach (var criterion in Model.CriterionScores)
-                        {
-                            <div class="criterion-item">
-                                <div class="criterion-header">
-                                    <div class="criterion-name">
-                                        <i class="fas fa-bookmark"></i> @criterion.CriterionName
+                        <div class="activity-list" style="padding: 0;">
+                            @foreach (var activity in Model.Activities)
+                            {
+                                <div class="activity-item" style="padding: 15px; border-bottom: 1px solid #eee;">
+                                    <div>
+                                        <div style="font-weight: 600; color: #2c3e50; font-size: 15px;">@activity.ActivityTitle</div>
+                                        <div style="font-size: 13px; color: #666; margin-top: 4px;">
+                                            <i class="fas fa-clock"></i> @activity.Date.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
                                     </div>
-                                    <div class="criterion-points">
-                                        @criterion.EarnedPoints.ToString("F2") / @criterion.MaxPoints.ToString("F2")
+                                    <div style="font-weight: 700; color: #27ae60; font-size: 16px;">
+                                        +@activity.Points.ToString("F0")
                                     </div>
                                 </div>
-                                <div class="progress-bar">
-                                    @{
-                                        var percentage = criterion.MaxPoints > 0 ? (criterion.EarnedPoints / criterion.MaxPoints *
-                                        100) : 0;
-                                    }
-                                    <div class="progress-fill" style="width: @percentage%"></div>
-                                </div>
-                                <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
-                                    <i class="fas fa-calendar-check"></i> @criterion.ActivityCount hoạt động
-                                </div>
-
-                                @if (criterion.Activities != null && criterion.Activities.Count > 0)
-                                {
-                                    <div class="activity-list">
-                                        @foreach (var activity in criterion.Activities)
-                                        {
-                                            <div class="activity-item">
-                                                <div>
-                                                    <div style="font-weight: 500;">@activity.ActivityTitle</div>
-                                                    <div style="font-size: 12px; color: #999;">
-                                                        @activity.ActivityDate.ToString("dd/MM/yyyy")
-                                                    </div>
-                                                </div>
-                                                <div style="font-weight: 600; color: #667eea;">
-                                                    +@activity.Points.ToString("F2")
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        }
+                            }
+                        </div>
                     }
                     else
                     {
                         <p style="text-align: center; color: #999; padding: 40px 0;">
                             <i class="fas fa-inbox" style="font-size: 48px; display: block; margin-bottom: 15px;"></i>
-                            Chưa có dữ liệu chi tiết
+                            Chưa có hoạt động nào được ghi nhận
                         </p>
                     }
                 </div>
             </div>
         </div>
-
         <!-- Right Column: History & Review -->
         <div>
             <!-- History -->

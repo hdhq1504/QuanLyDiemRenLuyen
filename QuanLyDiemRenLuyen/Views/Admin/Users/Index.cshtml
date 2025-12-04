@@ -42,7 +42,7 @@
 
     .form-control:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: #2563eb;
     }
 
     .btn {
@@ -57,7 +57,7 @@
     }
 
     .btn-primary {
-        background: #667eea;
+        background: #2563eb;
         color: white;
     }
 
@@ -165,15 +165,15 @@
     }
 
     .pagination a:hover {
-        background: #667eea;
+        background: #2563eb;
         color: white;
-        border-color: #667eea;
+        border-color: #2563eb;
     }
 
     .pagination .active {
-        background: #667eea;
+        background: #2563eb;
         color: white;
-        border-color: #667eea;
+        border-color: #2563eb;
     }
 
     .header-actions {
@@ -182,19 +182,111 @@
         align-items: center;
         margin-bottom: 20px;
     }
-</style>
 
-<div class="content-header">
-    <div class="header-actions">
-        <div>
-            <h2><i class="fas fa-users"></i> Quản lý Người dùng</h2>
-            <p>Danh sách người dùng trong hệ thống</p>
-        </div>
-        <a href="@Url.Action("Create")" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Thêm mới
-        </a>
-    </div>
-</div>
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        animation: fadeIn 0.3s ease;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 0;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        animation: slideDown 0.3s ease;
+    }
+
+    @@keyframes slideDown {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        padding: 20px 25px;
+        background: #2563eb;
+        color: white;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .close {
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s;
+        line-height: 1;
+    }
+
+    .close:hover {
+        transform: scale(1.2);
+    }
+
+    .modal-body {
+        padding: 25px;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #5a6c7d;
+        font-size: 14px;
+    }
+
+    .detail-value {
+        color: #2c3e50;
+        font-size: 14px;
+    }
+
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn-info:hover {
+        background: #138496;
+    }
+</style>
 
 @if (TempData["SuccessMessage"] != null)
 {
@@ -247,7 +339,7 @@
                 <th>Vai trò</th>
                 <th>Trạng thái</th>
                 <th>Ngày tạo</th>
-                <th style="width: 150px;">Thao tác</th>
+                <th style="width: 180px;">Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -289,7 +381,10 @@
                         </td>
                         <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td>
-                            <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-primary btn-sm" title="Sửa">
+                            <button onclick="viewUserDetails('@item.Id')" class="btn btn-info btn-sm" title="Xem chi tiết" style="margin-right: 5px;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-primary btn-sm" title="Sửa" style="margin-right: 5px;">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <form action="@Url.Action("Delete", new { id = item.Id })" method="post" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa người dùng @item.FullName (@item.Id)? Hành động này không thể hoàn tác.');">
@@ -332,3 +427,104 @@
         </div>
     }
 </div>
+
+<!-- User Details Modal -->
+<div id="userDetailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-circle"></i> Thông tin chi tiết người dùng</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div style="text-align: center; padding: 20px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #2563eb;"></i>
+                <p style="color: #999; margin-top: 10px;">Đang tải...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function viewUserDetails(userId) {
+        var modal = document.getElementById('userDetailsModal');
+        var modalBody = document.getElementById('modalBody');
+        
+        // Show modal with loading state
+        modal.style.display = 'block';
+        modalBody.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #667eea;"></i><p style="color: #999; margin-top: 10px;">Đang tải...</p></div>';
+        
+        // Fetch user details via AJAX
+        fetch('@Url.Action("Details", "Users")?id=' + encodeURIComponent(userId))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    var user = data.data;
+                    var roleLabel = getRoleLabel(user.Role);
+                    var statusLabel = user.IsActive 
+                        ? '<span class="badge badge-active">Hoạt động</span>' 
+                        : '<span class="badge badge-inactive">Đã khóa</span>';
+                    
+                    modalBody.innerHTML = `
+                        <div class="detail-row">
+                            <div class="detail-label"><i class="fas fa-id-card"></i> Mã người dùng:</div>
+                            <div class="detail-value"><strong>${user.Id}</strong></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label"><i class="fas fa-user"></i> Họ và tên:</div>
+                            <div class="detail-value">${user.FullName}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label"><i class="fas fa-envelope"></i> Email:</div>
+                            <div class="detail-value">${user.Email}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label"><i class="fas fa-user-tag"></i> Vai trò:</div>
+                            <div class="detail-value">${roleLabel}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label"><i class="fas fa-toggle-on"></i> Trạng thái:</div>
+                            <div class="detail-value">${statusLabel}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label"><i class="fas fa-calendar-plus"></i> Ngày tạo:</div>
+                            <div class="detail-value">${user.CreatedAt}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label"><i class="fas fa-calendar-check"></i> Ngày cập nhật:</div>
+                            <div class="detail-value">${user.UpdatedAt}</div>
+                        </div>
+                    `;
+                } else {
+                    modalBody.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;"><i class="fas fa-exclamation-circle" style="font-size: 24px;"></i><p style="margin-top: 10px;">' + data.message + '</p></div>';
+                }
+            })
+            .catch(error => {
+                modalBody.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;"><i class="fas fa-exclamation-circle" style="font-size: 24px;"></i><p style="margin-top: 10px;">Đã xảy ra lỗi khi tải thông tin</p></div>';
+            });
+    }
+    
+    function getRoleLabel(role) {
+        switch(role) {
+            case 'STUDENT':
+                return '<span class="badge badge-student">Sinh viên</span>';
+            case 'LECTURER':
+                return '<span class="badge badge-lecturer">Giảng viên</span>';
+            case 'ADMIN':
+                return '<span class="badge badge-admin">Quản trị viên</span>';
+            default:
+                return '<span class="badge">' + role + '</span>';
+        }
+    }
+    
+    function closeModal() {
+        document.getElementById('userDetailsModal').style.display = 'none';
+    }
+    
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        var modal = document.getElementById('userDetailsModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
