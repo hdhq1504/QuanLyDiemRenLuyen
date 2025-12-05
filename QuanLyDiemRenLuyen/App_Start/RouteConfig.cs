@@ -78,6 +78,13 @@ namespace QuanLyDiemRenLuyen
                 namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Lecturer" }
             );
 
+            routes.MapRoute(
+                name: "LecturerPermissions",
+                url: "Lecturer/Permissions/{action}/{id}",
+                defaults: new { controller = "Permissions", action = "MyClasses", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Lecturer" }
+            );
+
             // Routes cho Admin nested controllers
             routes.MapRoute(
                 name: "AdminDashboard",

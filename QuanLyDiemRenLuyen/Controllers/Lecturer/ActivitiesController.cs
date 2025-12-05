@@ -81,11 +81,13 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                                           (ID, TITLE, DESCRIPTION, REQUIREMENTS, BENEFITS, 
                                            TERM_ID, START_AT, END_AT, 
                                            STATUS, MAX_SEATS, LOCATION, POINTS, 
+                                           REGISTRATION_START, REGISTRATION_DEADLINE,
                                            APPROVAL_STATUS, ORGANIZER_ID, CREATED_AT)
                                           VALUES 
                                           (RAWTOHEX(SYS_GUID()), :Title, :Description, :Requirements, :Benefits,
                                            :TermId, :StartAt, :EndAt,
                                            'OPEN', :MaxSeats, :Location, :Points,
+                                           :RegistrationStart, :RegistrationDeadline,
                                            'PENDING', :OrganizerId, SYSTIMESTAMP)";
 
                     var parameters = new[]
@@ -100,6 +102,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                         OracleDbHelper.CreateParameter("MaxSeats", OracleDbType.Int32, model.MaxSeats),
                         OracleDbHelper.CreateParameter("Location", OracleDbType.Varchar2, model.Location),
                         OracleDbHelper.CreateParameter("Points", OracleDbType.Decimal, model.Points),
+                        OracleDbHelper.CreateParameter("RegistrationStart", OracleDbType.TimeStamp, model.RegistrationStart.HasValue ? (object)model.RegistrationStart.Value : DBNull.Value),
+                        OracleDbHelper.CreateParameter("RegistrationDeadline", OracleDbType.TimeStamp, model.RegistrationDeadline.HasValue ? (object)model.RegistrationDeadline.Value : DBNull.Value),
                         OracleDbHelper.CreateParameter("OrganizerId", OracleDbType.Varchar2, mand)
                     };
 
@@ -127,6 +131,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                                               MAX_SEATS = :MaxSeats,
                                               LOCATION = :Location,
                                               POINTS = :Points,
+                                              REGISTRATION_START = :RegistrationStart,
+                                              REGISTRATION_DEADLINE = :RegistrationDeadline,
                                               APPROVAL_STATUS = 'PENDING'
                                           WHERE ID = :Id AND ORGANIZER_ID = :OrganizerId";
 
@@ -142,6 +148,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                         OracleDbHelper.CreateParameter("MaxSeats", OracleDbType.Int32, model.MaxSeats),
                         OracleDbHelper.CreateParameter("Location", OracleDbType.Varchar2, model.Location),
                         OracleDbHelper.CreateParameter("Points", OracleDbType.Decimal, model.Points),
+                        OracleDbHelper.CreateParameter("RegistrationStart", OracleDbType.TimeStamp, model.RegistrationStart.HasValue ? (object)model.RegistrationStart.Value : DBNull.Value),
+                        OracleDbHelper.CreateParameter("RegistrationDeadline", OracleDbType.TimeStamp, model.RegistrationDeadline.HasValue ? (object)model.RegistrationDeadline.Value : DBNull.Value),
                         OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, model.Id),
                         OracleDbHelper.CreateParameter("OrganizerId", OracleDbType.Varchar2, mand)
                     };
@@ -337,7 +345,9 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 EndAt = Convert.ToDateTime(row["END_AT"]),
                 MaxSeats = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,
                 Location = row["LOCATION"] != DBNull.Value ? row["LOCATION"].ToString() : "",
-                Points = row["POINTS"] != DBNull.Value ? Convert.ToDecimal(row["POINTS"]) : 0
+                Points = row["POINTS"] != DBNull.Value ? Convert.ToDecimal(row["POINTS"]) : 0,
+                RegistrationStart = row["REGISTRATION_START"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["REGISTRATION_START"]) : null,
+                RegistrationDeadline = row["REGISTRATION_DEADLINE"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["REGISTRATION_DEADLINE"]) : null
             };
         }
 

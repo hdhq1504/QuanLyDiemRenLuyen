@@ -1,0 +1,346 @@
+@model QuanLyDiemRenLuyen.Models.DatabaseUserManagementViewModel
+@{
+    ViewBag.Title = "Quản Lý Database Users";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #667eea;
+        margin: 10px 0;
+    }
+
+    .stat-label {
+        color: #7f8c8d;
+        font-size: 14px;
+    }
+
+    .user-table {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #5a6c7d;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .badge-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .badge-role-student {
+        background: #cfe2ff;
+        color: #084298;
+    }
+
+    .badge-role-lecturer {
+        background: #fff3cd;
+        color: #664d03;
+    }
+
+    .badge-role-admin {
+        background: #f8d7da;
+        color: #842029;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .password-display {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border: 2px solid #667eea;
+        margin-bottom: 20px;
+    }
+
+    .password-display code {
+        background: #e9ecef;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        color: #dc3545;
+    }
+</style>
+
+<h2 style="margin-bottom: 25px; color: #2c3e50;">
+    <i class="fas fa-database"></i> Quản Lý Database Users (RBAC)
+</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["DbPassword"] != null)
+{
+    <div class="password-display">
+        <strong><i class="fas fa-key"></i> Mật khẩu Database (Lưu lại ngay!):</strong><br />
+        <code>@TempData["DbPassword"]</code>
+        <p style="margin-top: 10px; color: #856404; font-size: 13px;">
+            <i class="fas fa-exclamation-triangle"></i> Mật khẩu này chỉ hiển thị một lần duy nhất. Vui lòng lưu lại!
+        </p>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Tổng số Users</div>
+        <div class="stat-number">@Model.TotalUsers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Có DB User</div>
+        <div class="stat-number" style="color: #28a745;">@Model.ActiveUsers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Chưa có DB User</div>
+        <div class="stat-number" style="color: #dc3545;">@Model.InactiveUsers</div>
+    </div>
+    @foreach (var roleGroup in Model.UsersByRole)
+    {
+        <div class="stat-card">
+            <div class="stat-label">@roleGroup.Key</div>
+            <div class="stat-number" style="color: #667eea;">@roleGroup.Value</div>
+        </div>
+    }
+</div>
+
+<!-- Users Table -->
+<div class="user-table">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>App User</th>
+                <th>App Role</th>
+                <th>DB Username</th>
+                <th>DB Role</th>
+                <th>Trạng thái</th>
+                <th>Tạo lúc</th>
+                <th>Last Login</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.DbUsers)
+            {
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: #2c3e50;">@user.AppUserFullName</div>
+                        <div style="font-size: 12px; color: #7f8c8d;">@user.AppUserEmail</div>
+                        <div style="font-size: 11px; color: #95a5a6;">MAND: @user.AppUserMand</div>
+                    </td>
+                    <td>
+                        @if (user.AppRole == "ADMIN")
+                        {
+                            <span class="badge badge-role-admin">ADMIN</span>
+                        }
+                        else if (user.AppRole == "LECTURER")
+                        {
+                            <span class="badge badge-role-lecturer">LECTURER</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-role-student">STUDENT</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.DbUsername != null)
+                        {
+                            <code style="font-size: 12px;">@user.DbUsername</code>
+                        }
+                        else
+                        {
+                            <span style="color: #999;">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.DbRole != null)
+                        {
+                            <span style="font-size: 12px; color: #667eea;">@user.DbRole</span>
+                        }
+                        else
+                        {
+                            <span style="color: #999;">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.DbUsername != null)
+                        {
+                            if (user.IsActive)
+                            {
+                                <span class="badge badge-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive">Inactive</span>
+                            }
+                        }
+                        else
+                        {
+                            <span style="color: #999;">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.CreatedAt != DateTime.MinValue)
+                        {
+                            @user.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        }
+                        else
+                        {
+                            <span style="color: #999;">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.LastLogin.HasValue)
+                        {
+                            @user.LastLogin.Value.ToString("dd/MM/yyyy HH:mm")
+                        }
+                        else
+                        {
+                            <span style="color: #999;">Chưa login</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.DbUsername == null)
+                        {
+                            using (Html.BeginForm("CreateDbUser", "Security", FormMethod.Post))
+                            {
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="mand" value="@user.AppUserMand" />
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> Tạo DB User
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            using (Html.BeginForm("DropDbUser", "Security", FormMethod.Post, new { style = "display:inline;" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="mand" value="@user.AppUserMand" />
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa DB user này?');">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            }
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 25px;">
+    <a href="@Url.RouteUrl("AdminActivities", new { action = "Index" })" class="btn btn-success">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+    <a href="@Url.Action("AccessMatrix", "Security")" class="btn btn-success" style="margin-left: 10px; background: #667eea;">
+        <i class="fas fa-table"></i> Xem Access Control Matrix
+    </a>
+</div>

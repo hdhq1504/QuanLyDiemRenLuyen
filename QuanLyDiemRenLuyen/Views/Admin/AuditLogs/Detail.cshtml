@@ -1,0 +1,291 @@
+@model QuanLyDiemRenLuyen.Models.AuditLogItem
+@{
+    ViewBag.Title = "Chi tiết Audit Log";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .detail-header h2 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 600;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .info-label {
+        font-size: 12px;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .info-value {
+        font-size: 14px;
+        color: #0f172a;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .json-viewer {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 16px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 13px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .diff-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .diff-panel {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 16px;
+    }
+
+    .diff-panel h4 {
+        margin: 0 0 12px 0;
+        font-size: 13px;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    .diff-old {
+        border-color: #fca5a5;
+        background: #fef2f2;
+    }
+
+    .diff-new {
+        border-color: #86efac;
+        background: #f0fdf4;
+    }
+
+    .justification-box {
+        background: #ecfdf5;
+        border: 1px solid #86efac;
+        border-radius: 6px;
+        padding: 16px;
+        color: #065f46;
+    }
+
+    .justification-box i {
+        margin-right: 8px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        text-decoration: none;
+    }
+</style>
+
+<div class="detail-header">
+    <h2>
+        <span class="badge @Model.OperationBadgeClass">@Model.OperationDisplayName</span>
+        Chi tiết thay đổi
+    </h2>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<!-- Basic Info -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-info-circle"></i> Thông tin chung
+    </div>
+    <div class="card-body">
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Bảng</span>
+                <span class="info-value">@Model.TableDisplayName (@Model.TableName)</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Record ID</span>
+                <span class="info-value">@Model.RecordId</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Thời gian</span>
+                <span class="info-value">@Model.PerformedAt.ToString("dd/MM/yyyy HH:mm:ss")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Thay đổi</span>
+                <span class="info-value">@(Model.ChangedColumns ?? "N/A")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Info -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-user"></i> Người thực hiện
+    </div>
+    <div class="card-body">
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">User ID</span>
+                <span class="info-value">@(Model.PerformedBy ?? "N/A")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Họ tên</span>
+                <span class="info-value">@(Model.PerformerName ?? "N/A")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Session User</span>
+                <span class="info-value">@(Model.SessionUser ?? "N/A")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">OS User</span>
+                <span class="info-value">@(Model.OsUser ?? "N/A")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Client IP</span>
+                <span class="info-value">@(Model.ClientIp ?? "N/A")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Client Host</span>
+                <span class="info-value">@(Model.ClientHost ?? "N/A")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Justification -->
+@if (!string.IsNullOrEmpty(Model.Justification))
+{
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-comment"></i> Lý do thay đổi
+        </div>
+        <div class="card-body">
+            <div class="justification-box">
+                <i class="fas fa-quote-left"></i>
+                @Model.Justification
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Data Changes -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-exchange-alt"></i> Dữ liệu thay đổi
+    </div>
+    <div class="card-body">
+        @if (Model.Operation == "UPDATE" && !string.IsNullOrEmpty(Model.OldValues) && !string.IsNullOrEmpty(Model.NewValues))
+        {
+            <div class="diff-container">
+                <div class="diff-panel diff-old">
+                    <h4><i class="fas fa-minus-circle" style="color: #dc2626;"></i> Giá trị cũ</h4>
+                    <pre class="json-viewer">@Model.OldValues</pre>
+                </div>
+                <div class="diff-panel diff-new">
+                    <h4><i class="fas fa-plus-circle" style="color: #16a34a;"></i> Giá trị mới</h4>
+                    <pre class="json-viewer">@Model.NewValues</pre>
+                </div>
+            </div>
+        }
+        else if (Model.Operation == "INSERT" && !string.IsNullOrEmpty(Model.NewValues))
+        {
+            <div class="diff-panel diff-new">
+                <h4><i class="fas fa-plus-circle" style="color: #16a34a;"></i> Dữ liệu mới</h4>
+                <pre class="json-viewer">@Model.NewValues</pre>
+            </div>
+        }
+        else if (Model.Operation == "DELETE" && !string.IsNullOrEmpty(Model.OldValues))
+        {
+            <div class="diff-panel diff-old">
+                <h4><i class="fas fa-minus-circle" style="color: #dc2626;"></i> Dữ liệu đã xóa</h4>
+                <pre class="json-viewer">@Model.OldValues</pre>
+            </div>
+        }
+        else
+        {
+            <p style="color: #64748b; text-align: center;">Không có dữ liệu chi tiết</p>
+        }
+    </div>
+</div>

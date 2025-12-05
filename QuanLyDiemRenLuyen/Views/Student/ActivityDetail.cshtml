@@ -253,6 +253,28 @@
                 <div class="info-label">Số lượng tham gia</div>
                 <div class="info-value"><i class="fas fa-users"></i> @Model.CurrentParticipants/@Model.MaxParticipants</div>
             </div>
+            @if (Model.RegistrationDeadline.HasValue)
+            {
+                var now = DateTime.Now;
+                var timeUntilDeadline = Model.RegistrationDeadline.Value - now;
+                var isApproaching = timeUntilDeadline.TotalHours <= 24 && timeUntilDeadline.TotalHours > 0;
+                var isPast = Model.RegistrationDeadline.Value < now;
+                
+                <div class="info-item">
+                    <div class="info-label">Hạn đăng ký</div>
+                    <div class="info-value" style="@(isPast ? "color: #dc2626;" : isApproaching ? "color: #ea580c;" : "")">
+                        <i class="fas fa-clock"></i> @Model.RegistrationDeadline.Value.ToString("dd/MM/yyyy HH:mm")
+                        @if (isPast)
+                        {
+                            <span class="badge" style="background: #fee2e2; color: #991b1b; margin-left: 8px;">Đã hết hạn</span>
+                        }
+                        else if (isApproaching)
+                        {
+                            <span class="badge" style="background: #fed7aa; color: #9a3412; margin-left: 8px;">Sắp hết hạn!</span>
+                        }
+                    </div>
+                </div>
+            }
         </div>
     </div>
 

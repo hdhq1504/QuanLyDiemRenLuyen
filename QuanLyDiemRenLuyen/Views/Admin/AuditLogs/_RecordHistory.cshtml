@@ -1,0 +1,164 @@
+@model List<QuanLyDiemRenLuyen.Models.AuditLogItem>
+
+<style>
+    .history-timeline {
+        position: relative;
+        padding-left: 24px;
+    }
+
+    .history-timeline::before {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+
+    .history-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+
+    .history-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .history-item::before {
+        content: '';
+        position: absolute;
+        left: -20px;
+        top: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #2563eb;
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px #e2e8f0;
+    }
+
+    .history-item.insert::before {
+        background: #16a34a;
+    }
+
+    .history-item.update::before {
+        background: #f59e0b;
+    }
+
+    .history-item.delete::before {
+        background: #dc2626;
+    }
+
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .history-operation {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .history-time {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .history-user {
+        font-size: 13px;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+
+    .history-changes {
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-family: monospace;
+    }
+
+    .history-justification {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #059669;
+        font-style: italic;
+    }
+
+    .badge {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+</style>
+
+<div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+    <strong>@ViewBag.TableName</strong> - Record: @ViewBag.RecordId
+    <span style="color: #64748b; margin-left: 8px;">(@Model.Count thay đổi)</span>
+</div>
+
+@if (Model != null && Model.Count > 0)
+{
+    <div class="history-timeline">
+        @foreach (var item in Model)
+        {
+            <div class="history-item @item.Operation.ToLower()">
+                <div class="history-header">
+                    <span class="history-operation">
+                        @if (item.Operation == "INSERT")
+                        {
+                            <span class="badge badge-success">Thêm mới</span>
+                        }
+                        else if (item.Operation == "UPDATE")
+                        {
+                            <span class="badge badge-warning">Cập nhật</span>
+                        }
+                        else if (item.Operation == "DELETE")
+                        {
+                            <span class="badge badge-danger">Xóa</span>
+                        }
+                    </span>
+                    <span class="history-time">@item.PerformedAt.ToString("dd/MM/yyyy HH:mm:ss")</span>
+                </div>
+                <div class="history-user">
+                    <i class="fas fa-user"></i> @(item.PerformerName ?? item.PerformedBy ?? "System")
+                </div>
+                @if (!string.IsNullOrEmpty(item.ChangedColumns))
+                {
+                    <div class="history-changes">
+                        <strong>Thay đổi:</strong> @item.ChangedColumns
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(item.Justification))
+                {
+                    <div class="history-justification">
+                        <i class="fas fa-comment"></i> @item.Justification
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p style="text-align: center; color: #64748b;">Không có lịch sử thay đổi</p>
+}

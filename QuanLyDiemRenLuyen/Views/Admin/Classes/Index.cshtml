@@ -178,6 +178,22 @@
     </div>
 }
 
+<!-- Header Actions -->
+<div class="header-actions">
+    <h3 style="margin: 0;"><i class="fas fa-school"></i> Quản Lý Lớp</h3>
+    <div style="display: flex; gap: 10px;">
+        <a href="@Url.Action("LecturerWorkload", "Classes")" class="btn" style="background: #17a2b8; color: white;">
+            <i class="fas fa-chart-bar"></i> Báo Cáo CVHT
+        </a>
+        <a href="@Url.Action("BulkAssignment", "Classes")" class="btn" style="background: #28a745; color: white;">
+            <i class="fas fa-users-cog"></i> Phân Công Hàng Loạt
+        </a>
+        <a href="@Url.Action("Create", "Classes")" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Thêm Lớp Mới
+        </a>
+    </div>
+</div>
+
 <!-- Filter Bar -->
 <div class="filter-bar">
     <form method="get">
@@ -207,8 +223,9 @@
                 <th>Mã lớp</th>
                 <th>Tên lớp</th>
                 <th>Khoa</th>
-                <th>Số sinh viên</th>
-                <th style="width: 150px;">Thao tác</th>
+                <th>Số SV</th>
+                <th>Cố vấn học tập (CVHT)</th>
+                <th style="width: 200px;">Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -229,7 +246,28 @@
                         </td>
                         <td>@item.DepartmentName</td>
                         <td>
-                            <span class="badge badge-info">@item.StudentCount sinh viên</span>
+                            <span class="badge badge-info">@item.StudentCount</span>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.CvhtName))
+                            {
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-user-tie" style="color: #667eea;"></i>
+                                    <div>
+                                        <div style="font-weight: 600;">@item.CvhtName</div>
+                                        @if (item.CvhtAssignedDate.HasValue)
+                                        {
+                                            <small style="color: #999;">Từ @item.CvhtAssignedDate.Value.ToString("dd/MM/yyyy")</small>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <span style="color: #999; font-style: italic;">
+                                    <i class="fas fa-user-slash"></i> Chưa phân công
+                                </span>
+                            }
                         </td>
                         <td>
                             <a href="@Url.Action("Details", new { id = item.Id })" class="btn btn-info btn-sm" title="Chi tiết" style="background: #17a2b8; color: white;">
@@ -260,7 +298,7 @@
             else
             {
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 40px;">
+                    <td colspan="7" style="text-align: center; padding: 40px;">
                         <i class="fas fa-inbox" style="font-size: 32px; color: #ccc; margin-bottom: 10px;"></i>
                         <p style="color: #999;">Không tìm thấy dữ liệu</p>
                     </td>

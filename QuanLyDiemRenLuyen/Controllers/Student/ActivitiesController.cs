@@ -88,15 +88,59 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 string mand = GetCurrentStudentId();
 
-                // Kiểm tra hoạt động có tồn tại không
+                // Kiểm tra hoạt động có tồn tại, đang mở và đã được duyệt
                 string checkQuery = @"SELECT COUNT(*) FROM ACTIVITIES
-                                     WHERE ID = :ActivityId AND STATUS = 'ACTIVE'";
+                                     WHERE ID = :ActivityId 
+                                       AND STATUS = 'OPEN' 
+                                       AND APPROVAL_STATUS = 'APPROVED'
+                                       AND (REGISTRATION_START IS NULL OR REGISTRATION_START <= SYSTIMESTAMP)
+                                       AND (REGISTRATION_DEADLINE IS NULL OR REGISTRATION_DEADLINE >= SYSTIMESTAMP)";
                 var checkParams = new[] { OracleDbHelper.CreateParameter("ActivityId", OracleDbType.Varchar2, activityId) };
                 int activityExists = Convert.ToInt32(OracleDbHelper.ExecuteScalar(checkQuery, checkParams));
 
                 if (activityExists == 0)
                 {
-                    TempData["ErrorMessage"] = "Hoạt động không tồn tại hoặc đã bị hủy";
+                    // Kiểm tra lý do cụ thể
+                    string detailCheckQuery = @"SELECT STATUS, APPROVAL_STATUS, REGISTRATION_START, REGISTRATION_DEADLINE 
+                                               FROM ACTIVITIES WHERE ID = :ActivityId";
+                    DataTable dt = OracleDbHelper.ExecuteQuery(detailCheckQuery, checkParams);
+                    
+                    if (dt.Rows.Count == 0)
+                    {
+                        TempData["ErrorMessage"] = "Hoạt động không tồn tại";
+                    }
+                    else
+                    {
+                        DataRow row = dt.Rows[0];
+                        string status = row["STATUS"].ToString();
+                        string approvalStatus = row["APPROVAL_STATUS"].ToString();
+                        DateTime? regDeadline = row["REGISTRATION_DEADLINE"] != DBNull.Value 
+                            ? (DateTime?)Convert.ToDateTime(row["REGISTRATION_DEADLINE"]) : null;
+                        DateTime? regStart = row["REGISTRATION_START"] != DBNull.Value 
+                            ? (DateTime?)Convert.ToDateTime(row["REGISTRATION_START"]) : null;
+                        DateTime now = DateTime.Now;
+
+                        if (approvalStatus != "APPROVED")
+                        {
+                            TempData["ErrorMessage"] = "Hoạt động chưa được phê duyệt";
+                        }
+                        else if (status != "OPEN")
+                        {
+                            TempData["ErrorMessage"] = "Hoạt động đã đóng hoặc bị hủy";
+                        }
+                        else if (regStart.HasValue && regStart.Value > now)
+                        {
+                            TempData["ErrorMessage"] = $"Chưa đến thời gian đăng ký. Đăng ký mở từ {regStart.Value:dd/MM/yyyy HH:mm}";
+                        }
+                        else if (regDeadline.HasValue && regDeadline.Value < now)
+                        {
+                            TempData["ErrorMessage"] = $"Đã hết hạn đăng ký. Hạn đăng ký: {regDeadline.Value:dd/MM/yyyy HH:mm}";
+                        }
+                        else
+                        {
+                            TempData["ErrorMessage"] = "Hoạt động không khả dụng để đăng ký";
+                        }
+                    }
                     return RedirectToAction("Detail", new { id = activityId });
                 }
 
@@ -367,7 +411,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 // Build query với điều kiện tìm kiếm và lọc
                 string countQuery = @"SELECT COUNT(*) FROM ACTIVITIES a WHERE a.APPROVAL_STATUS = 'APPROVED' AND a.STATUS = 'OPEN'";
                 string dataQuery = @"SELECT a.ID, a.TITLE, a.DESCRIPTION, a.START_AT, a.END_AT, a.LOCATION,
-                                       a.POINTS, a.MAX_SEATS, a.STATUS,
+                                       a.POINTS, a.MAX_SEATS, a.STATUS, 
+                                       a.REGISTRATION_START, a.REGISTRATION_DEADLINE,
                                        u.FULL_NAME as ORGANIZER_NAME,
                                        (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STATUS != 'CANCELLED') as CURRENT_PARTICIPANTS,
                                        (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STUDENT_ID = :StudentId AND STATUS != 'CANCELLED') as IS_REGISTERED,
@@ -434,7 +479,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                         MaxParticipants = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,
                         CurrentParticipants = row["CURRENT_PARTICIPANTS"] != DBNull.Value ? Convert.ToInt32(row["CURRENT_PARTICIPANTS"]) : 0,
                         Status = row["STATUS"].ToString(),
-                        RegistrationDeadline = null,
+                        RegistrationDeadline = row["REGISTRATION_DEADLINE"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["REGISTRATION_DEADLINE"]) : null,
 
                         OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
                         IsRegistered = row["IS_REGISTERED"] != DBNull.Value && Convert.ToInt32(row["IS_REGISTERED"]) > 0,
@@ -456,6 +501,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             string query = @"SELECT a.ID, a.TITLE, a.DESCRIPTION, a.REQUIREMENTS, a.BENEFITS, 
                                    a.START_AT, a.END_AT, a.LOCATION,
                                    a.POINTS, a.MAX_SEATS, a.STATUS, a.CREATED_AT,
+                                   a.REGISTRATION_START, a.REGISTRATION_DEADLINE,
                                    u.FULL_NAME as ORGANIZER_NAME,
                                    (SELECT COUNT(*) FROM REGISTRATIONS WHERE ACTIVITY_ID = a.ID AND STATUS != 'CANCELLED') as CURRENT_PARTICIPANTS,
                                    r.STATUS as REG_STATUS, r.REGISTERED_AT,
@@ -496,7 +542,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 MaxParticipants = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,
                 CurrentParticipants = row["CURRENT_PARTICIPANTS"] != DBNull.Value ? Convert.ToInt32(row["CURRENT_PARTICIPANTS"]) : 0,
                 Status = row["STATUS"].ToString(),
-                RegistrationDeadline = null,
+                RegistrationDeadline = row["REGISTRATION_DEADLINE"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["REGISTRATION_DEADLINE"]) : null,
 
                 OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
                 Requirements = row["REQUIREMENTS"] != DBNull.Value ? row["REQUIREMENTS"].ToString() : "",

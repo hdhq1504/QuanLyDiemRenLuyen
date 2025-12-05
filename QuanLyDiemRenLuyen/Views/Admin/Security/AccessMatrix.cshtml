@@ -1,0 +1,188 @@
+@model QuanLyDiemRenLuyen.Models.AccessControlMatrixViewModel
+@{
+    ViewBag.Title = "Access Control Matrix";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .matrix-container {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+    }
+
+    .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+
+    .matrix-table th {
+        background: #667eea;
+        color: white;
+        padding: 12px;
+        text-align: center;
+        font-weight: 600;
+        border: 1px solid #5568d3;
+    }
+
+    .matrix-table th.table-name {
+        background: #f8f9fa;
+        color: #2c3e50;
+        text-align: left;
+        font-weight: 700;
+    }
+
+    .matrix-table td {
+        padding: 10px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+    }
+
+    .matrix-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .perm-cell {
+        font-weight: 600;
+    }
+
+    .perm-full {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .perm-partial {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .perm-none {
+        background: #f8f9fa;
+        color: #999;
+    }
+
+    .legend {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .legend-box {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+    }
+</style>
+
+<h2 style="margin-bottom: 25px; color: #2c3e50;">
+    <i class="fas fa-table"></i> Access Control Matrix (RBAC)
+</h2>
+
+<!-- Legend -->
+<div class="legend">
+    <div class="legend-item">
+        <div class="legend-box" style="background: #d4edda;"></div>
+        <span>Full Access (ALL / SIUD)</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-box" style="background: #fff3cd;"></div>
+        <span>Partial Access</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-box" style="background: #f8f9fa;"></div>
+        <span>No Access</span>
+    </div>
+    <div class="legend-item" style="margin-left: auto;">
+        <strong>Viết tắt:</strong> S=SELECT, I=INSERT, U=UPDATE, D=DELETE
+    </div>
+</div>
+
+<!-- Access Control Matrix -->
+<div class="matrix-container">
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th class="table-name">Table / Role</th>
+                @foreach (var role in Model.Roles)
+                {
+                    <th>@role.Replace("ROLE_", "")</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var table in Model.Tables)
+            {
+                <tr>
+                    <td class="table-name">@table</td>
+                    @foreach (var role in Model.Roles)
+                    {
+                        var perm = Model.GetPermission(role, table);
+                        var cellClass = "perm-cell ";
+                        
+                        if (perm == "-")
+                        {
+                            cellClass += "perm-none";
+                        }
+                        else if (perm.Contains("S") && perm.Contains("I") && perm.Contains("U") && perm.Contains("D"))
+                        {
+                            cellClass += "perm-full";
+                            perm = "ALL";
+                        }
+                        else
+                        {
+                            cellClass += "perm-partial";
+                        }
+                        
+                        <td class="@cellClass">@perm</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 25px;">
+    <a href="@Url.Action("DatabaseUsers", "Security")" class="btn btn-success">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<style>
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+        color: white;
+        background: #667eea;
+        display: inline-block;
+    }
+
+    .btn:hover {
+        background: #5568d3;
+    }
+    
+    .btn-success {
+        background: #28a745;
+    }
+    
+    .btn-success:hover {
+        background: #218838;
+    }
+</style>

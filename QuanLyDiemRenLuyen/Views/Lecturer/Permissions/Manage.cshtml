@@ -1,0 +1,320 @@
+@model QuanLyDiemRenLuyen.Models.PermissionManagementViewModel
+@{
+    ViewBag.Title = Model.ClassName;
+    Layout = "~/Views/Shared/_LecturerLayout.cshtml";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-key"></i> Quản Lý Phân Quyền</h2>
+            <p class="text-muted">Lớp: <strong>@Model.ClassName</strong> (@Model.ClassCode)</p>
+        </div>
+        <a href="@Url.Action("MyClasses")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="info-card bg-success">
+            <div class="info-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="info-content">
+                <h3>@Model.ActiveCount</h3>
+                <p>Quyền Đang Hoạt Động</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="info-card bg-warning">
+            <div class="info-icon"><i class="fas fa-clock"></i></div>
+            <div class="info-content">
+                <h3>@Model.ExpiredCount</h3>
+                <p>Quyền Hết Hạn</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="info-card bg-danger">
+            <div class="info-icon"><i class="fas fa-ban"></i></div>
+            <div class="info-content">
+                <h3>@Model.RevokedCount</h3>
+                <p>Quyền Đã Thu Hồi</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="info-card bg-primary">
+            <div class="info-icon"><i class="fas fa-list"></i></div>
+            <div class="info-content">
+                <h3>@Model.TotalPermissions</h3>
+                <p>Tổng Số Quyền</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grant New Permission Form -->
+<div class="card  mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Cấp Quyền Mới</h5>
+    </div>
+    <div class="card-body">
+        <form id="grantForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="classId" value="@Model.ClassId" />
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Người Nhận Quyền <span class="text-danger">*</span></label>
+                        <select id="grantedTo" class="form-control" required>
+                            <option value="">-- Chọn người dùng --</option>
+                            @foreach (var grantee in Model.AvailableGrantees)
+                            {
+                                <option value="@grantee.Mand">
+                                    @grantee.FullName (@grantee.Role)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Loại Quyền <span class="text-danger">*</span></label>
+                        <select id="permissionType" class="form-control" required>
+                            <option value="VIEW">Xem (VIEW)</option>
+                            <option value="EDIT">Chỉnh sửa (EDIT)</option>
+                            <option value="APPROVE">Phê duyệt (APPROVE)</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            APPROVE bao gồm EDIT và VIEW
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Ngày Hết Hạn</label>
+                        <input type="datetime-local" id="expiresAt" class="form-control" />
+                        <small class="form-text text-muted">Để trống = vô thời hạn</small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-success btn-block">
+                            <i class="fas fa-key"></i> Cấp Quyền
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Ghi Chú</label>
+                <textarea id="notes" class="form-control" rows="2" placeholder="Lý do cấp quyền..."></textarea>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Active Permissions Table -->
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> Danh Sách Quyền Đang Hoạt Động</h5>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.ActivePermissions.Count == 0)
+        {
+            <div class="p-4 text-center text-muted">
+                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <p>Chưa có quyền nào được cấp</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Người Nhận</th>
+                            <th>Vai Trò</th>
+                            <th>Loại Quyền</th>
+                            <th>Ngày Cấp</th>
+                            <th>Hết Hạn</th>
+                            <th>Trạng Thái</th>
+                            <th>Ghi Chú</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var perm in Model.ActivePermissions)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@perm.GrantedToName</strong><br />
+                                    <small class="text-muted">@perm.GrantedTo</small>
+                                </td>
+                                <td>
+                                    @if (perm.GranteeRole == "LECTURER")
+                                    {
+                                        <span class="badge badge-info">Giảng viên</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">@perm.GranteeRole</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (perm.PermissionType == "VIEW")
+                                    {
+                                        <span class="badge badge-primary">
+                                            <i class="fas fa-eye"></i> Xem
+                                        </span>
+                                    }
+                                    else if (perm.PermissionType == "EDIT")
+                                    {
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-edit"></i> Chỉnh sửa
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check-circle"></i> Phê duyệt
+                                        </span>
+                                    }
+                                </td>
+                                <td>@perm.GrantedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    @if (perm.ExpiresAt.HasValue)
+                                    {
+                                        if (perm.IsExpired)
+                                        {
+                                            <span class="text-danger">
+                                                @perm.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            @perm.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Vô thời hạn</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (perm.IsRevoked)
+                                    {
+                                        <span class="badge badge-danger">Đã thu hồi</span>
+                                    }
+                                    else if (perm.IsExpired)
+                                    {
+                                        <span class="badge badge-warning">Hết hạn</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">Đang hoạt động</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(perm.Notes))
+                                    {
+                                        <span title="@perm.Notes">@(perm.Notes.Length > 30 ? perm.Notes.Substring(0, 30) + "..." : perm.Notes)</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!perm.IsRevoked && !perm.IsExpired)
+                                    {
+                                        <form method="post" action="@Url.Action("Revoke")" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="permissionId" value="@perm.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                    onclick="return confirm('Bạn có chắc muốn thu hồi quyền này?')">
+                                                <i class="fas fa-times"></i> Thu hồi
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .info-card {
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .info-icon {
+        font-size: 40px;
+        margin-right: 20px;
+        opacity: 0.8;
+    }
+
+    .info-content h3 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: bold;
+    }
+
+    .info-content p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .table th {
+        border-top: none;
+    }
+</style>
+
+@section scripts {
+<script>
+    $(document).ready(function() {
+        $('#grantForm').submit(function(e) {
+            e.preventDefault();
+            
+            var data = {
+                classId: $('#classId').val(),
+                grantedTo: $('#grantedTo').val(),
+                permissionType: $('#permissionType').val(),
+                expiresAt: $('#expiresAt').val() || null,
+                notes: $('#notes').val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("Grant")',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Cấp quyền thành công!');
+                        location.reload();
+                    } else {
+                        alert('Lỗi: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Có lỗi xảy ra khi cấp quyền');
+                }
+            });
+        });
+    });
+</script>
+}

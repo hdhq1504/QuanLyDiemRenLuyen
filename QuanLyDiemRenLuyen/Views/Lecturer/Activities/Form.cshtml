@@ -93,6 +93,25 @@
                                     @Html.ValidationMessageFor(m => m.EndAt, "", new { @class = "text-danger small" })
                                 </div>
 
+                                <hr class="my-3" />
+                                <p class="text-muted small mb-3">
+                                    <i class="fas fa-info-circle"></i> Thời hạn đăng ký (tùy chọn) - Để trống nếu cho phép đăng ký đến khi hoạt động bắt đầu
+                                </p>
+
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.RegistrationStart, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.RegistrationStart, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+                                    <small class="form-text text-muted">Thời điểm bắt đầu nhận đăng ký (tùy chọn)</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.RegistrationDeadline, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.RegistrationDeadline, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+                                    <small class="form-text text-muted">Hạn cuối đăng ký (tùy chọn)</small>
+                                </div>
+
+                                <hr class="my-3" />
+
                                 <div class="mb-3">
                                     @Html.LabelFor(m => m.Location, new { @class = "form-label" })
                                     @Html.TextBoxFor(m => m.Location, new { @class = "form-control", placeholder = "VD: Hội trường A" })

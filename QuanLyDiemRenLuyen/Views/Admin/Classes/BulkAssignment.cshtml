@@ -1,0 +1,217 @@
+@model QuanLyDiemRenLuyen.Models.BulkAssignmentViewModel
+@{
+    ViewBag.Title = "Phân Công CVHT Hàng Loạt";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .filter-bar { 
+        background: white; 
+        padding: 20px; 
+        border-radius: 12px; 
+        box-shadow:0 2px 8px rgba(0,0,0,0.08); 
+        margin-bottom: 25px; 
+    }
+    
+    .stats-row { 
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 15px; 
+        margin-bottom: 20px; 
+    }
+    
+    .stat-box { 
+        background: #f8f9fa; 
+        padding: 15px; 
+        border-radius: 8px; 
+        text-align: center; 
+    }
+    
+    .stat-box strong { 
+        font-size: 24px; 
+        color: #667eea; 
+        display: block; 
+    }
+    
+    .table { 
+        width: 100%; 
+        border-collapse: collapse; 
+    }
+    
+    .table th { 
+        background: #f8f9fa; 
+        padding: 12px; 
+        text-align: left; 
+        font-weight: 600; 
+        border-bottom: 2px solid #e9ecef; 
+    }
+    
+    .table td { 
+        padding: 12px; 
+        border-bottom: 1px solid #e9ecef; 
+    }
+    
+    .table tr:hover { 
+        background: #f8f9fa; 
+    }
+    
+    select.form-control { 
+        padding: 8px; 
+        border: 1px solid #e0e0e0; 
+        border-radius: 6px; 
+        width: 100%; 
+    }
+    
+    .btn { 
+        padding: 10px 20px; 
+        border-radius: 6px; 
+        border: none; 
+        cursor: pointer; 
+        font-size: 14px; 
+    }
+    
+    .btn-primary { 
+        background: #667eea; 
+        color: white; 
+    }
+    
+    .btn-success { 
+        background: #28a745; 
+        color: white; 
+    }
+    
+    .btn-secondary { 
+        background: #6c757d; 
+        color: white; 
+    }
+</style>
+
+<div class="stats-row">
+    <div class="stat-box">
+        <strong>@Model.TotalClasses</strong>
+        <span>Tổng số lớp</span>
+    </div>
+    <div class="stat-box">
+        <strong>@Model.AssignedClasses</strong>
+        <span>Đã phân công</span>
+    </div>
+    <div class="stat-box">
+        <strong>@Model.UnassignedClasses</strong>
+        <span>Chưa phân công</span>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <form method="get" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px;">
+        <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Khoa</label>
+            @Html.DropDownList("departmentId", Model.Departments, "Tất cả khoa", new { @class = "form-control" })
+        </div>
+        <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Trạng thái</label>
+            <select name="status" class="form-control">
+                <option value="all" @(Model.FilterStatus == "all" ? "selected" : "")>Tất cả</option>
+                <option value="assigned" @(Model.FilterStatus == "assigned" ? "selected" : "")>Đã phân công</option>
+                <option value="unassigned" @(Model.FilterStatus == "unassigned" ? "selected" : "")>Chưa phân công</option>
+            </select>
+        </div>
+        <div style="align-self: end;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Lọc</button>
+        </div>
+    </form>
+</div>
+
+@using (Html.BeginForm("BulkAssignment", "Classes", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    
+    <div style="background: white; border-radius: 12px; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Mã lớp</th>
+                    <th>Tên lớp</th>
+                    <th style="width: 80px;">Sĩ số</th>
+                    <th style="width: 200px;">CVHT hiện tại</th>
+                    <th style="width: 300px;">Chọn CVHT mới</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Classes != null && Model.Classes.Any())
+                {
+                    int index = 0;
+                    foreach (var item in Model.Classes)
+                    {
+                        <tr>
+                            <td><strong>@item.ClassCode</strong></td>
+                            <td>@item.ClassName</td>
+                            <td><span style="background: #d1ecf1; color: #0c5460; padding: 4px 10px; border-radius: 12px; font-size: 12px;">@item.StudentCount</span></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.CurrentCvht))
+                                {
+                                    <span style="color: #28a745;"><i class="fas fa-check-circle"></i> @item.CurrentCvht</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #999; font-style: italic;"><i class="fas fa-user-slash"></i> Chưa phân công</span>
+                                }
+                            </td>
+                            <td>
+                                <input type="hidden" name="Assignments[@(index)].ClassId" value="@item.ClassId" />
+                                <select name="Assignments[@(index)].LecturerId" class="form-control">
+                                    <option value="">-- Giữ nguyên / Bỏ qua --</option>
+                                    @foreach (var lecturer in Model.AvailableLecturers)
+                                    {
+                                        <option value="@lecturer.Value">@lecturer.Text</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 10px;"></i>
+                            <p>Không có lớp nào phù hợp</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    if (Model.Classes != null && Model.Classes.Any())
+    {
+        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <label style="display: block; margin-bottom: 10px; font-weight: 600;">Ghi chú chung (tùy chọn)</label>
+            <textarea name="Notes" class="form-control" rows="3" placeholder="Ghi chú về đợt phân công này..." style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #e0e0e0;"></textarea>
+        </div>
+        
+        <div style="text-align: right;">
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Hủy
+            </a>
+            <button type="submit" class="btn btn-success" style="margin-left: 10px;" 
+                    onclick="return confirm('Xác nhận phân công CVHT cho các lớp đã chọn?');">
+                <i class="fas fa-check"></i> Xác Nhận Phân Công
+            </button>
+        </div>
+    }
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <script>
+        alert('@TempData["SuccessMessage"]');
+    </script>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <script>
+        alert('Lỗi: @TempData["ErrorMessage"]');
+    </script>
+}

@@ -331,11 +331,11 @@
                             </a>
                             @if (activity.CurrentParticipants > 0)
                             {
-                                <a href="@Url.Action("Registrations", "Activities", new { id = activity.Id })"
+                                <a href="@Url.RouteUrl("AdminActivities", new { action = "Registrations", id = activity.Id })"
                                     class="btn btn-success btn-sm">
                                     <i class="fas fa-users"></i> DS
                                 </a>
-                                <a href="@Url.Action("Participants", "Activities", new { id = activity.Id })"
+                                <a href="@Url.RouteUrl("AdminActivities", new { action = "Participants", id = activity.Id })"
                                     class="btn btn-primary btn-sm" style="background: #2563eb;">
                                     <i class="fas fa-user-check"></i> Điểm danh
                                 </a>

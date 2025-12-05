@@ -1,44 +1,14 @@
 -- =========================================================
 -- RSA ENCRYPTION INFRASTRUCTURE
 -- Migration Script: 000_CREATE_ENCRYPTION_INFRASTRUCTURE
--- Description: Tạo bảng ENCRYPTION_KEYS và Oracle packages cho RSA encryption
--- Author: Team RSA
--- Date: 2025-12-02
+-- Description: Oracle packages cho RSA encryption
+-- NOTE: ENCRYPTION_KEYS table already created in db.sql
 -- =========================================================
 
--- =========================================================
--- 1) BẢNG ENCRYPTION_KEYS - Lưu trữ RSA key pairs
--- =========================================================
-CREATE TABLE ENCRYPTION_KEYS (
-    ID              VARCHAR2(32) DEFAULT RAWTOHEX(SYS_GUID()) PRIMARY KEY,
-    KEY_NAME        VARCHAR2(100) NOT NULL UNIQUE,
-    PUBLIC_KEY      CLOB NOT NULL,           -- RSA Public Key (XML format)
-    PRIVATE_KEY     CLOB,                    -- RSA Private Key (XML format) - MÃ HÓA
-    KEY_SIZE        NUMBER DEFAULT 2048,      -- Key size in bits
-    ALGORITHM       VARCHAR2(20) DEFAULT 'RSA',
-    CREATED_AT      TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
-    CREATED_BY      VARCHAR2(50),            -- Username who created the key (nullable)
-    IS_ACTIVE       NUMBER(1) DEFAULT 1 NOT NULL,
-    EXPIRES_AT      TIMESTAMP,
-    LAST_USED_AT    TIMESTAMP,
-    DESCRIPTION     VARCHAR2(500),
-    CONSTRAINT CK_ENCKEY_ACTIVE CHECK (IS_ACTIVE IN (0,1))
-    -- Note: Không dùng FK vì system key được tạo trước khi có users
-);
-
--- Indexes
-CREATE INDEX IX_ENCKEY_NAME ON ENCRYPTION_KEYS(KEY_NAME);
-CREATE INDEX IX_ENCKEY_ACTIVE ON ENCRYPTION_KEYS(IS_ACTIVE);
-CREATE INDEX IX_ENCKEY_CREATED ON ENCRYPTION_KEYS(CREATED_AT);
-
--- Comments
-COMMENT ON TABLE ENCRYPTION_KEYS IS 'Lưu trữ các cặp khóa RSA của hệ thống';
-COMMENT ON COLUMN ENCRYPTION_KEYS.PUBLIC_KEY IS 'Public key ở định dạng XML - dùng để mã hóa';
-COMMENT ON COLUMN ENCRYPTION_KEYS.PRIVATE_KEY IS 'Private key ở định dạng XML - dùng để giải mã (PHẢI MÃ HÓA)';
-COMMENT ON COLUMN ENCRYPTION_KEYS.KEY_NAME IS 'Tên định danh của key (ví dụ: SYSTEM_MAIN_KEY)';
+SET SERVEROUTPUT ON;
 
 -- =========================================================
--- 2) ORACLE PACKAGE: PKG_RSA_CRYPTO
+-- 1) ORACLE PACKAGE: PKG_RSA_CRYPTO
 -- Package xử lý RSA encryption/decryption trong Oracle
 -- =========================================================
 
@@ -217,34 +187,12 @@ END PKG_RSA_CRYPTO;
 /
 
 -- =========================================================
--- 3) Grant permissions
+-- 2) Grant permissions
 -- =========================================================
 GRANT EXECUTE ON PKG_RSA_CRYPTO TO PUBLIC;
 
 -- =========================================================
--- 4) Test data - Tạo system key (sẽ được replace bởi app)
--- =========================================================
--- Note: Key này chỉ là placeholder, app sẽ generate key thật khi khởi động
-INSERT INTO ENCRYPTION_KEYS (
-    ID,
-    KEY_NAME,
-    PUBLIC_KEY,
-    PRIVATE_KEY,
-    CREATED_BY,
-    DESCRIPTION
-) VALUES (
-    RAWTOHEX(SYS_GUID()),
-    'SYSTEM_MAIN_KEY',
-    '<RSAKeyValue><Modulus>PLACEHOLDER</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>',
-    '<RSAKeyValue><Modulus>PLACEHOLDER</Modulus><Exponent>AQAB</Exponent><P>PLACEHOLDER</P></RSAKeyValue>',
-    NULL,  -- CREATED_BY = NULL vì system key được tạo trước khi có users
-    'Main system RSA key pair - will be replaced by application on first run'
-);
-
-COMMIT;
-
--- =========================================================
--- 5) Verification queries
+-- 3) Verification queries
 -- =========================================================
 -- Kiểm tra table đã tạo
 SELECT 'ENCRYPTION_KEYS table created' AS STATUS FROM DUAL

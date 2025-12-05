@@ -293,15 +293,17 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             // Build query
             string countQuery = @"SELECT COUNT(*) FROM REGISTRATIONS r
-                                 INNER JOIN STUDENTS s ON r.STUDENT_ID = s.MAND
+                                 INNER JOIN USERS u ON r.STUDENT_ID = u.MAND
                                  WHERE r.ACTIVITY_ID = :ActivityId";
 
             string dataQuery = @"SELECT r.ID as REG_ID, r.STUDENT_ID, r.STATUS, r.REGISTERED_AT, r.CHECKED_IN_AT,
-                                       s.FULL_NAME as STUDENT_NAME, s.EMAIL as STUDENT_EMAIL, s.CLASS_ID,
+                                       u.FULL_NAME as STUDENT_NAME, u.EMAIL as STUDENT_EMAIL,
+                                       s.CLASS_ID,
                                        p.ID as PROOF_ID, p.STATUS as PROOF_STATUS, p.STORED_PATH as PROOF_PATH, 
                                        p.FILE_NAME as PROOF_FILE_NAME, p.CREATED_AT_UTC as PROOF_UPLOADED_AT
                                 FROM REGISTRATIONS r
-                                INNER JOIN STUDENTS s ON r.STUDENT_ID = s.MAND
+                                INNER JOIN USERS u ON r.STUDENT_ID = u.MAND
+                                LEFT JOIN STUDENTS s ON u.MAND = s.USER_ID
                                 LEFT JOIN (
                                     SELECT * FROM (
                                         SELECT REGISTRATION_ID, ID, STATUS, STORED_PATH, FILE_NAME, CREATED_AT_UTC,
@@ -325,8 +327,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             if (!string.IsNullOrEmpty(search))
             {
-                countQuery += " AND (UPPER(s.FULL_NAME) LIKE :Search OR UPPER(s.EMAIL) LIKE :Search)";
-                dataQuery += " AND (UPPER(s.FULL_NAME) LIKE :Search OR UPPER(s.EMAIL) LIKE :Search)";
+                countQuery += " AND (UPPER(u.FULL_NAME) LIKE :Search OR UPPER(u.EMAIL) LIKE :Search)";
+                dataQuery += " AND (UPPER(u.FULL_NAME) LIKE :Search OR UPPER(u.EMAIL) LIKE :Search)";
                 parameters.Add(OracleDbHelper.CreateParameter("Search", OracleDbType.Varchar2, "%" + search.ToUpper() + "%"));
             }
 

@@ -7,31 +7,7 @@
 -- =========================================================
 
 -- =========================================================
--- 1) Thêm columns mã hóa vào bảng STUDENTS
--- =========================================================
-ALTER TABLE STUDENTS ADD (
-    PHONE_ENCRYPTED       CLOB,              -- Số điện thoại mã hóa RSA  
-    ADDRESS_ENCRYPTED     CLOB,              -- Địa chỉ mã hóa RSA
-    ID_CARD_NUMBER        VARCHAR2(20),      -- Số CMND/CCCD (plaintext - sẽ migrate)
-    ID_CARD_ENCRYPTED     CLOB,              -- Số CMND/CCCD mã hóa RSA
-    ENCRYPTED_AT          TIMESTAMP,         -- Thời điểm mã hóa
-    ENCRYPTION_KEY_ID     VARCHAR2(32),      -- FK to ENCRYPTION_KEYS
-    CONSTRAINT FK_STUDENTS_ENCKEY FOREIGN KEY (ENCRYPTION_KEY_ID) 
-        REFERENCES ENCRYPTION_KEYS(ID)
-);
-
--- Comments
-COMMENT ON COLUMN STUDENTS.PHONE_ENCRYPTED IS 'Số điện thoại đã mã hóa RSA';
-COMMENT ON COLUMN STUDENTS.ADDRESS_ENCRYPTED IS 'Địa chỉ đã mã hóa RSA';
-COMMENT ON COLUMN STUDENTS.ID_CARD_ENCRYPTED IS 'Số CMND/CCCD đã mã hóa RSA';
-COMMENT ON COLUMN STUDENTS.ENCRYPTED_AT IS 'Thời điểm data được mã hóa';
-
--- Index
-CREATE INDEX IX_STUDENTS_ENCKEY ON STUDENTS(ENCRYPTION_KEY_ID);
-CREATE INDEX IX_STUDENTS_ENCRYPTED ON STUDENTS(ENCRYPTED_AT);
-
--- =========================================================
--- 2) ORACLE PACKAGE: PKG_STUDENT_ENCRYPTION
+-- 1) ORACLE PACKAGE: PKG_STUDENT_ENCRYPTION
 -- Package xử lý mã hóa thông tin nhạy cảm sinh viên
 -- =========================================================
 
@@ -191,7 +167,7 @@ END PKG_STUDENT_ENCRYPTION;
 GRANT EXECUTE ON PKG_STUDENT_ENCRYPTION TO PUBLIC;
 
 -- =========================================================
--- 3) Verification
+-- 2) Verification
 -- =========================================================
 -- Kiểm tra columns đã được thêm
 SELECT 
@@ -212,4 +188,3 @@ FROM USER_OBJECTS
 WHERE OBJECT_NAME = 'PKG_STUDENT_ENCRYPTION';
 
 PROMPT 'Migration 001_ADD_ENCRYPTED_COLUMNS_STUDENTS completed successfully!';
-PROMPT 'NOTE: Actual RSA encryption/decryption is handled by C# application layer';

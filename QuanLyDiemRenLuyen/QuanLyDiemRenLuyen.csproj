@@ -207,6 +207,7 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\Admin\ActivitiesController.cs" />
     <Compile Include="Controllers\Admin\AdminBaseController.cs" />
+    <Compile Include="Controllers\Admin\AuditLogsController.cs" />
     <Compile Include="Controllers\Admin\ClassesController.cs" />
     <Compile Include="Controllers\Admin\DashboardController.cs" />
     <Compile Include="Controllers\Admin\DatabaseController.cs" />
@@ -214,10 +215,12 @@
     <Compile Include="Controllers\Admin\ProofsController.cs" />
     <Compile Include="Controllers\Admin\ReviewRequestsController.cs" />
     <Compile Include="Controllers\Admin\ScoresController.cs" />
+    <Compile Include="Controllers\Admin\SecurityController.cs" />
     <Compile Include="Controllers\Admin\UsersController.cs" />
     <Compile Include="Controllers\Lecturer\ActivitiesController.cs" />
     <Compile Include="Controllers\Lecturer\DashboardController.cs" />
     <Compile Include="Controllers\Lecturer\LecturerBaseController.cs" />
+    <Compile Include="Controllers\Lecturer\PermissionsController.cs" />
     <Compile Include="Controllers\Student\ActivitiesController.cs" />
     <Compile Include="Controllers\Student\DashboardController.cs" />
     <Compile Include="Controllers\Student\FeedbacksController.cs" />
@@ -233,8 +236,10 @@
     <Compile Include="Helpers\RsaKeyManager.cs" />
     <Compile Include="Models\ActivityViewModel.cs" />
     <Compile Include="Models\AdminViewModel.cs" />
+    <Compile Include="Models\AuditLogsViewModel.cs" />
     <Compile Include="Models\ClassScoreViewModel.cs" />
     <Compile Include="Models\ClassViewModel.cs" />
+    <Compile Include="Models\DacModels.cs" />
     <Compile Include="Models\DatabaseViewModel.cs" />
     <Compile Include="Models\EditStudentProfileViewModel.cs" />
     <Compile Include="Models\EncryptedFeedbackViewModel.cs" />
@@ -249,6 +254,7 @@
     <Compile Include="Models\ReviewRequestViewModel.cs" />
     <Compile Include="Models\ScoreSignatureViewModel.cs" />
     <Compile Include="Models\ScoreViewModel.cs" />
+    <Compile Include="Models\SecurityModels.cs" />
     <Compile Include="Models\StudentDashboardViewModel.cs" />
     <Compile Include="Models\StudentProfileViewModel.cs" />
     <Compile Include="Models\User.cs" />
@@ -364,6 +370,17 @@
     <Content Include="Views\Admin\Database\Index.cshtml" />
     <Content Include="Views\Admin\Database\Sessions.cshtml" />
     <Content Include="Views\Admin\Database\Tablespaces.cshtml" />
+    <Content Include="Views\Admin\Security\AccessMatrix.cshtml" />
+    <Content Include="Views\Admin\Security\DatabaseUsers.cshtml" />
+    <Content Include="Views\Lecturer\Permissions\AccessLog.cshtml" />
+    <Content Include="Views\Lecturer\Permissions\Manage.cshtml" />
+    <Content Include="Views\Lecturer\Permissions\MyClasses.cshtml" />
+    <Content Include="Views\Admin\Classes\BulkAssignment.cshtml" />
+    <Content Include="Views\Admin\Classes\LecturerWorkload.cshtml" />
+    <Content Include="Views\Admin\AuditLogs\DailySummary.cshtml" />
+    <Content Include="Views\Admin\AuditLogs\Detail.cshtml" />
+    <Content Include="Views\Admin\AuditLogs\Index.cshtml" />
+    <Content Include="Views\Admin\AuditLogs\_RecordHistory.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

@@ -1,0 +1,246 @@
+@model List<QuanLyDiemRenLuyen.Models.DailySummaryItem>
+@{
+    ViewBag.Title = "Thống kê Audit";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .page-header h2 {
+        margin: 0;
+    }
+
+    .card {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+    }
+
+    .summary-item {
+        text-align: center;
+        padding: 16px;
+        background: #f8fafc;
+        border-radius: 6px;
+    }
+
+    .summary-item h4 {
+        margin: 0 0 4px 0;
+        font-size: 24px;
+        color: #2563eb;
+    }
+
+    .summary-item p {
+        margin: 0;
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .date-group {
+        margin-bottom: 24px;
+    }
+
+    .date-header {
+        background: #f1f5f9;
+        padding: 10px 16px;
+        border-radius: 6px 6px 0 0;
+        font-weight: 600;
+        color: #0f172a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .date-content {
+        border: 1px solid #e2e8f0;
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background: #f8fafc;
+        padding: 10px 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 12px;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    .table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+    }
+
+    .table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #64748b;
+    }
+</style>
+
+<div class="page-header">
+    <h2><i class="fas fa-chart-bar"></i> Thống kê Audit (30 ngày)</h2>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+@if (Model != null && Model.Count > 0)
+{
+    var groupedByDate = Model.GroupBy(x => x.Date.Date).OrderByDescending(g => g.Key);
+    
+    // Overall summary
+    <div class="card">
+        <div class="card-header">Tổng quan</div>
+        <div class="card-body">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h4>@Model.Sum(x => x.ChangeCount)</h4>
+                    <p>Tổng thay đổi</p>
+                </div>
+                <div class="summary-item">
+                    <h4>@Model.Where(x => x.Operation == "INSERT").Sum(x => x.ChangeCount)</h4>
+                    <p>Thêm mới</p>
+                </div>
+                <div class="summary-item">
+                    <h4>@Model.Where(x => x.Operation == "UPDATE").Sum(x => x.ChangeCount)</h4>
+                    <p>Cập nhật</p>
+                </div>
+                <div class="summary-item">
+                    <h4>@Model.Where(x => x.Operation == "DELETE").Sum(x => x.ChangeCount)</h4>
+                    <p>Xóa</p>
+                </div>
+                <div class="summary-item">
+                    <h4>@groupedByDate.Count()</h4>
+                    <p>Ngày có hoạt động</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    // Daily breakdown
+    foreach (var dateGroup in groupedByDate)
+    {
+        <div class="date-group">
+            <div class="date-header">
+                <span><i class="fas fa-calendar-day"></i> @dateGroup.Key.ToString("dd/MM/yyyy (dddd)")</span>
+                <span>@dateGroup.Sum(x => x.ChangeCount) thay đổi</span>
+            </div>
+            <div class="date-content">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Bảng</th>
+                            <th>Thao tác</th>
+                            <th>Số lượng</th>
+                            <th>Người dùng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in dateGroup.OrderBy(x => x.TableName))
+                        {
+                            <tr>
+                                <td>@item.TableName</td>
+                                <td>
+                                    @if (item.Operation == "INSERT")
+                                    {
+                                        <span class="badge badge-success">Thêm mới</span>
+                                    }
+                                    else if (item.Operation == "UPDATE")
+                                    {
+                                        <span class="badge badge-warning">Cập nhật</span>
+                                    }
+                                    else if (item.Operation == "DELETE")
+                                    {
+                                        <span class="badge badge-danger">Xóa</span>
+                                    }
+                                </td>
+                                <td><strong>@item.ChangeCount</strong></td>
+                                <td>@item.UniqueUsers người</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="card">
+        <div class="empty-state">
+            <i class="fas fa-inbox" style="font-size: 48px; opacity: 0.5;"></i>
+            <p>Không có dữ liệu thống kê trong 30 ngày qua</p>
+        </div>
+    </div>
+}

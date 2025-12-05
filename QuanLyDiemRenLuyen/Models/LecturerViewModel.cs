@@ -72,6 +72,12 @@ namespace QuanLyDiemRenLuyen.Models
         [Display(Name = "Điểm rèn luyện")]
         [Range(0, 100, ErrorMessage = "Điểm phải từ 0 đến 100")]
         public decimal Points { get; set; }
+        
+        [Display(Name = "Thời gian bắt đầu đăng ký")]
+        public DateTime? RegistrationStart { get; set; }
+        
+        [Display(Name = "Hạn đăng ký")]
+        public DateTime? RegistrationDeadline { get; set; }
     }
 
     public class LecturerDashboardViewModel
