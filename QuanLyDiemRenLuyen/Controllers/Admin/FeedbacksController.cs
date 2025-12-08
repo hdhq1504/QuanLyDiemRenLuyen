@@ -62,10 +62,120 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             }
         }
 
-        // POST: Admin/Feedbacks/Respond
+        // POST: Admin/Feedbacks/Approve
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Respond(string id, string response)
+        public ActionResult Approve(string id)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                string mand = Session["MAND"].ToString();
+                
+                // Get feedback details
+                var feedback = GetFeedbackDetail(id);
+                if (feedback == null)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy phản hồi";
+                    return Redirect(Url.RouteUrl("AdminFeedbacks", new { action = "Index" }));
+                }
+
+                if (string.IsNullOrEmpty(feedback.ActivityId))
+                {
+                    TempData["ErrorMessage"] = "Phản hồi không liên kết với hoạt động";
+                    return Redirect(Url.RouteUrl("AdminFeedbacks", new { action = "Detail", id = id }));
+                }
+
+                // Get student USER_ID from STUDENT_CODE
+                string getStudentQuery = @"SELECT USER_ID FROM STUDENTS WHERE STUDENT_CODE = :StudentCode";
+                var studentParams = new[] { OracleDbHelper.CreateParameter("StudentCode", OracleDbType.Varchar2, feedback.StudentId) };
+                DataTable studentDt = OracleDbHelper.ExecuteQuery(getStudentQuery, studentParams);
+                
+                if (studentDt.Rows.Count == 0)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy sinh viên";
+                    return Redirect(Url.RouteUrl("AdminFeedbacks", new { action = "Detail", id = id }));
+                }
+                
+                string studentUserId = studentDt.Rows[0]["USER_ID"].ToString();
+
+                // Get current term from feedback
+                string getTermQuery = @"SELECT TERM_ID FROM FEEDBACKS WHERE ID = :Id";
+                var termParams = new[] { OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, id) };
+                DataTable termDt = OracleDbHelper.ExecuteQuery(getTermQuery, termParams);
+                string termId = termDt.Rows[0]["TERM_ID"].ToString();
+
+                // Update or create SCORES record
+                string checkScoreQuery = @"SELECT ID, TOTAL FROM SCORES WHERE STUDENT_ID = :StudentId AND TERM_ID = :TermId";
+                var checkParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentUserId),
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
+                };
+                DataTable scoreDt = OracleDbHelper.ExecuteQuery(checkScoreQuery, checkParams);
+
+                decimal pointsToAdd = feedback.ActivityPoints ?? 0;
+
+                if (scoreDt.Rows.Count > 0)
+                {
+                    // Update existing score
+                    string scoreId = scoreDt.Rows[0]["ID"].ToString();
+                    decimal currentTotal = Convert.ToDecimal(scoreDt.Rows[0]["TOTAL"]);
+                    decimal newTotal = currentTotal + pointsToAdd;
+
+                    string updateScoreQuery = @"UPDATE SCORES SET TOTAL = :NewTotal WHERE ID = :ScoreId";
+                    var updateParams = new[]
+                    {
+                        OracleDbHelper.CreateParameter("NewTotal", OracleDbType.Decimal, newTotal),
+                        OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId)
+                    };
+                    OracleDbHelper.ExecuteNonQuery(updateScoreQuery, updateParams);
+                }
+                else
+                {
+                    // Create new score record
+                    string newScoreId = "SC" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                    string insertScoreQuery = @"INSERT INTO SCORES (ID, STUDENT_ID, TERM_ID, TOTAL, STATUS, CREATED_AT)
+                                               VALUES (:Id, :StudentId, :TermId, :Total, 'PENDING', SYSDATE)";
+                    var insertParams = new[]
+                    {
+                        OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, newScoreId),
+                        OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentUserId),
+                        OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId),
+                        OracleDbHelper.CreateParameter("Total", OracleDbType.Decimal, pointsToAdd)
+                    };
+                    OracleDbHelper.ExecuteNonQuery(insertScoreQuery, insertParams);
+                }
+
+                // Update feedback status
+                string updateFeedbackQuery = @"UPDATE FEEDBACKS
+                                              SET STATUS = 'RESPONDED',
+                                                  RESPONSE = :Response,
+                                                  RESPONDED_AT = SYSDATE
+                                              WHERE ID = :Id";
+                var feedbackParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Response", OracleDbType.Clob, $"Đã duyệt và cộng {pointsToAdd} điểm từ hoạt động {feedback.ActivityTitle}"),
+                    OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, id)
+                };
+                OracleDbHelper.ExecuteNonQuery(updateFeedbackQuery, feedbackParams);
+
+                TempData["SuccessMessage"] = $"Đã duyệt và cộng {pointsToAdd} điểm cho sinh viên";
+                return Redirect(Url.RouteUrl("AdminFeedbacks", new { action = "Detail", id = id }));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Đã xảy ra lỗi: " + ex.Message;
+                return Redirect(Url.RouteUrl("AdminFeedbacks", new { action = "Detail", id = id }));
+            }
+        }
+
+        // POST: Admin/Feedbacks/Reject
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Reject(string id, string reason)
         {
             var authCheck = CheckAuth();
             if (authCheck != null) return authCheck;
@@ -74,17 +184,21 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             {
                 string mand = Session["MAND"].ToString();
 
+                if (string.IsNullOrWhiteSpace(reason))
+                {
+                    TempData["ErrorMessage"] = "Vui lòng nhập lý do từ chối";
+                    return Redirect(Url.RouteUrl("AdminFeedbacks", new { action = "Detail", id = id }));
+                }
+
                 string updateQuery = @"UPDATE FEEDBACKS
                                       SET STATUS = 'RESPONDED',
                                           RESPONSE = :Response,
-                                          RESPONDED_BY = :RespondedBy,
                                           RESPONDED_AT = SYSDATE
                                       WHERE ID = :Id";
 
                 var parameters = new[]
                 {
-                    OracleDbHelper.CreateParameter("Response", OracleDbType.Clob, response),
-                    OracleDbHelper.CreateParameter("RespondedBy", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("Response", OracleDbType.Clob, reason),
                     OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, id)
                 };
 
@@ -92,19 +206,19 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
                 if (result > 0)
                 {
-                    TempData["SuccessMessage"] = "Đã gửi phản hồi thành công";
+                    TempData["SuccessMessage"] = "Đã từ chối phản hồi";
                 }
                 else
                 {
                     TempData["ErrorMessage"] = "Không thể cập nhật phản hồi";
                 }
 
-                return RedirectToAction("Detail", new { id = id });
+                return Redirect(Url.RouteUrl("AdminFeedbacks", new { action = "Detail", id = id }));
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Đã xảy ra lỗi: " + ex.Message;
-                return RedirectToAction("Detail", new { id = id });
+                return Redirect(Url.RouteUrl("AdminFeedbacks", new { action = "Detail", id = id }));
             }
         }
 
@@ -185,14 +299,17 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
         private AdminFeedbackItem GetFeedbackDetail(string id)
         {
             string query = @"SELECT f.ID, f.TITLE, f.CONTENT, f.STATUS, f.CREATED_AT, f.RESPONDED_AT, f.RESPONSE,
+                                   f.STUDENT_ID, f.ACTIVITY_ID,
                                    s.STUDENT_CODE, u.FULL_NAME as STUDENT_NAME,
                                    t.NAME as TERM_NAME,
-                                   r.FULL_NAME as RESPONDER_NAME
+                                   a.TITLE as ACTIVITY_TITLE, a.POINTS as ACTIVITY_POINTS,
+                                   reg.STATUS as REG_STATUS, reg.CHECKED_IN_AT
                             FROM FEEDBACKS f
                             INNER JOIN STUDENTS s ON f.STUDENT_ID = s.USER_ID
                             INNER JOIN USERS u ON s.USER_ID = u.MAND
                             INNER JOIN TERMS t ON f.TERM_ID = t.ID
-                            LEFT JOIN USERS r ON f.RESPONDED_BY = r.MAND
+                            LEFT JOIN ACTIVITIES a ON f.ACTIVITY_ID = a.ID
+                            LEFT JOIN REGISTRATIONS reg ON f.ACTIVITY_ID = reg.ACTIVITY_ID AND f.STUDENT_ID = reg.STUDENT_ID
                             WHERE f.ID = :Id";
 
             var parameters = new[] { OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, id) };
@@ -205,7 +322,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             {
                 Id = row["ID"].ToString(),
                 Title = row["TITLE"].ToString(),
-                Content = EncryptionHelper.Decrypt(row["CONTENT"].ToString()), // Decrypt Content
+                Content = EncryptionHelper.Decrypt(row["CONTENT"].ToString()),
                 StudentId = row["STUDENT_CODE"].ToString(),
                 StudentName = row["STUDENT_NAME"].ToString(),
                 TermName = row["TERM_NAME"].ToString(),
@@ -213,7 +330,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
                 RespondedAt = row["RESPONDED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["RESPONDED_AT"]) : null,
                 Response = row["RESPONSE"] != DBNull.Value ? row["RESPONSE"].ToString() : null,
-                RespondedBy = row["RESPONDER_NAME"] != DBNull.Value ? row["RESPONDER_NAME"].ToString() : null
+                // Activity info
+                ActivityId = row["ACTIVITY_ID"] != DBNull.Value ? row["ACTIVITY_ID"].ToString() : null,
+                ActivityTitle = row["ACTIVITY_TITLE"] != DBNull.Value ? row["ACTIVITY_TITLE"].ToString() : null,
+                ActivityPoints = row["ACTIVITY_POINTS"] != DBNull.Value ? Convert.ToDecimal(row["ACTIVITY_POINTS"]) : (decimal?)null,
+                HasCheckedIn = row["REG_STATUS"] != DBNull.Value && row["REG_STATUS"].ToString() == "CHECKED_IN",
+                CheckedInAt = row["CHECKED_IN_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["CHECKED_IN_AT"]) : null
             };
         }
 

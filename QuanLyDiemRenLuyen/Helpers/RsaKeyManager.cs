@@ -20,79 +20,32 @@ namespace QuanLyDiemRenLuyen.Helpers
         {
             try
             {
-                // Kiểm tra xem đã có key thật chưa (không phải PLACEHOLDER)
+                // Kiểm tra xem đã có key thật chưa
                 if (IsSystemKeyInitialized())
                 {
                     System.Diagnostics.Debug.WriteLine("✓ System RSA key đã tồn tại và hoạt động.");
                     return;
                 }
 
-                // Generate new key pair
-                System.Diagnostics.Debug.WriteLine("Đang tạo RSA key pair mới cho hệ thống...");
-                var keyPair = RsaHelper.GenerateRsaKeyPair();
+                // Sử dụng Oracle PKG_RSA để tạo keys
+                System.Diagnostics.Debug.WriteLine("Đang tạo RSA key pair mới cho hệ thống bằng crypto4ora...");
+                
+                string initQuery = @"
+                    BEGIN
+                        PKG_RSA.INIT_SYSTEM_KEY(:KeyName);
+                    END;";
 
-                // Kiểm tra xem có key PLACEHOLDER không
-                bool hasPlaceholder = CheckPlaceholderKeyExists();
-
-                if (hasPlaceholder)
+                var parameters = new[]
                 {
-                    // UPDATE existing PLACEHOLDER key
-                    System.Diagnostics.Debug.WriteLine("Đang cập nhật PLACEHOLDER key với key thật...");
-                    
-                    string updateQuery = @"
-                        UPDATE ENCRYPTION_KEYS
-                        SET PUBLIC_KEY = :PublicKey,
-                            PRIVATE_KEY = :PrivateKey,
-                            CREATED_AT = SYSTIMESTAMP,
-                            CREATED_BY = :CreatedBy,
-                            DESCRIPTION = :Description
-                        WHERE KEY_NAME = :KeyName";
+                    OracleDbHelper.CreateParameter("KeyName", OracleDbType.Varchar2, SYSTEM_KEY_NAME)
+                };
 
-                    var updateParams = new[]
-                    {
-                        OracleDbHelper.CreateParameter("PublicKey", OracleDbType.Clob, keyPair.PublicKey),
-                        OracleDbHelper.CreateParameter("PrivateKey", OracleDbType.Clob, keyPair.PrivateKey),
-                        OracleDbHelper.CreateParameter("CreatedBy", OracleDbType.Varchar2, "SYSTEM_AUTO"),
-                        OracleDbHelper.CreateParameter("Description", OracleDbType.Varchar2, 
-                            "Main system RSA key pair (2048-bit) auto-generated on " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
-                        OracleDbHelper.CreateParameter("KeyName", OracleDbType.Varchar2, SYSTEM_KEY_NAME)
-                    };
+                OracleDbHelper.ExecuteNonQuery(initQuery, parameters);
 
-                    OracleDbHelper.ExecuteNonQuery(updateQuery, updateParams);
-                    System.Diagnostics.Debug.WriteLine("✓ Đã cập nhật key thành công!");
-                }
-                else
-                {
-                    // INSERT new key
-                    string insertQuery = @"
-                        BEGIN
-                            PKG_RSA_CRYPTO.CREATE_KEY(
-                                p_key_name => :KeyName,
-                                p_public_key => :PublicKey,
-                                p_private_key => :PrivateKey,
-                                p_created_by => :CreatedBy,
-                                p_description => :Description
-                            );
-                        END;";
-
-                    var insertParams = new[]
-                    {
-                        OracleDbHelper.CreateParameter("KeyName", OracleDbType.Varchar2, SYSTEM_KEY_NAME),
-                        OracleDbHelper.CreateParameter("PublicKey", OracleDbType.Clob, keyPair.PublicKey),
-                        OracleDbHelper.CreateParameter("PrivateKey", OracleDbType.Clob, keyPair.PrivateKey),
-                        OracleDbHelper.CreateParameter("CreatedBy", OracleDbType.Varchar2, "SYSTEM_AUTO"),
-                        OracleDbHelper.CreateParameter("Description", OracleDbType.Varchar2, 
-                            "Main system RSA key pair (2048-bit) generated on " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
-                    };
-
-                    OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
-                    System.Diagnostics.Debug.WriteLine("✓ Đã tạo key mới thành công!");
-                }
-
-                System.Diagnostics.Debug.WriteLine("✓ System RSA key đã sẵn sàng!");
+                System.Diagnostics.Debug.WriteLine("✓ System RSA key đã sẵn sàng (crypto4ora)!");
                 System.Diagnostics.Debug.WriteLine("  - Key Name: " + SYSTEM_KEY_NAME);
-                System.Diagnostics.Debug.WriteLine("  - Key Size: " + keyPair.KeySize + " bits");
-                System.Diagnostics.Debug.WriteLine("  - Fingerprint: " + keyPair.GetPublicKeyFingerprint().Substring(0, 16) + "...");
+                System.Diagnostics.Debug.WriteLine("  - Key Size: 2048 bits");
+                System.Diagnostics.Debug.WriteLine("  - Generated by: Oracle crypto4ora");
             }
             catch (Exception ex)
             {
@@ -235,17 +188,16 @@ namespace QuanLyDiemRenLuyen.Helpers
             try
             {
                 string query = @"
-                    INSERT INTO AUDIT_TRAIL (WHO, ACTION, EVENT_AT_UTC)
-                    VALUES (:Who, :Action, SYS_EXTRACT_UTC(SYSTIMESTAMP))";
+                    BEGIN
+                        PKG_AUDIT_EVENTS.LOG_SECURITY_EVENT(
+                            p_event_type => 'PRIVATE_KEY_ACCESS',
+                            p_performed_by => 'SYSTEM_APP',
+                            p_entity_type => 'ENCRYPTION_KEY',
+                            p_description => 'Application accessed system private key'
+                        );
+                    END;";
 
-                var parameters = new[]
-                {
-                    OracleDbHelper.CreateParameter("Who", OracleDbType.Varchar2, "SYSTEM_APP"),
-                    OracleDbHelper.CreateParameter("Action", OracleDbType.Varchar2, 
-                        "PRIVATE_KEY_ACCESS: Application accessed system private key")
-                };
-
-                OracleDbHelper.ExecuteNonQuery(query, parameters);
+                OracleDbHelper.ExecuteNonQuery(query, null);
             }
             catch
             {
@@ -303,14 +255,18 @@ namespace QuanLyDiemRenLuyen.Helpers
 
                 // 3. Log rotation
                 string logQuery = @"
-                    INSERT INTO AUDIT_TRAIL (WHO, ACTION, EVENT_AT_UTC)
-                    VALUES (:Who, :Action, SYS_EXTRACT_UTC(SYSTIMESTAMP))";
+                    BEGIN
+                        PKG_AUDIT_EVENTS.LOG_SECURITY_EVENT(
+                            p_event_type => 'KEY_ROTATION',
+                            p_performed_by => 'SYSTEM_APP',
+                            p_entity_type => 'ENCRYPTION_KEY',
+                            p_description => :reason
+                        );
+                    END;";
 
                 OracleDbHelper.ExecuteNonQuery(logQuery, new[]
                 {
-                    OracleDbHelper.CreateParameter("Who", OracleDbType.Varchar2, "SYSTEM_APP"),
-                    OracleDbHelper.CreateParameter("Action", OracleDbType.Varchar2, 
-                        "KEY_ROTATION: " + reason)
+                    OracleDbHelper.CreateParameter("reason", OracleDbType.Varchar2, reason)
                 });
 
                 System.Diagnostics.Debug.WriteLine("✓ System key rotation completed successfully!");

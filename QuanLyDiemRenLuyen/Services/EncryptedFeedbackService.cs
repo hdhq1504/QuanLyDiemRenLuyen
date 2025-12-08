@@ -1,18 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
 
 namespace QuanLyDiemRenLuyen.Services
 {
     /// <summary>
     /// Service xử lý mã hóa feedback nhạy cảm
-    /// Sử dụng RSA encryption với access control
+    /// Sử dụng Oracle PKG_FEEDBACK_ENCRYPTION với crypto4ora backend
+    /// 
+    /// UPDATE: Now uses Oracle database packages for encryption.
+    /// Private keys never leave the database, improving security.
     /// </summary>
     public class EncryptedFeedbackService
     {
         /// <summary>
-        /// Mã hóa nội dung feedback
+        /// Mã hóa nội dung feedback using Oracle PKG_FEEDBACK_ENCRYPTION
         /// </summary>
         public static string EncryptFeedbackContent(string content)
         {
@@ -21,16 +25,18 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                string publicKey = RsaKeyManager.GetSystemPublicKey();
-                
-                // Xử lý content dài (nếu > 200 chars thì dùng multi-block)
-                if (content.Length > 200)
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
                 {
-                    return EncryptLongText(content, publicKey);
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_FEEDBACK_ENCRYPTION.ENCRYPT_CONTENT(:content) FROM DUAL";
+                        cmd.Parameters.Add("content", OracleDbType.Varchar2).Value = content;
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
                 }
-                
-                string encrypted = RsaHelper.Encrypt(content, publicKey);
-                return encrypted;
             }
             catch (Exception ex)
             {
@@ -39,7 +45,7 @@ namespace QuanLyDiemRenLuyen.Services
         }
 
         /// <summary>
-        /// Giải mã nội dung feedback
+        /// Giải mã nội dung feedback using Oracle PKG_FEEDBACK_ENCRYPTION
         /// </summary>
         public static string DecryptFeedbackContent(string encryptedContent)
         {
@@ -48,16 +54,18 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                string privateKey = RsaKeyManager.GetSystemPrivateKey();
-                
-                // Kiểm tra multi-block
-                if (encryptedContent.StartsWith("[MULTI]"))
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
                 {
-                    return DecryptLongText(encryptedContent, privateKey);
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_FEEDBACK_ENCRYPTION.DECRYPT_CONTENT(:encrypted) FROM DUAL";
+                        cmd.Parameters.Add("encrypted", OracleDbType.Clob).Value = encryptedContent;
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
                 }
-                
-                string decrypted = RsaHelper.Decrypt(encryptedContent, privateKey);
-                return decrypted;
             }
             catch (Exception ex)
             {
@@ -83,43 +91,68 @@ namespace QuanLyDiemRenLuyen.Services
         }
 
         /// <summary>
-        /// Mã hóa văn bản dài (chia thành nhiều blocks)
+        /// Store encrypted feedback directly using Oracle procedure
         /// </summary>
-        private static string EncryptLongText(string text, string publicKey)
+        public static int StoreEncryptedFeedback(int studentId, int termId, string content)
         {
-            const int chunkSize = 200;
-            var chunks = new List<string>();
-            
-            for (int i = 0; i < text.Length; i += chunkSize)
+            try
             {
-                string chunk = text.Substring(i, Math.Min(chunkSize, text.Length - i));
-                string encryptedChunk = RsaHelper.Encrypt(chunk, publicKey);
-                chunks.Add(encryptedChunk);
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"
+                            DECLARE
+                                v_feedback_id NUMBER;
+                            BEGIN
+                                PKG_FEEDBACK_ENCRYPTION.STORE_ENCRYPTED_FEEDBACK(
+                                    :student_id, :term_id, :content, v_feedback_id);
+                                :feedback_id := v_feedback_id;
+                            END;";
+                        
+                        cmd.Parameters.Add("student_id", OracleDbType.Int32).Value = studentId;
+                        cmd.Parameters.Add("term_id", OracleDbType.Int32).Value = termId;
+                        cmd.Parameters.Add("content", OracleDbType.Varchar2).Value = content;
+                        cmd.Parameters.Add("feedback_id", OracleDbType.Int32).Direction = System.Data.ParameterDirection.Output;
+                        
+                        cmd.ExecuteNonQuery();
+                        
+                        return Convert.ToInt32(cmd.Parameters["feedback_id"].Value);
+                    }
+                }
             }
-            
-            // Format: [MULTI]chunk1|chunk2|chunk3...
-            return "[MULTI]" + string.Join("|", chunks);
+            catch (Exception ex)
+            {
+                throw new Exception("Lỗi khi lưu feedback: " + ex.Message, ex);
+            }
         }
 
         /// <summary>
-        /// Giải mã văn bản dài (từ nhiều blocks)
+        /// Get decrypted feedback content using Oracle function
         /// </summary>
-        private static string DecryptLongText(string encryptedText, string privateKey)
+        public static string GetFeedbackContent(int feedbackId)
         {
-            // Remove [MULTI] prefix
-            string data = encryptedText.Substring(7);
-            
-            // Split blocks
-            string[] chunks = data.Split('|');
-            var decryptedChunks = new List<string>();
-            
-            foreach (var chunk in chunks)
+            try
             {
-                string decrypted = RsaHelper.Decrypt(chunk, privateKey);
-                decryptedChunks.Add(decrypted);
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_FEEDBACK_ENCRYPTION.GET_FEEDBACK_CONTENT(:feedback_id) FROM DUAL";
+                        cmd.Parameters.Add("feedback_id", OracleDbType.Int32).Value = feedbackId;
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
+                }
             }
-            
-            return string.Join("", decryptedChunks);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Get feedback error: " + ex.Message);
+                return "[Error retrieving feedback]";
+            }
         }
 
         /// <summary>
@@ -133,7 +166,7 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                // Simple JSON array parsing (trong production nên dùng JSON.NET)
+                // Simple JSON array parsing
                 string cleaned = allowedReadersJson.Trim('[', ']');
                 var readers = cleaned.Split(',')
                     .Select(r => r.Trim().Trim('"'))

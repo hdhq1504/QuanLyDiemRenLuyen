@@ -1,25 +1,25 @@
 -- =========================================================
--- AUDITING - PART 4: AUDIT TRIGGERS (Run as QLDiemRenLuyen)
+-- KIỂM TOÁN - PHẦN TRIGGERS (Chạy với QLDiemRenLuyen)
 -- =========================================================
--- Connection: QLDiemRenLuyen
--- Purpose: Create triggers for capturing OLD/NEW values
--- Prerequisite: Run Parts 1, 2, 3 first!
+-- Kết nối: QLDiemRenLuyen
+-- Mục đích: Tạo triggers ghi lại giá trị OLD/NEW
+-- Điều kiện: Chạy các phần trước đó trước!
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 SET LINESIZE 200;
 
 PROMPT '========================================';
-PROMPT 'AUDITING PART 4 - Audit Triggers';
-PROMPT 'Executing as: QLDiemRenLuyen';
+PROMPT 'KIỂM TOÁN - Audit Triggers';
+PROMPT 'Đang thực thi với: QLDiemRenLuyen';
 PROMPT '========================================';
 
 -- =========================================================
--- STEP 1: CREATE TRIGGER FOR SCORES TABLE
+-- BƯỚC 1: TẠO TRIGGER CHO BẢNG SCORES (ĐIỂM)
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit trigger for SCORES...';
+PROMPT 'Đang tạo trigger audit cho SCORES...';
 
 CREATE OR REPLACE TRIGGER TRG_AUDIT_SCORES
 AFTER INSERT OR UPDATE OR DELETE ON SCORES
@@ -32,7 +32,7 @@ DECLARE
     v_justification VARCHAR2(1000);
     v_record_id VARCHAR2(100);
 BEGIN
-    -- Get justification from context (set by application)
+    -- Lấy lý do từ context (đặt bởi ứng dụng)
     BEGIN
         v_justification := SYS_CONTEXT('AUDIT_CTX', 'JUSTIFICATION');
     EXCEPTION
@@ -53,7 +53,7 @@ BEGIN
         v_operation := 'UPDATE';
         v_record_id := TO_CHAR(:NEW.ID);
         
-        -- Build changed columns list
+        -- Xây dựng danh sách cột đã thay đổi
         v_changed_cols := '';
         IF NVL(:OLD.TOTAL_SCORE, -1) != NVL(:NEW.TOTAL_SCORE, -1) THEN
             v_changed_cols := v_changed_cols || 'TOTAL_SCORE,';
@@ -91,7 +91,7 @@ BEGIN
                       '}';
     END IF;
     
-    -- Insert audit log
+    -- Ghi log audit
     INSERT INTO AUDIT_CHANGE_LOGS(
         TABLE_NAME, RECORD_ID, OPERATION,
         OLD_VALUES, NEW_VALUES, CHANGED_COLUMNS,
@@ -110,14 +110,14 @@ BEGIN
 END;
 /
 
-PROMPT '✓ Created TRG_AUDIT_SCORES';
+PROMPT '✓ Đã tạo TRG_AUDIT_SCORES';
 
 -- =========================================================
--- STEP 2: CREATE TRIGGER FOR USERS TABLE
+-- BƯỚC 2: TẠO TRIGGER CHO BẢNG USERS (NGƯỜI DÙNG)
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit trigger for USERS...';
+PROMPT 'Đang tạo trigger audit cho USERS...';
 
 CREATE OR REPLACE TRIGGER TRG_AUDIT_USERS
 AFTER INSERT OR UPDATE OR DELETE ON USERS
@@ -201,14 +201,14 @@ BEGIN
 END;
 /
 
-PROMPT '✓ Created TRG_AUDIT_USERS';
+PROMPT '✓ Đã tạo TRG_AUDIT_USERS';
 
 -- =========================================================
--- STEP 3: CREATE TRIGGER FOR FEEDBACKS TABLE
+-- BƯỚC 3: TẠO TRIGGER CHO BẢNG FEEDBACKS (PHẢN HỒI)
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit trigger for FEEDBACKS...';
+PROMPT 'Đang tạo trigger audit cho FEEDBACKS...';
 
 CREATE OR REPLACE TRIGGER TRG_AUDIT_FEEDBACKS
 AFTER INSERT OR UPDATE ON FEEDBACKS
@@ -271,14 +271,14 @@ BEGIN
 END;
 /
 
-PROMPT '✓ Created TRG_AUDIT_FEEDBACKS';
+PROMPT '✓ Đã tạo TRG_AUDIT_FEEDBACKS';
 
 -- =========================================================
--- STEP 4: CREATE TRIGGER FOR PROOFS TABLE
+-- BƯỚC 4: TẠO TRIGGER CHO BẢNG PROOFS (MINH CHỨNG)
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit trigger for PROOFS...';
+PROMPT 'Đang tạo trigger audit cho PROOFS...';
 
 CREATE OR REPLACE TRIGGER TRG_AUDIT_PROOFS
 AFTER UPDATE ON PROOFS
@@ -288,7 +288,7 @@ DECLARE
     v_new_json CLOB;
     v_justification VARCHAR2(1000);
 BEGIN
-    -- Only audit if STATUS changed
+    -- Chỉ audit khi STATUS thay đổi
     IF NVL(:OLD.STATUS, ' ') = NVL(:NEW.STATUS, ' ') THEN
         RETURN;
     END IF;
@@ -322,14 +322,14 @@ BEGIN
 END;
 /
 
-PROMPT '✓ Created TRG_AUDIT_PROOFS';
+PROMPT '✓ Đã tạo TRG_AUDIT_PROOFS';
 
 -- =========================================================
--- STEP 5: CREATE TRIGGER FOR ACTIVITIES TABLE
+-- BƯỚC 5: TẠO TRIGGER CHO BẢNG ACTIVITIES (HOẠT ĐỘNG)
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit trigger for ACTIVITIES...';
+PROMPT 'Đang tạo trigger audit cho ACTIVITIES...';
 
 CREATE OR REPLACE TRIGGER TRG_AUDIT_ACTIVITIES
 AFTER UPDATE ON ACTIVITIES
@@ -340,7 +340,7 @@ DECLARE
     v_changed_cols VARCHAR2(1000);
     v_justification VARCHAR2(1000);
 BEGIN
-    -- Only audit if APPROVAL_STATUS or STATUS changed
+    -- Chỉ audit khi APPROVAL_STATUS hoặc STATUS thay đổi
     IF NVL(:OLD.APPROVAL_STATUS, ' ') = NVL(:NEW.APPROVAL_STATUS, ' ') 
        AND NVL(:OLD.STATUS, ' ') = NVL(:NEW.STATUS, ' ') THEN
         RETURN;
@@ -389,14 +389,14 @@ BEGIN
 END;
 /
 
-PROMPT '✓ Created TRG_AUDIT_ACTIVITIES';
+PROMPT '✓ Đã tạo TRG_AUDIT_ACTIVITIES';
 
 -- =========================================================
--- STEP 6: CREATE TRIGGER FOR CLASS_LECTURER_ASSIGNMENTS
+-- BƯỚC 6: TẠO TRIGGER CHO BẢNG CLASS_LECTURER_ASSIGNMENTS
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit trigger for CLASS_LECTURER_ASSIGNMENTS...';
+PROMPT 'Đang tạo trigger audit cho CLASS_LECTURER_ASSIGNMENTS...';
 
 CREATE OR REPLACE TRIGGER TRG_AUDIT_CLASS_ASSIGNMENTS
 AFTER INSERT OR UPDATE ON CLASS_LECTURER_ASSIGNMENTS
@@ -450,19 +450,19 @@ BEGIN
 END;
 /
 
-PROMPT '✓ Created TRG_AUDIT_CLASS_ASSIGNMENTS';
+PROMPT '✓ Đã tạo TRG_AUDIT_CLASS_ASSIGNMENTS';
 
 -- =========================================================
--- VERIFICATION
+-- XÁC MINH
 -- =========================================================
 
 PROMPT '';
 PROMPT '========================================';
-PROMPT 'VERIFICATION - Audit Triggers';
+PROMPT 'XÁC MINH - Các Audit Trigger';
 PROMPT '========================================';
 
 PROMPT '';
-PROMPT 'Triggers created:';
+PROMPT 'Các trigger đã tạo:';
 SELECT TRIGGER_NAME, TABLE_NAME, STATUS
 FROM USER_TRIGGERS
 WHERE TRIGGER_NAME LIKE 'TRG_AUDIT%'
@@ -470,14 +470,12 @@ ORDER BY TRIGGER_NAME;
 
 PROMPT '';
 PROMPT '========================================';
-PROMPT '✓ PART 4 COMPLETED!';
-PROMPT 'Triggers created for:';
-PROMPT '  - SCORES';
-PROMPT '  - USERS';
-PROMPT '  - FEEDBACKS';
-PROMPT '  - PROOFS';
-PROMPT '  - ACTIVITIES';
-PROMPT '  - CLASS_LECTURER_ASSIGNMENTS';
-PROMPT '';
-PROMPT 'Next: Run Part 5 to create helpers';
+PROMPT '✓ HOÀN THÀNH AUDIT TRIGGERS!';
+PROMPT 'Đã tạo trigger cho:';
+PROMPT '  - SCORES (Điểm)';
+PROMPT '  - USERS (Người dùng)';
+PROMPT '  - FEEDBACKS (Phản hồi)';
+PROMPT '  - PROOFS (Minh chứng)';
+PROMPT '  - ACTIVITIES (Hoạt động)';
+PROMPT '  - CLASS_LECTURER_ASSIGNMENTS (Phân công CVHT)';
 PROMPT '========================================';

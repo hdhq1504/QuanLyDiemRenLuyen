@@ -354,14 +354,15 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
             viewModel.ClassId = classId;
             viewModel.ClassName = className?.ToString();
 
-            // Get access logs from AUDIT_TRAIL
+            // Get access logs from AUDIT_EVENTS
             string logQuery = @"SELECT 
-                                   at.ID, at.WHO, u.FULL_NAME as WHO_NAME, 
-                                   at.ACTION, at.EVENT_AT_UTC, at.CLIENT_IP, at.USER_AGENT
-                               FROM AUDIT_TRAIL at
-                               JOIN USERS u ON at.WHO = u.MAND
-                               WHERE at.ACTION LIKE 'SCORE_ACCESS%'
-                               ORDER BY at.EVENT_AT_UTC DESC";
+                                   ae.ID, ae.PERFORMED_BY as WHO, u.FULL_NAME as WHO_NAME, 
+                                   ae.EVENT_TYPE || '|' || NVL(ae.ENTITY_TYPE,'') || '|' || NVL(ae.DESCRIPTION,'') as ACTION, 
+                                   ae.EVENT_AT_UTC, ae.CLIENT_IP, ae.USER_AGENT
+                               FROM AUDIT_EVENTS ae
+                               JOIN USERS u ON ae.PERFORMED_BY = u.MAND
+                               WHERE ae.EVENT_TYPE LIKE 'SCORE_ACCESS%' OR ae.ENTITY_TYPE = 'SCORE'
+                               ORDER BY ae.EVENT_AT_UTC DESC";
 
             DataTable logs = OracleDbHelper.ExecuteQuery(logQuery);
 

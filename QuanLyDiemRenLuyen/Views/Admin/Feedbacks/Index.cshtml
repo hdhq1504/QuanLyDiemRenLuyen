@@ -97,6 +97,32 @@
     .table td {
         padding: 15px;
         border-bottom: 1px solid #e9ecef;
+        word-break: break-word;
+    }
+
+    .card {
+        overflow-x: auto;
+    }
+
+    .table {
+        min-width: 700px;
+    }
+
+    .table td:first-child {
+        max-width: 300px;
+    }
+
+    .table td:first-child div:first-child {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .table td:first-child div:last-child {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
     }
 
     .badge {
@@ -139,13 +165,8 @@
     }
 </style>
 
-<div class="content-header">
-    <h2><i class="fas fa-comments"></i> Quản lý phản hồi</h2>
-    <p>Xem và phản hồi ý kiến của sinh viên</p>
-</div>
-
 <div class="filter-bar">
-    @using (Html.BeginForm("Index", "Feedbacks", FormMethod.Get))
+    @using (Html.BeginForm("Index", "Feedbacks", FormMethod.Get, new { @class = "" }))
     {
         <div class="filter-row">
             <div class="form-group">
@@ -208,7 +229,7 @@
                             }
                         </td>
                         <td>
-                            <a href="@Url.Action("Detail", "Feedbacks", new { id = item.Id })" class="btn btn-primary btn-sm">
+                            <a href="@Url.RouteUrl("AdminFeedbacks", new { action = "Detail", id = item.Id })" class="btn btn-primary btn-sm">
                                 <i class="fas fa-eye"></i> Chi tiết
                             </a>
                         </td>
@@ -228,7 +249,7 @@
                     }
                     else
                     {
-                        <a href="@Url.Action("Index", "Feedbacks", new { status = Model.FilterStatus, search = Model.SearchKeyword, page = i })">@i</a>
+                        <a href="@Url.RouteUrl("AdminFeedbacks", new { action = "Index", status = Model.FilterStatus, search = Model.SearchKeyword, page = i })">@i</a>
                     }
                 }
             </div>

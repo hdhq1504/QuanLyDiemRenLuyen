@@ -6,6 +6,7 @@ using System.Web.Security;
 using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
 using QuanLyDiemRenLuyen.Models;
+using QuanLyDiemRenLuyen.Services;
 
 namespace QuanLyDiemRenLuyen.Controllers
 {
@@ -139,6 +140,16 @@ namespace QuanLyDiemRenLuyen.Controllers
                 Session["RoleName"] = roleName;
                 Session["Email"] = model.Email;
 
+                // Log login thành công với encrypted details
+                try
+                {
+                    var auditService = new AuditCryptoService();
+                    string clientIp = Request.UserHostAddress;
+                    string userAgent = Request.UserAgent;
+                    auditService.LogLogin(mand, clientIp, userAgent, success: true);
+                }
+                catch { /* Không fail nếu audit lỗi */ }
+
                 // Redirect theo role
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
@@ -168,107 +179,12 @@ namespace QuanLyDiemRenLuyen.Controllers
             }
         }
 
-        // GET: Account/Register
+        // GET: Account/Register (Đã vô hiệu hóa - chỉ Admin được tạo tài khoản)
         [AllowAnonymous]
         public ActionResult Register()
         {
-            return View();
-        }
-
-        // POST: Account/Register
-        [HttpPost]
-        [AllowAnonymous]
-        [ValidateAntiForgeryToken]
-        public ActionResult Register(RegisterViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            try
-            {
-                // Kiểm tra email đã tồn tại chưa
-                string checkQuery = "SELECT COUNT(*) FROM USERS WHERE EMAIL = :Email OR MAND = :MAND";
-                var checkParams = new[]
-                {
-                    OracleDbHelper.CreateParameter("Email", OracleDbType.Varchar2, model.Email),
-                    OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, model.MAND)
-                };
-
-                int count = Convert.ToInt32(OracleDbHelper.ExecuteScalar(checkQuery, checkParams));
-                if (count > 0)
-                {
-                    ModelState.AddModelError("", "Email hoặc mã người dùng đã tồn tại");
-                    return View(model);
-                }
-
-                // Tạo salt và hash password
-                string salt = PasswordHelper.GenerateSalt();
-                string hash = PasswordHelper.HashPassword(model.Password, salt);
-
-                // Insert user mới
-                string insertQuery = @"INSERT INTO USERS
-                    (MAND, EMAIL, FULL_NAME, ROLE_NAME, PASSWORD_HASH, PASSWORD_SALT, IS_ACTIVE, CREATED_AT, FAILED_LOGIN_COUNT)
-                    VALUES
-                    (:MAND, :Email, :FullName, :RoleName, :PasswordHash, :PasswordSalt, 1, SYSTIMESTAMP, 0)";
-
-                var insertParams = new[]
-                {
-                    OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, model.MAND),
-                    OracleDbHelper.CreateParameter("Email", OracleDbType.Varchar2, model.Email),
-                    OracleDbHelper.CreateParameter("FullName", OracleDbType.Varchar2, model.FullName),
-                    OracleDbHelper.CreateParameter("RoleName", OracleDbType.Varchar2, model.RoleName),
-                    OracleDbHelper.CreateParameter("PasswordHash", OracleDbType.Varchar2, hash),
-                    OracleDbHelper.CreateParameter("PasswordSalt", OracleDbType.Varchar2, salt)
-                };
-
-                int result = OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
-
-                if (result > 0)
-                {
-                    // Nếu role là STUDENT, tự động tạo record trong bảng STUDENTS
-                    if (model.RoleName == "STUDENT")
-                    {
-                        try
-                        {
-                            // Tạo STUDENT_CODE tự động (format: năm hiện tại + 8 số cuối của MAND)
-                            string studentCode = DateTime.Now.Year.ToString() + model.MAND.Substring(Math.Max(0, model.MAND.Length - 8));
-
-                            string insertStudentQuery = @"INSERT INTO STUDENTS
-                                (USER_ID, STUDENT_CODE, CLASS_ID, DEPARTMENT_ID, DATE_OF_BIRTH, GENDER, PHONE, ADDRESS)
-                                VALUES
-                                (:UserID, :StudentCode, NULL, NULL, NULL, NULL, NULL, NULL)";
-
-                            var studentParams = new[]
-                            {
-                                OracleDbHelper.CreateParameter("UserID", OracleDbType.Varchar2, model.MAND),
-                                OracleDbHelper.CreateParameter("StudentCode", OracleDbType.Varchar2, studentCode)
-                            };
-
-                            OracleDbHelper.ExecuteNonQuery(insertStudentQuery, studentParams);
-                        }
-                        catch (Exception studentEx)
-                        {
-                            // Log lỗi nhưng vẫn cho phép đăng ký thành công
-                            System.Diagnostics.Debug.WriteLine("Lỗi khi tạo STUDENT record: " + studentEx.Message);
-                        }
-                    }
-
-                    TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
-                    return RedirectToAction("Login");
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Đăng ký thất bại. Vui lòng thử lại.");
-                    return View(model);
-                }
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", "Đã xảy ra lỗi: " + ex.Message);
-                return View(model);
-            }
+            TempData["InfoMessage"] = "Chức năng đăng ký đã bị vô hiệu hóa. Vui lòng liên hệ Quản trị viên để được cấp tài khoản.";
+            return RedirectToAction("Login");
         }
 
         // POST: Account/Logout

@@ -1,60 +1,59 @@
 -- =========================================================
--- AUDITING - PART 5: HELPERS (Run as SYSDBA first, then QLDiemRenLuyen)
+-- KIỂM TOÁN - PHẦN HELPERS (Chạy với SYSDBA trước, sau đó QLDiemRenLuyen)
 -- =========================================================
--- Connection: Start with SYSDBA, then switch to QLDiemRenLuyen
--- Purpose: Create context and helper procedures
--- Prerequisite: Run Parts 1-4 first!
+-- Kết nối: Bắt đầu với SYSDBA, sau đó chuyển sang QLDiemRenLuyen
+-- Mục đích: Tạo context và các thủ tục hỗ trợ
+-- Điều kiện: Chạy các phần trước đó trước!
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 SET LINESIZE 200;
 
 PROMPT '========================================';
-PROMPT 'AUDITING PART 5 - Helpers';
+PROMPT 'KIỂM TOÁN - Helpers';
 PROMPT '========================================';
 
 -- =========================================================
--- SECTION A: RUN AS SYSDBA
+-- PHẦN A: CHẠY VỚI SYSDBA
 -- =========================================================
 
 PROMPT '';
-PROMPT '=== SECTION A: Run as SYSDBA ===';
+PROMPT '=== PHẦN A: Chạy với SYSDBA ===';
 PROMPT '';
 
--- Create Application Context
-PROMPT 'Creating AUDIT_CTX context...';
+-- Tạo Application Context
+PROMPT 'Đang tạo AUDIT_CTX context...';
 
 CREATE OR REPLACE CONTEXT AUDIT_CTX USING QLDIEMRENLUYEN.PKG_AUDIT_CONTEXT ACCESSED GLOBALLY;
 
-PROMPT '✓ Created AUDIT_CTX context';
+PROMPT '✓ Đã tạo AUDIT_CTX context';
 
--- Grant access
+-- Cấp quyền
 GRANT CREATE ANY CONTEXT TO QLDIEMRENLUYEN;
 
-PROMPT '✓ Granted CREATE ANY CONTEXT to QLDiemRenLuyen';
+PROMPT '✓ Đã cấp quyền CREATE ANY CONTEXT cho QLDiemRenLuyen';
 
 -- =========================================================
--- SECTION B: RUN AS QLDiemRenLuyen
--- (Comment out Section A and uncomment Section B when running as QLDiemRenLuyen)
+-- PHẦN B: CHẠY VỚI QLDiemRenLuyen
 -- =========================================================
 
 PROMPT '';
-PROMPT '=== SECTION B: Context Package ===';
-PROMPT 'Creating PKG_AUDIT_CONTEXT package...';
+PROMPT '=== PHẦN B: Context Package ===';
+PROMPT 'Đang tạo gói PKG_AUDIT_CONTEXT...';
 
--- Context management package
+-- Gói quản lý context
 CREATE OR REPLACE PACKAGE PKG_AUDIT_CONTEXT AS
-    -- Set audit context before performing changes
+    -- Đặt audit context trước khi thực hiện thay đổi
     PROCEDURE SET_CONTEXT(
         p_user_id       IN VARCHAR2,
         p_justification IN VARCHAR2 DEFAULT NULL,
         p_client_ip     IN VARCHAR2 DEFAULT NULL
     );
     
-    -- Clear context after operation
+    -- Xóa context sau khi hoàn thành
     PROCEDURE CLEAR_CONTEXT;
     
-    -- Get current context values
+    -- Lấy giá trị context hiện tại
     FUNCTION GET_USER_ID RETURN VARCHAR2;
     FUNCTION GET_JUSTIFICATION RETURN VARCHAR2;
 END PKG_AUDIT_CONTEXT;
@@ -99,16 +98,16 @@ CREATE OR REPLACE PACKAGE BODY PKG_AUDIT_CONTEXT AS
 END PKG_AUDIT_CONTEXT;
 /
 
-PROMPT '✓ Created PKG_AUDIT_CONTEXT package';
+PROMPT '✓ Đã tạo gói PKG_AUDIT_CONTEXT';
 
 -- =========================================================
--- STEP 2: CREATE HELPER PROCEDURES
+-- BƯỚC 2: TẠO CÁC THỦ TỤC HỖ TRỢ
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating helper procedures...';
+PROMPT 'Đang tạo các thủ tục hỗ trợ...';
 
--- Procedure to log business actions
+-- Thủ tục ghi log hành động nghiệp vụ
 CREATE OR REPLACE PROCEDURE SP_LOG_BUSINESS_ACTION(
     p_action_type   IN VARCHAR2,
     p_action_desc   IN VARCHAR2,
@@ -134,9 +133,9 @@ BEGIN
 END SP_LOG_BUSINESS_ACTION;
 /
 
-PROMPT '✓ Created SP_LOG_BUSINESS_ACTION';
+PROMPT '✓ Đã tạo SP_LOG_BUSINESS_ACTION';
 
--- Procedure to get record history
+-- Thủ tục lấy lịch sử bản ghi
 CREATE OR REPLACE PROCEDURE SP_GET_RECORD_HISTORY(
     p_table_name    IN VARCHAR2,
     p_record_id     IN VARCHAR2,
@@ -160,9 +159,9 @@ BEGIN
 END SP_GET_RECORD_HISTORY;
 /
 
-PROMPT '✓ Created SP_GET_RECORD_HISTORY';
+PROMPT '✓ Đã tạo SP_GET_RECORD_HISTORY';
 
--- Function to get audit count for a record
+-- Hàm đếm số lượng audit của một bản ghi
 CREATE OR REPLACE FUNCTION FN_GET_AUDIT_COUNT(
     p_table_name    IN VARCHAR2,
     p_record_id     IN VARCHAR2
@@ -179,9 +178,9 @@ BEGIN
 END FN_GET_AUDIT_COUNT;
 /
 
-PROMPT '✓ Created FN_GET_AUDIT_COUNT';
+PROMPT '✓ Đã tạo FN_GET_AUDIT_COUNT';
 
--- Procedure to set justification (wrapper)
+-- Thủ tục đặt lý do (wrapper)
 CREATE OR REPLACE PROCEDURE SP_SET_AUDIT_JUSTIFICATION(
     p_user_id       IN VARCHAR2,
     p_justification IN VARCHAR2
@@ -194,23 +193,23 @@ BEGIN
 END SP_SET_AUDIT_JUSTIFICATION;
 /
 
-PROMPT '✓ Created SP_SET_AUDIT_JUSTIFICATION';
+PROMPT '✓ Đã tạo SP_SET_AUDIT_JUSTIFICATION';
 
--- Procedure to clear justification
+-- Thủ tục xóa lý do
 CREATE OR REPLACE PROCEDURE SP_CLEAR_AUDIT_CONTEXT AS
 BEGIN
     PKG_AUDIT_CONTEXT.CLEAR_CONTEXT;
 END SP_CLEAR_AUDIT_CONTEXT;
 /
 
-PROMPT '✓ Created SP_CLEAR_AUDIT_CONTEXT';
+PROMPT '✓ Đã tạo SP_CLEAR_AUDIT_CONTEXT';
 
 -- =========================================================
--- STEP 3: CREATE AUDIT REPORT PROCEDURE
+-- BƯỚC 3: TẠO THỦ TỤC BÁO CÁO AUDIT
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit report procedures...';
+PROMPT 'Đang tạo các thủ tục báo cáo audit...';
 
 CREATE OR REPLACE PROCEDURE SP_AUDIT_REPORT(
     p_table_name    IN VARCHAR2 DEFAULT NULL,
@@ -238,9 +237,9 @@ BEGIN
 END SP_AUDIT_REPORT;
 /
 
-PROMPT '✓ Created SP_AUDIT_REPORT';
+PROMPT '✓ Đã tạo SP_AUDIT_REPORT';
 
--- Daily summary function
+-- Hàm tổng hợp theo ngày
 CREATE OR REPLACE FUNCTION FN_AUDIT_DAILY_SUMMARY(
     p_date IN DATE DEFAULT SYSDATE
 ) RETURN SYS_REFCURSOR AS
@@ -261,15 +260,15 @@ BEGIN
 END FN_AUDIT_DAILY_SUMMARY;
 /
 
-PROMPT '✓ Created FN_AUDIT_DAILY_SUMMARY';
+PROMPT '✓ Đã tạo FN_AUDIT_DAILY_SUMMARY';
 
 -- =========================================================
--- VERIFICATION
+-- XÁC MINH
 -- =========================================================
 
 PROMPT '';
 PROMPT '========================================';
-PROMPT 'VERIFICATION - Helper Objects';
+PROMPT 'XÁC MINH - Các đối tượng Helper';
 PROMPT '========================================';
 
 PROMPT '';
@@ -296,9 +295,9 @@ ORDER BY OBJECT_NAME;
 
 PROMPT '';
 PROMPT '========================================';
-PROMPT '✓ PART 5 COMPLETED!';
-PROMPT 'Created:';
-PROMPT '  - PKG_AUDIT_CONTEXT (context management)';
+PROMPT '✓ HOÀN THÀNH AUDIT HELPERS!';
+PROMPT 'Đã tạo:';
+PROMPT '  - PKG_AUDIT_CONTEXT (quản lý context)';
 PROMPT '  - SP_LOG_BUSINESS_ACTION';
 PROMPT '  - SP_GET_RECORD_HISTORY';
 PROMPT '  - SP_SET_AUDIT_JUSTIFICATION';
@@ -306,6 +305,4 @@ PROMPT '  - SP_CLEAR_AUDIT_CONTEXT';
 PROMPT '  - SP_AUDIT_REPORT';
 PROMPT '  - FN_GET_AUDIT_COUNT';
 PROMPT '  - FN_AUDIT_DAILY_SUMMARY';
-PROMPT '';
-PROMPT 'Next: Run Part 6 to create views';
 PROMPT '========================================';

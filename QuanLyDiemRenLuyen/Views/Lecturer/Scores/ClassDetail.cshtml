@@ -1,0 +1,227 @@
+@model QuanLyDiemRenLuyen.Models.LecturerClassScoreDetailViewModel
+@{
+    ViewBag.Title = "Chi Tiết Điểm Lớp - " + Model.ClassName;
+    Layout = "~/Views/Shared/_LecturerLayout.cshtml";
+}
+
+<style>
+    .page-container { max-width: 1400px; margin: 0 auto; }
+
+    .page-header {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+
+    .page-header h1 { font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 15px 0; }
+
+    .class-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .info-item { padding: 12px 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #0ea5e9; }
+    .info-item .label { font-size: 12px; color: #64748b; }
+    .info-item .value { font-size: 16px; font-weight: 600; color: #0f172a; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        text-align: center;
+    }
+
+    .stat-card .value { font-size: 28px; font-weight: 700; color: #0f172a; }
+    .stat-card .label { font-size: 13px; color: #64748b; }
+    .stat-card.excellent .value { color: #059669; }
+    .stat-card.good .value { color: #0ea5e9; }
+    .stat-card.fair .value { color: #8b5cf6; }
+    .stat-card.average .value { color: #f59e0b; }
+    .stat-card.weak .value { color: #ef4444; }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 20px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .table-header h2 { font-size: 18px; font-weight: 600; color: #0f172a; margin: 0; }
+
+    .btn {
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary { background: #64748b; color: white; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-success { background: #059669; color: white; }
+    .btn-success:hover { background: #047857; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 14px 20px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    th { background: #f8fafc; font-weight: 600; color: #475569; font-size: 13px; }
+    tr:hover { background: #f8fafc; }
+
+    .classification-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-excellent { background: #d1fae5; color: #065f46; }
+    .badge-good { background: #dbeafe; color: #1e40af; }
+    .badge-fair { background: #ede9fe; color: #5b21b6; }
+    .badge-average { background: #fef3c7; color: #92400e; }
+    .badge-weak { background: #fee2e2; color: #991b1b; }
+
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: 600; }
+    .status-approved { background: #d1fae5; color: #065f46; }
+    .status-official { background: #dbeafe; color: #1e40af; }
+    .status-provisional { background: #fef3c7; color: #92400e; }
+    .status-na { background: #f1f5f9; color: #64748b; }
+</style>
+
+<div class="page-container">
+    <div class="page-header">
+        <a href="@Url.RouteUrl("LecturerScores", new { action = "MyClasses" })" style="color: #64748b; text-decoration: none; font-weight: 500; display: inline-block; margin-bottom: 15px;">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+        <h1><i class="fas fa-graduation-cap"></i> @Model.ClassName</h1>
+        <div class="class-info">
+            <div class="info-item">
+                <div class="label">Mã lớp</div>
+                <div class="value">@Model.ClassCode</div>
+            </div>
+            <div class="info-item">
+                <div class="label">Khoa</div>
+                <div class="value">@Model.DepartmentName</div>
+            </div>
+            <div class="info-item">
+                <div class="label">Học kỳ</div>
+                <div class="value">@Model.TermName</div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Statistics != null)
+    {
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="value">@Model.Statistics.TotalStudents</div>
+                <div class="label">Tổng SV</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">@Model.Statistics.AverageScore.ToString("F1")</div>
+                <div class="label">ĐTB</div>
+            </div>
+            <div class="stat-card excellent">
+                <div class="value">@Model.Statistics.ExcellentCount</div>
+                <div class="label">Xuất sắc</div>
+            </div>
+            <div class="stat-card good">
+                <div class="value">@Model.Statistics.GoodCount</div>
+                <div class="label">Giỏi</div>
+            </div>
+            <div class="stat-card fair">
+                <div class="value">@Model.Statistics.FairCount</div>
+                <div class="label">Khá</div>
+            </div>
+            <div class="stat-card average">
+                <div class="value">@Model.Statistics.AverageCount</div>
+                <div class="label">Trung bình</div>
+            </div>
+            <div class="stat-card weak">
+                <div class="value">@Model.Statistics.WeakCount</div>
+                <div class="label">Yếu</div>
+            </div>
+        </div>
+    }
+
+    <div class="table-container">
+        <div class="table-header">
+            <h2><i class="fas fa-list"></i> Danh sách điểm sinh viên</h2>
+            <a href="@Url.RouteUrl("LecturerScores", new { action = "Export", id = Model.ClassId })" class="btn btn-success">
+                <i class="fas fa-file-csv"></i> Xuất CSV
+            </a>
+        </div>
+
+        @if (Model.Students != null && Model.Students.Count > 0)
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>MSSV</th>
+                        <th>Họ và tên</th>
+                        <th>Điểm</th>
+                        <th>Xếp loại</th>
+                        <th>Trạng thái</th>
+                        <th>Hoạt động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Students.Count; i++)
+                    {
+                        var student = Model.Students[i];
+                        string badgeClass = "badge-average";
+                        if (student.TotalScore >= 90) { badgeClass = "badge-excellent"; }
+                        else if (student.TotalScore >= 80) { badgeClass = "badge-good"; }
+                        else if (student.TotalScore >= 65) { badgeClass = "badge-fair"; }
+                        else if (student.TotalScore < 50) { badgeClass = "badge-weak"; }
+
+                        string statusClass = "status-na";
+                        string statusText = "N/A";
+                        if (student.Status == "APPROVED") { statusClass = "status-approved"; statusText = "Đã duyệt"; }
+                        else if (student.Status == "OFFICIAL") { statusClass = "status-official"; statusText = "Chính thức"; }
+                        else if (student.Status == "PROVISIONAL" || student.Status == "DRAFT_PUBLISHED") { statusClass = "status-provisional"; statusText = "Tạm thời"; }
+
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td><strong>@student.StudentCode</strong></td>
+                            <td>@student.StudentName</td>
+                            <td><strong style="font-size: 16px; color: #0ea5e9;">@student.TotalScore</strong></td>
+                            <td><span class="classification-badge @badgeClass">@student.Classification</span></td>
+                            <td><span class="status-badge @statusClass">@statusText</span></td>
+                            <td>@student.ActivityCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div style="text-align: center; padding: 60px 20px; color: #64748b;">
+                <i class="fas fa-inbox" style="font-size: 48px; color: #e2e8f0; margin-bottom: 15px; display: block;"></i>
+                <h3>Chưa có dữ liệu điểm</h3>
+                <p>Lớp này chưa có điểm rèn luyện trong học kỳ hiện tại.</p>
+            </div>
+        }
+    </div>
+</div>

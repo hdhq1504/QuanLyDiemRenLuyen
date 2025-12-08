@@ -1,15 +1,15 @@
 -- =========================================================
--- MAC + VPD IMPLEMENTATION - PART A (Run as SYSDBA)
+-- MAC + VPD - PHẦN A (Chạy với SYSDBA)
 -- =========================================================
--- Connection: SYSDBA (sys/sys)
--- Purpose: Create Application Context for VPD
+-- Kết nối: SYSDBA (sys/sys)
+-- Mục đích: Tạo Application Context cho VPD
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 
 PROMPT '========================================';
-PROMPT 'MAC + VPD PART A - Creating Application Context';
-PROMPT 'Executing as: SYSDBA';
+PROMPT 'MAC + VPD PHẦN A - Tạo Application Context';
+PROMPT 'Đang thực thi với: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================

@@ -1,19 +1,19 @@
 -- =========================================================
--- MAC + OLS IMPLEMENTATION - PART C (Run as SYSDBA)
+-- MAC + OLS - PHẦN C (Chạy với SYSDBA)
 -- =========================================================
--- Connection: SYSDBA (sys as sysdba)
--- Purpose: Set user labels for OLS policy
--- Prerequisite: Run 001 and 002 scripts first!
+-- Kết nối: SYSDBA (sys as sysdba)
+-- Mục đích: Thiết lập nhãn người dùng cho OLS policy
+-- Điều kiện: Chạy script 001 và 002 trước!
 -- =========================================================
 --
--- IMPORTANT: Use SHORT_NAME for levels/groups:
---   Levels: CONF, INT, PUB (not CONFIDENTIAL, INTERNAL, PUBLIC)
---   Groups: UNI, DEPT, CLS (not UNIVERSITY, DEPARTMENT, CLASS)
+-- LƯU Ý: Sử dụng SHORT_NAME cho levels/groups:
+--   Levels: CONF, INT, PUB (không phải CONFIDENTIAL, INTERNAL, PUBLIC)
+--   Groups: UNI, DEPT, CLS (không phải UNIVERSITY, DEPARTMENT, CLASS)
 --
--- USER LABEL ASSIGNMENT:
--- STUDENT:  Can read PUB level data
--- LECTURER: Can read PUB + INT level data
--- ADMIN:    Can read all levels (PUB, INT, CONF)
+-- PHÂN QUYỀN NHÃN NGƯỜI DÙNG:
+-- STUDENT:  Chỉ đọc được dữ liệu cấp PUB
+-- LECTURER: Đọc được dữ liệu cấp PUB + INT
+-- ADMIN:    Đọc được tất cả cấp (PUB, INT, CONF)
 --
 -- =========================================================
 
@@ -21,8 +21,8 @@ SET SERVEROUTPUT ON;
 SET LINESIZE 200;
 
 PROMPT '========================================';
-PROMPT 'MAC + OLS PART C - User Label Assignment';
-PROMPT 'Executing as: SYSDBA';
+PROMPT 'MAC + OLS PHẦN C - Gán nhãn người dùng';
+PROMPT 'Đang thực thi với: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================

@@ -1,66 +1,19 @@
 -- =========================================================
--- DAC PHASE 2: SCORE SHARING BY CVHT
+-- DAC GIAI ĐOẠN 2: CHIA SẺ ĐIỂM BỞI CVHT
 -- =========================================================
--- Connection: QLDiemRenLuyen
--- Purpose: Enable class advisors (CVHT) to share score access temporarily
--- Design: Optimized with 1 new table, reusing AUDIT_TRAIL for logging
+-- Kết nối: QLDiemRenLuyen
+-- Mục đích: Cho phép CVHT chia sẻ quyền xem điểm tạm thời
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 
 PROMPT '========================================';
-PROMPT 'DAC PHASE 2 - Score Sharing Implementation';
-PROMPT 'Executing as: QLDiemRenLuyen';
+PROMPT 'DAC GIAI ĐOẠN 2 - Chia sẻ Điểm';
+PROMPT 'Đang thực thi với: QLDiemRenLuyen';
 PROMPT '========================================';
 
 -- =========================================================
--- STEP 1: CREATE CLASS_SCORE_PERMISSIONS TABLE
--- =========================================================
-
--- Check if table exists
-DECLARE
-    table_exists NUMBER;
-BEGIN
-    SELECT COUNT(*) INTO table_exists 
-    FROM USER_TABLES 
-    WHERE TABLE_NAME = 'CLASS_SCORE_PERMISSIONS';
-    
-    IF table_exists > 0 THEN
-        EXECUTE IMMEDIATE 'DROP TABLE CLASS_SCORE_PERMISSIONS CASCADE CONSTRAINTS';
-        DBMS_OUTPUT.PUT_LINE('✓ Dropped existing CLASS_SCORE_PERMISSIONS table');
-    END IF;
-END;
-/
-
-CREATE TABLE CLASS_SCORE_PERMISSIONS (
-    ID VARCHAR2(32) DEFAULT RAWTOHEX(SYS_GUID()) PRIMARY KEY,
-    CLASS_ID VARCHAR2(32) NOT NULL,
-    GRANTED_BY VARCHAR2(50) NOT NULL,
-    GRANTED_TO VARCHAR2(50) NOT NULL,
-    PERMISSION_TYPE VARCHAR2(20) NOT NULL,         -- VIEW, EDIT, APPROVE
-    GRANTED_AT TIMESTAMP DEFAULT SYSTIMESTAMP,
-    EXPIRES_AT TIMESTAMP,                          -- NULL = no expiration
-    REVOKED_AT TIMESTAMP,                          -- NULL = not revoked
-    REVOKED_BY VARCHAR2(50),
-    IS_ACTIVE NUMBER(1) DEFAULT 1,
-    NOTES VARCHAR2(500),
-    
-    CONSTRAINT FK_CSP_CLASS FOREIGN KEY (CLASS_ID) REFERENCES CLASSES(ID) ON DELETE CASCADE,
-    CONSTRAINT FK_CSP_GRANTED_BY FOREIGN KEY (GRANTED_BY) REFERENCES USERS(MAND),
-    CONSTRAINT FK_CSP_GRANTED_TO FOREIGN KEY (GRANTED_TO) REFERENCES USERS(MAND),
-    CONSTRAINT CK_CSP_PERMISSION CHECK (PERMISSION_TYPE IN ('VIEW', 'EDIT', 'APPROVE')),
-    CONSTRAINT CK_CSP_ACTIVE CHECK (IS_ACTIVE IN (0,1))
-);
-
-CREATE INDEX IX_CSP_CLASS ON CLASS_SCORE_PERMISSIONS(CLASS_ID);
-CREATE INDEX IX_CSP_GRANTED_TO ON CLASS_SCORE_PERMISSIONS(GRANTED_TO);
-CREATE INDEX IX_CSP_ACTIVE ON CLASS_SCORE_PERMISSIONS(IS_ACTIVE);
-CREATE INDEX IX_CSP_EXPIRES ON CLASS_SCORE_PERMISSIONS(EXPIRES_AT);
-
-PROMPT '✓ Created CLASS_SCORE_PERMISSIONS table';
-
--- =========================================================
--- STEP 2: CREATE HELPER VIEW FOR ACTIVE PERMISSIONS
+-- BƯỚC 1: TẠO VIEW QUYỀN ĐANG HOẠT ĐỘNG
 -- =========================================================
 
 CREATE OR REPLACE VIEW V_ACTIVE_SCORE_PERMISSIONS AS

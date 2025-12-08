@@ -13,20 +13,20 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
     public class ScoresController : AdminBaseController
     {
         // GET: Admin/Scores
-        public ActionResult Index(string department, string term, string search)
+        public ActionResult Index(string department, string term, string classification, string search)
         {
             var authCheck = CheckAuth();
             if (authCheck != null) return authCheck;
 
             try
             {
-                var viewModel = GetClassScoreListViewModel(department, term, search);
+                var viewModel = GetSchoolWideScoresViewModel(department, term, classification, search);
                 return View("~/Views/Admin/ApproveScores.cshtml", viewModel);
             }
             catch (Exception ex)
             {
                 ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
-                return View("~/Views/Admin/ApproveScores.cshtml", new ClassScoreListViewModel { Classes = new List<ClassItem>() });
+                return View("~/Views/Admin/ApproveScores.cshtml", new SchoolWideScoresViewModel { Students = new List<StudentScorePublicationItem>() });
             }
         }
 
@@ -508,6 +508,491 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             if (score >= 65) return "Khá";
             if (score >= 50) return "Trung bình";
             return "Yếu";
+        }
+
+        private SchoolWideScoresViewModel GetSchoolWideScoresViewModel(string department, string term, string classification, string search)
+        {
+            var viewModel = new SchoolWideScoresViewModel
+            {
+                FilterDepartment = department,
+                FilterClassification = classification,
+                SearchKeyword = search,
+                Students = new List<StudentScorePublicationItem>(),
+                Terms = new List<TermSelectItem>(),
+                Departments = new List<DepartmentSelectItem>()
+            };
+
+            // Get terms for dropdown
+            string termsQuery = "SELECT ID, NAME, IS_CURRENT, SCORE_STATUS, DRAFT_PUBLISHED_AT, FEEDBACK_DEADLINE, OFFICIAL_PUBLISHED_AT, PUBLISHED_BY FROM TERMS ORDER BY START_DATE DESC";
+            DataTable termsDt = OracleDbHelper.ExecuteQuery(termsQuery, null);
+            foreach (DataRow row in termsDt.Rows)
+            {
+                viewModel.Terms.Add(new TermSelectItem
+                {
+                    Id = row["ID"].ToString(),
+                    Name = row["NAME"].ToString(),
+                    IsCurrent = row["IS_CURRENT"] != DBNull.Value && Convert.ToInt32(row["IS_CURRENT"]) == 1
+                });
+            }
+
+            // Get selected term or current term
+            string termId = term;
+            DataRow selectedTermRow = null;
+            if (string.IsNullOrEmpty(termId))
+            {
+                selectedTermRow = termsDt.AsEnumerable().FirstOrDefault(r => r["IS_CURRENT"] != DBNull.Value && Convert.ToInt32(r["IS_CURRENT"]) == 1);
+                if (selectedTermRow != null) termId = selectedTermRow["ID"].ToString();
+            }
+            else
+            {
+                selectedTermRow = termsDt.AsEnumerable().FirstOrDefault(r => r["ID"].ToString() == termId);
+            }
+
+            if (selectedTermRow != null)
+            {
+                viewModel.TermId = termId;
+                viewModel.TermName = selectedTermRow["NAME"].ToString();
+                viewModel.ScoreStatus = selectedTermRow["SCORE_STATUS"] != DBNull.Value ? selectedTermRow["SCORE_STATUS"].ToString() : "PROVISIONAL";
+                viewModel.DraftPublishedAt = selectedTermRow["DRAFT_PUBLISHED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(selectedTermRow["DRAFT_PUBLISHED_AT"]) : null;
+                viewModel.FeedbackDeadline = selectedTermRow["FEEDBACK_DEADLINE"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(selectedTermRow["FEEDBACK_DEADLINE"]) : null;
+                viewModel.OfficialPublishedAt = selectedTermRow["OFFICIAL_PUBLISHED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(selectedTermRow["OFFICIAL_PUBLISHED_AT"]) : null;
+            }
+
+            if (string.IsNullOrEmpty(termId)) return viewModel;
+
+            // Get departments for dropdown
+            string deptsQuery = "SELECT ID, NAME FROM DEPARTMENTS ORDER BY NAME";
+            DataTable deptsDt = OracleDbHelper.ExecuteQuery(deptsQuery, null);
+            foreach (DataRow row in deptsDt.Rows)
+            {
+                viewModel.Departments.Add(new DepartmentSelectItem
+                {
+                    Id = row["ID"].ToString(),
+                    Name = row["NAME"].ToString()
+                });
+            }
+
+            // Get all scores for the term
+            string scoresQuery = @"SELECT sc.ID as SCORE_ID, sc.STUDENT_ID, st.STUDENT_CODE, u.FULL_NAME,
+                                          c.NAME as CLASS_NAME, d.NAME as DEPT_NAME,
+                                          sc.TOTAL_SCORE, sc.CLASSIFICATION, sc.STATUS
+                                   FROM SCORES sc
+                                   INNER JOIN STUDENTS st ON sc.STUDENT_ID = st.USER_ID
+                                   INNER JOIN USERS u ON st.USER_ID = u.MAND
+                                   LEFT JOIN CLASSES c ON st.CLASS_ID = c.ID
+                                   LEFT JOIN DEPARTMENTS d ON st.DEPARTMENT_ID = d.ID
+                                   WHERE sc.TERM_ID = :TermId";
+
+            var parameters = new List<OracleParameter> { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
+
+            if (!string.IsNullOrEmpty(department))
+            {
+                scoresQuery += " AND st.DEPARTMENT_ID = :DeptId";
+                parameters.Add(OracleDbHelper.CreateParameter("DeptId", OracleDbType.Varchar2, department));
+            }
+
+            if (!string.IsNullOrEmpty(classification))
+            {
+                scoresQuery += " AND sc.CLASSIFICATION = :Classification";
+                parameters.Add(OracleDbHelper.CreateParameter("Classification", OracleDbType.Varchar2, classification));
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                scoresQuery += " AND (st.STUDENT_CODE LIKE :Search OR u.FULL_NAME LIKE :Search)";
+                parameters.Add(OracleDbHelper.CreateParameter("Search", OracleDbType.Varchar2, "%" + search + "%"));
+            }
+
+            scoresQuery += " ORDER BY d.NAME, c.NAME, st.STUDENT_CODE";
+
+            DataTable scoresDt = OracleDbHelper.ExecuteQuery(scoresQuery, parameters.ToArray());
+
+            foreach (DataRow row in scoresDt.Rows)
+            {
+                int totalScore = Convert.ToInt32(row["TOTAL_SCORE"]);
+                string classificationValue = row["CLASSIFICATION"] != DBNull.Value ? row["CLASSIFICATION"].ToString() : GetClassification(totalScore);
+
+                viewModel.Students.Add(new StudentScorePublicationItem
+                {
+                    ScoreId = row["SCORE_ID"].ToString(),
+                    StudentId = row["STUDENT_ID"].ToString(),
+                    StudentCode = row["STUDENT_CODE"].ToString(),
+                    StudentName = row["FULL_NAME"].ToString(),
+                    ClassName = row["CLASS_NAME"] != DBNull.Value ? row["CLASS_NAME"].ToString() : "",
+                    DepartmentName = row["DEPT_NAME"] != DBNull.Value ? row["DEPT_NAME"].ToString() : "",
+                    TotalScore = totalScore,
+                    Classification = classificationValue,
+                    Status = row["STATUS"].ToString()
+                });
+
+                // Count by classification
+                if (totalScore >= 90) viewModel.ExcellentCount++;
+                else if (totalScore >= 80) viewModel.GoodCount++;
+                else if (totalScore >= 65) viewModel.FairCount++;
+                else if (totalScore >= 50) viewModel.AverageCount++;
+                else viewModel.WeakCount++;
+            }
+
+            viewModel.TotalStudents = viewModel.Students.Count;
+
+            // Count pending feedbacks
+            string feedbacksQuery = @"SELECT COUNT(*) FROM FEEDBACKS WHERE TERM_ID = :TermId AND STATUS = 'SUBMITTED'";
+            var fbParams = new[] { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
+            object fbCount = OracleDbHelper.ExecuteScalar(feedbacksQuery, fbParams);
+            viewModel.PendingFeedbacks = fbCount != null ? Convert.ToInt32(fbCount) : 0;
+
+            return viewModel;
+        }
+
+        #endregion
+
+        #region Publish Actions
+
+        // POST: Admin/Scores/PublishDraft
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult PublishDraft(string termId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                string mand = Session["MAND"].ToString();
+                DateTime now = DateTime.Now;
+                DateTime deadline = now.AddDays(3);
+
+                // Update TERMS
+                string updateTermQuery = @"UPDATE TERMS 
+                                          SET SCORE_STATUS = 'DRAFT',
+                                              DRAFT_PUBLISHED_AT = :PublishedAt,
+                                              FEEDBACK_DEADLINE = :Deadline,
+                                              PUBLISHED_BY = :PublishedBy
+                                          WHERE ID = :TermId";
+                var termParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("PublishedAt", OracleDbType.TimeStamp, now),
+                    OracleDbHelper.CreateParameter("Deadline", OracleDbType.TimeStamp, deadline),
+                    OracleDbHelper.CreateParameter("PublishedBy", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
+                };
+                OracleDbHelper.ExecuteNonQuery(updateTermQuery, termParams);
+
+                // Update all SCORES status
+                string updateScoresQuery = @"UPDATE SCORES SET STATUS = 'DRAFT_PUBLISHED' WHERE TERM_ID = :TermId AND STATUS = 'PROVISIONAL'";
+                var scoreParams = new[] { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
+                OracleDbHelper.ExecuteNonQuery(updateScoresQuery, scoreParams);
+
+                // Get term name
+                string termNameQuery = "SELECT NAME FROM TERMS WHERE ID = :TermId";
+                object termNameObj = OracleDbHelper.ExecuteScalar(termNameQuery, scoreParams);
+                string termName = termNameObj?.ToString() ?? "";
+
+                // Create notification for all students
+                string notificationId = "N" + now.ToString("yyyyMMddHHmmss");
+                string notificationTitle = $"Điểm rèn luyện {termName} - Công bố dự kiến";
+                string notificationContent = $"Điểm rèn luyện {termName} đã được công bố dự kiến. Bạn có thể xem điểm và gửi phản hồi nếu có sai sót. Hạn chót phản hồi: {deadline:dd/MM/yyyy HH:mm}.";
+
+                string insertNotificationQuery = @"INSERT INTO NOTIFICATIONS (ID, TITLE, CONTENT, TARGET_ROLE, CREATED_AT)
+                                                  VALUES (:Id, :Title, :Content, 'STUDENT', SYSDATE)";
+                var notiParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, notificationId),
+                    OracleDbHelper.CreateParameter("Title", OracleDbType.Varchar2, notificationTitle),
+                    OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, notificationContent)
+                };
+                OracleDbHelper.ExecuteNonQuery(insertNotificationQuery, notiParams);
+
+                TempData["SuccessMessage"] = $"Đã công bố điểm dự kiến. Sinh viên có thể phản hồi đến {deadline:dd/MM/yyyy HH:mm}";
+                return RedirectToAction("Index", new { term = termId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("Index", new { term = termId });
+            }
+        }
+
+        // POST: Admin/Scores/PublishOfficial
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult PublishOfficial(string termId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                string mand = Session["MAND"].ToString();
+                DateTime now = DateTime.Now;
+
+                // Update TERMS
+                string updateTermQuery = @"UPDATE TERMS 
+                                          SET SCORE_STATUS = 'OFFICIAL',
+                                              OFFICIAL_PUBLISHED_AT = :PublishedAt
+                                          WHERE ID = :TermId";
+                var termParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("PublishedAt", OracleDbType.TimeStamp, now),
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
+                };
+                OracleDbHelper.ExecuteNonQuery(updateTermQuery, termParams);
+
+                // Update all SCORES status to OFFICIAL
+                string updateScoresQuery = @"UPDATE SCORES SET STATUS = 'OFFICIAL' WHERE TERM_ID = :TermId AND STATUS = 'DRAFT_PUBLISHED'";
+                var scoreParams = new[] { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
+                OracleDbHelper.ExecuteNonQuery(updateScoresQuery, scoreParams);
+
+                // Get term name
+                string termNameQuery = "SELECT NAME FROM TERMS WHERE ID = :TermId";
+                object termNameObj = OracleDbHelper.ExecuteScalar(termNameQuery, scoreParams);
+                string termName = termNameObj?.ToString() ?? "";
+
+                // Create notification
+                string notificationId = "N" + now.ToString("yyyyMMddHHmmss") + "O";
+                string notificationTitle = $"Điểm rèn luyện {termName} - Chính thức";
+                string notificationContent = $"Điểm rèn luyện {termName} đã được công bố chính thức. Đây là kết quả cuối cùng sau khi xử lý các phản hồi.";
+
+                string insertNotificationQuery = @"INSERT INTO NOTIFICATIONS (ID, TITLE, CONTENT, TARGET_ROLE, CREATED_AT)
+                                                  VALUES (:Id, :Title, :Content, 'STUDENT', SYSDATE)";
+                var notiParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, notificationId),
+                    OracleDbHelper.CreateParameter("Title", OracleDbType.Varchar2, notificationTitle),
+                    OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, notificationContent)
+                };
+                OracleDbHelper.ExecuteNonQuery(insertNotificationQuery, notiParams);
+
+                TempData["SuccessMessage"] = "Đã công bố điểm chính thức!";
+                return RedirectToAction("Index", new { term = termId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("Index", new { term = termId });
+            }
+        }
+
+        // GET: Admin/Scores/ExportScores
+        public ActionResult ExportScores(string termId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                var viewModel = GetSchoolWideScoresViewModel(null, termId, null, null);
+                
+                var csv = new System.Text.StringBuilder();
+                csv.AppendLine("STT,MSSV,Họ tên,Lớp,Khoa,Điểm,Xếp loại");
+
+                int stt = 1;
+                foreach (var student in viewModel.Students)
+                {
+                    csv.AppendLine($"{stt},{student.StudentCode},{student.StudentName},{student.ClassName},{student.DepartmentName},{student.TotalScore},{student.Classification}");
+                    stt++;
+                }
+
+                byte[] buffer = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv.ToString())).ToArray();
+                return File(buffer, "text/csv", $"DiemRenLuyen_{viewModel.TermName.Replace(" ", "_")}.csv");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi xuất file: " + ex.Message;
+                return RedirectToAction("Index", new { term = termId });
+            }
+        }
+
+        // POST: Admin/Scores/InitializeScores
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult InitializeScores(string termId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                // Insert 70 points for all students who don't have a score in this term
+                string insertQuery = @"INSERT INTO SCORES (STUDENT_ID, TERM_ID, TOTAL_SCORE, CLASSIFICATION, STATUS, CREATED_AT)
+                                      SELECT s.USER_ID, :TermId, 70, 'Khá', 'PROVISIONAL', SYSTIMESTAMP
+                                      FROM STUDENTS s
+                                      WHERE NOT EXISTS (
+                                          SELECT 1 FROM SCORES sc 
+                                          WHERE sc.STUDENT_ID = s.USER_ID AND sc.TERM_ID = :TermId
+                                      )";
+
+                var parameters = new[]
+                {
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
+                };
+
+                int insertedCount = OracleDbHelper.ExecuteNonQuery(insertQuery, parameters);
+
+                if (insertedCount > 0)
+                {
+                    TempData["SuccessMessage"] = $"Đã khởi tạo điểm 70 cho {insertedCount} sinh viên";
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = "Tất cả sinh viên đã có điểm trong học kỳ này";
+                }
+
+                return RedirectToAction("Index", new { term = termId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("Index", new { term = termId });
+            }
+        }
+
+        // POST: Admin/Scores/SetCurrentTerm
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SetCurrentTerm(string termId, bool initializeScores = true)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                // 1. Reset all terms IS_CURRENT to 0
+                string resetQuery = "UPDATE TERMS SET IS_CURRENT = 0";
+                OracleDbHelper.ExecuteNonQuery(resetQuery, null);
+
+                // 2. Set selected term as current
+                string setCurrentQuery = @"UPDATE TERMS 
+                                          SET IS_CURRENT = 1,
+                                              SCORE_STATUS = NVL(SCORE_STATUS, 'PROVISIONAL')
+                                          WHERE ID = :TermId";
+                var setParams = new[] { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
+                OracleDbHelper.ExecuteNonQuery(setCurrentQuery, setParams);
+
+                // 3. Get term name
+                string termNameQuery = "SELECT NAME FROM TERMS WHERE ID = :TermId";
+                object termNameObj = OracleDbHelper.ExecuteScalar(termNameQuery, setParams);
+                string termName = termNameObj?.ToString() ?? "";
+
+                // 4. Initialize scores if requested
+                int insertedCount = 0;
+                if (initializeScores)
+                {
+                    string insertQuery = @"INSERT INTO SCORES (STUDENT_ID, TERM_ID, TOTAL_SCORE, CLASSIFICATION, STATUS, CREATED_AT)
+                                          SELECT s.USER_ID, :TermId, 70, 'Khá', 'PROVISIONAL', SYSTIMESTAMP
+                                          FROM STUDENTS s
+                                          WHERE NOT EXISTS (
+                                              SELECT 1 FROM SCORES sc 
+                                              WHERE sc.STUDENT_ID = s.USER_ID AND sc.TERM_ID = :TermId
+                                          )";
+                    insertedCount = OracleDbHelper.ExecuteNonQuery(insertQuery, setParams);
+                }
+
+                string message = $"Đã chuyển sang {termName}";
+                if (insertedCount > 0)
+                {
+                    message += $" và khởi tạo điểm 70 cho {insertedCount} sinh viên";
+                }
+                TempData["SuccessMessage"] = message;
+
+                return RedirectToAction("Index", new { term = termId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("Index");
+            }
+        }
+
+        // POST: Admin/Scores/CreateNextTerm
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult CreateNextTerm()
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                // Determine next term based on current date
+                DateTime now = DateTime.Now;
+                int currentYear = now.Year;
+                int currentMonth = now.Month;
+
+                // Academic year: Sep-Aug of next year
+                // HK1: Sep-Jan, HK2: Feb-May, HK3: Jun-Aug
+                int termNumber;
+                int academicYear;
+                DateTime startDate, endDate;
+
+                if (currentMonth >= 9) // Sep-Dec: HK1
+                {
+                    termNumber = 1;
+                    academicYear = currentYear;
+                    startDate = new DateTime(currentYear, 9, 1);
+                    endDate = new DateTime(currentYear + 1, 1, 31);
+                }
+                else if (currentMonth == 1) // Jan: still HK1
+                {
+                    termNumber = 1;
+                    academicYear = currentYear - 1;
+                    startDate = new DateTime(currentYear - 1, 9, 1);
+                    endDate = new DateTime(currentYear, 1, 31);
+                }
+                else if (currentMonth >= 2 && currentMonth <= 5) // Feb-May: HK2
+                {
+                    termNumber = 2;
+                    academicYear = currentYear - 1;
+                    startDate = new DateTime(currentYear, 2, 1);
+                    endDate = new DateTime(currentYear, 5, 31);
+                }
+                else // Jun-Aug: HK3 (Summer)
+                {
+                    termNumber = 3;
+                    academicYear = currentYear - 1;
+                    startDate = new DateTime(currentYear, 6, 1);
+                    endDate = new DateTime(currentYear, 8, 31);
+                }
+
+                string termName = $"Học kỳ {termNumber} - {academicYear}-{academicYear + 1}";
+                string termId = $"HK{termNumber}_{academicYear}";
+
+                // Check if term already exists
+                string checkQuery = "SELECT COUNT(*) FROM TERMS WHERE ID = :TermId OR NAME = :TermName";
+                var checkParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId),
+                    OracleDbHelper.CreateParameter("TermName", OracleDbType.Varchar2, termName)
+                };
+                object existsObj = OracleDbHelper.ExecuteScalar(checkQuery, checkParams);
+                if (existsObj != null && Convert.ToInt32(existsObj) > 0)
+                {
+                    TempData["ErrorMessage"] = $"Học kỳ '{termName}' đã tồn tại!";
+                    return RedirectToAction("Index");
+                }
+
+                // Create new term
+                string insertQuery = @"INSERT INTO TERMS (ID, NAME, YEAR, TERM_NUMBER, START_DATE, END_DATE, IS_CURRENT, SCORE_STATUS)
+                                      VALUES (:Id, :Name, :Year, :TermNumber, :StartDate, :EndDate, 0, 'PROVISIONAL')";
+                var insertParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, termId),
+                    OracleDbHelper.CreateParameter("Name", OracleDbType.Varchar2, termName),
+                    OracleDbHelper.CreateParameter("Year", OracleDbType.Int32, academicYear),
+                    OracleDbHelper.CreateParameter("TermNumber", OracleDbType.Int32, termNumber),
+                    OracleDbHelper.CreateParameter("StartDate", OracleDbType.Date, startDate),
+                    OracleDbHelper.CreateParameter("EndDate", OracleDbType.Date, endDate)
+                };
+                OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
+
+                TempData["SuccessMessage"] = $"Đã tạo '{termName}'. Chọn học kỳ và click 'Đặt làm HK hiện tại' để kích hoạt.";
+                return RedirectToAction("Index", new { term = termId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("Index");
+            }
         }
 
         #endregion

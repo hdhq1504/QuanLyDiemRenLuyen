@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Web.Mvc;
 using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
@@ -402,12 +403,30 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             try
             {
+                string mand = Session["MAND"].ToString();
+                
+                // Check activity time for warning
+                string timeQuery = @"SELECT START_AT, END_AT FROM ACTIVITIES WHERE ID = :ActivityId";
+                var timeParams = new[] { OracleDbHelper.CreateParameter("ActivityId", OracleDbType.Varchar2, activityId) };
+                DataTable activityTime = OracleDbHelper.ExecuteQuery(timeQuery, timeParams);
+                
+                bool isOutsideTime = false;
+                if (activityTime.Rows.Count > 0)
+                {
+                    DateTime startAt = Convert.ToDateTime(activityTime.Rows[0]["START_AT"]);
+                    DateTime endAt = Convert.ToDateTime(activityTime.Rows[0]["END_AT"]);
+                    DateTime now = DateTime.Now;
+                    isOutsideTime = now < startAt || now > endAt;
+                }
+                
                 string updateQuery = @"UPDATE REGISTRATIONS 
                                        SET STATUS = 'CHECKED_IN', 
-                                           CHECKED_IN_AT = SYSTIMESTAMP
+                                           CHECKED_IN_AT = SYSTIMESTAMP,
+                                           CHECKED_IN_BY = :CheckedInBy
                                        WHERE ID = :RegId AND STATUS = 'REGISTERED'";
 
                 var parameters = new[] {
+                    OracleDbHelper.CreateParameter("CheckedInBy", OracleDbType.Varchar2, mand),
                     OracleDbHelper.CreateParameter("RegId", OracleDbType.Varchar2, registrationId)
                 };
 
@@ -416,6 +435,10 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 if (result > 0)
                 {
                     TempData["SuccessMessage"] = "Điểm danh thành công!";
+                    if (isOutsideTime)
+                    {
+                        TempData["WarningMessage"] = "Lưu ý: Điểm danh ngoài thời gian hoạt động.";
+                    }
                 }
                 else
                 {
@@ -447,33 +470,154 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             try
             {
-                var regIdList = registrationIds.Split(',');
-                int successCount = 0;
-
-                foreach (var regId in regIdList)
+                string mand = Session["MAND"].ToString();
+                
+                // Check activity time for warning
+                string timeQuery = @"SELECT START_AT, END_AT FROM ACTIVITIES WHERE ID = :ActivityId";
+                var timeParams = new[] { OracleDbHelper.CreateParameter("ActivityId", OracleDbType.Varchar2, activityId) };
+                DataTable activityTime = OracleDbHelper.ExecuteQuery(timeQuery, timeParams);
+                
+                bool isOutsideTime = false;
+                if (activityTime.Rows.Count > 0)
                 {
-                    if (string.IsNullOrWhiteSpace(regId)) continue;
+                    DateTime startAt = Convert.ToDateTime(activityTime.Rows[0]["START_AT"]);
+                    DateTime endAt = Convert.ToDateTime(activityTime.Rows[0]["END_AT"]);
+                    DateTime now = DateTime.Now;
+                    isOutsideTime = now < startAt || now > endAt;
+                }
+                
+                var regIdList = registrationIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                               .Select(id => id.Trim())
+                                               .Where(id => !string.IsNullOrEmpty(id))
+                                               .ToArray();
 
-                    string updateQuery = @"UPDATE REGISTRATIONS 
-                                           SET STATUS = 'CHECKED_IN', 
-                                               CHECKED_IN_AT = SYSTIMESTAMP
-                                           WHERE ID = :RegId AND STATUS = 'REGISTERED'";
-
-                    var parameters = new[] {
-                        OracleDbHelper.CreateParameter("RegId", OracleDbType.Varchar2, regId.Trim())
-                    };
-
-                    int result = OracleDbHelper.ExecuteNonQuery(updateQuery, parameters);
-                    if (result > 0) successCount++;
+                if (regIdList.Length == 0)
+                {
+                    TempData["ErrorMessage"] = "Không có sinh viên hợp lệ để điểm danh.";
+                    return RedirectToAction("Participants", new { id = activityId });
                 }
 
+                // Build batch update with IN clause
+                var parameterNames = regIdList.Select((id, index) => $":Id{index}").ToArray();
+                string inClause = string.Join(",", parameterNames);
+                
+                string updateQuery = $@"UPDATE REGISTRATIONS 
+                                        SET STATUS = 'CHECKED_IN', 
+                                            CHECKED_IN_AT = SYSTIMESTAMP,
+                                            CHECKED_IN_BY = :CheckedInBy
+                                        WHERE ID IN ({inClause}) AND STATUS = 'REGISTERED'";
+
+                var parameters = new List<OracleParameter>
+                {
+                    OracleDbHelper.CreateParameter("CheckedInBy", OracleDbType.Varchar2, mand)
+                };
+
+                for (int i = 0; i < regIdList.Length; i++)
+                {
+                    parameters.Add(OracleDbHelper.CreateParameter($"Id{i}", OracleDbType.Varchar2, regIdList[i]));
+                }
+
+                int successCount = OracleDbHelper.ExecuteNonQuery(updateQuery, parameters.ToArray());
+
                 TempData["SuccessMessage"] = $"Đã điểm danh thành công {successCount}/{regIdList.Length} sinh viên.";
+                if (isOutsideTime)
+                {
+                    TempData["WarningMessage"] = "Lưu ý: Điểm danh ngoài thời gian hoạt động.";
+                }
                 return RedirectToAction("Participants", new { id = activityId });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
                 return RedirectToAction("Participants", new { id = activityId });
+            }
+        }
+
+        // POST: Admin/Activities/UnCheckIn
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UnCheckIn(string registrationId, string activityId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                string updateQuery = @"UPDATE REGISTRATIONS 
+                                       SET STATUS = 'REGISTERED', 
+                                           CHECKED_IN_AT = NULL,
+                                           CHECKED_IN_BY = NULL
+                                       WHERE ID = :RegId AND STATUS = 'CHECKED_IN'";
+
+                var parameters = new[] {
+                    OracleDbHelper.CreateParameter("RegId", OracleDbType.Varchar2, registrationId)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(updateQuery, parameters);
+
+                if (result > 0)
+                {
+                    TempData["SuccessMessage"] = "Hủy điểm danh thành công!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Không thể hủy điểm danh. Sinh viên có thể chưa được điểm danh.";
+                }
+
+                return RedirectToAction("Participants", new { id = activityId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("Participants", new { id = activityId });
+            }
+        }
+
+        // GET: Admin/Activities/ExportParticipants/activityId
+        public ActionResult ExportParticipants(string id)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null) return authCheck;
+
+            try
+            {
+                // Get all participants (no pagination)
+                var viewModel = GetParticipants(id, null, null, 1, 10000, out _);
+
+                var sb = new System.Text.StringBuilder();
+                
+                // BOM for UTF-8 Excel compatibility
+                sb.Append('\uFEFF');
+                
+                // Title info
+                sb.AppendLine($"DANH SÁCH ĐIỂM DANH - {viewModel.ActivityTitle}");
+                sb.AppendLine($"Thời gian: {viewModel.ActivityStartAt:dd/MM/yyyy HH:mm} - {viewModel.ActivityEndAt:dd/MM/yyyy HH:mm}");
+                sb.AppendLine($"Tổng đăng ký: {viewModel.TotalRegistered} | Đã điểm danh: {viewModel.TotalCheckedIn} | Tỷ lệ: {viewModel.AttendanceRate:0.0}%");
+                sb.AppendLine();
+                
+                // Headers
+                sb.AppendLine("STT,MSSV,Họ và tên,Lớp,Trạng thái,Thời gian điểm danh,Người điểm danh");
+                
+                // Data
+                int stt = 1;
+                foreach (var p in viewModel.Participants)
+                {
+                    string status = p.Status == "CHECKED_IN" ? "Đã điểm danh" : "Chưa điểm danh";
+                    string checkedInAt = p.CheckedInAt?.ToString("dd/MM/yyyy HH:mm") ?? "";
+                    string checkedInBy = p.CheckedInByName ?? "";
+                    
+                    // Escape commas in fields
+                    sb.AppendLine($"{stt++},\"{p.StudentCode}\",\"{p.StudentName}\",\"{p.ClassName}\",\"{status}\",\"{checkedInAt}\",\"{checkedInBy}\"");
+                }
+
+                var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+                string fileName = $"DiemDanh_{viewModel.ActivityTitle.Replace(" ", "_").Replace(",", "")}_{DateTime.Now:yyyyMMdd}.csv";
+                return File(bytes, "text/csv; charset=utf-8", fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi xuất CSV: " + ex.Message;
+                return RedirectToAction("Participants", new { id = id });
             }
         }
 
@@ -515,14 +659,16 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                                   WHERE r.ACTIVITY_ID = :ActivityId AND r.STATUS != 'CANCELLED'";
 
             string dataQuery = @"SELECT r.ID as REG_ID, r.STUDENT_ID, r.STATUS, 
-                                        r.REGISTERED_AT, r.CHECKED_IN_AT,
+                                        r.REGISTERED_AT, r.CHECKED_IN_AT, r.CHECKED_IN_BY,
                                         u.FULL_NAME as STUDENT_NAME, u.EMAIL as STUDENT_EMAIL,
                                         s.STUDENT_CODE, c.NAME as CLASS_NAME,
-                                        p.ID as PROOF_ID, p.STATUS as PROOF_STATUS
+                                        p.ID as PROOF_ID, p.STATUS as PROOF_STATUS,
+                                        checker.FULL_NAME as CHECKED_IN_BY_NAME
                                  FROM REGISTRATIONS r
                                  INNER JOIN USERS u ON r.STUDENT_ID = u.MAND
                                  INNER JOIN STUDENTS s ON u.MAND = s.USER_ID
                                  LEFT JOIN CLASSES c ON s.CLASS_ID = c.ID
+                                 LEFT JOIN USERS checker ON r.CHECKED_IN_BY = checker.MAND
                                  LEFT JOIN (
                                      SELECT REGISTRATION_ID, ID, STATUS,
                                             ROW_NUMBER() OVER (PARTITION BY REGISTRATION_ID ORDER BY CREATED_AT_UTC DESC) as rn
@@ -578,7 +724,9 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                         ? (DateTime?)Convert.ToDateTime(row["CHECKED_IN_AT"])
                         : null,
                     HasProof = row["PROOF_ID"] != DBNull.Value,
-                    ProofStatus = row["PROOF_STATUS"] != DBNull.Value ? row["PROOF_STATUS"].ToString() : ""
+                    ProofStatus = row["PROOF_STATUS"] != DBNull.Value ? row["PROOF_STATUS"].ToString() : "",
+                    CheckedInBy = row["CHECKED_IN_BY"] != DBNull.Value ? row["CHECKED_IN_BY"].ToString() : "",
+                    CheckedInByName = row["CHECKED_IN_BY_NAME"] != DBNull.Value ? row["CHECKED_IN_BY_NAME"].ToString() : ""
                 });
             }
 

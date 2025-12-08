@@ -181,6 +181,77 @@ namespace QuanLyDiemRenLuyen.Models
         public DateTime? RespondedAt { get; set; }
         public string Response { get; set; }
         public string RespondedBy { get; set; }
+        
+        // Activity-related fields
+        public string ActivityId { get; set; }
+        public string ActivityTitle { get; set; }
+        public decimal? ActivityPoints { get; set; }
+        public bool HasCheckedIn { get; set; }
+        public DateTime? CheckedInAt { get; set; }
+    }
+
+    // ==================== SCHOOL-WIDE SCORES ====================
+    public class SchoolWideScoresViewModel
+    {
+        public string TermId { get; set; }
+        public string TermName { get; set; }
+        public string ScoreStatus { get; set; } // PROVISIONAL, DRAFT, OFFICIAL
+        public DateTime? DraftPublishedAt { get; set; }
+        public DateTime? FeedbackDeadline { get; set; }
+        public DateTime? OfficialPublishedAt { get; set; }
+        public string PublishedBy { get; set; }
+        
+        // Statistics
+        public int TotalStudents { get; set; }
+        public int ExcellentCount { get; set; }  // >= 90
+        public int GoodCount { get; set; }       // 80-89
+        public int FairCount { get; set; }       // 65-79
+        public int AverageCount { get; set; }    // 50-64
+        public int WeakCount { get; set; }       // < 50
+        public int PendingFeedbacks { get; set; }
+        
+        // Filter
+        public string FilterDepartment { get; set; }
+        public string FilterClass { get; set; }
+        public string FilterClassification { get; set; }
+        public string SearchKeyword { get; set; }
+        
+        // Data
+        public List<StudentScorePublicationItem> Students { get; set; }
+        public List<TermSelectItem> Terms { get; set; }
+        public List<DepartmentSelectItem> Departments { get; set; }
+        
+        // Helpers
+        public bool CanPublishDraft => ScoreStatus == "PROVISIONAL";
+        public bool CanPublishOfficial => ScoreStatus == "DRAFT" && FeedbackDeadline.HasValue && DateTime.Now > FeedbackDeadline.Value;
+        public bool IsInFeedbackPeriod => ScoreStatus == "DRAFT" && FeedbackDeadline.HasValue && DateTime.Now <= FeedbackDeadline.Value;
+        public TimeSpan? TimeRemaining => FeedbackDeadline.HasValue ? (TimeSpan?)(FeedbackDeadline.Value - DateTime.Now) : null;
+    }
+
+    public class StudentScorePublicationItem
+    {
+        public string ScoreId { get; set; }
+        public string StudentId { get; set; }
+        public string StudentCode { get; set; }
+        public string StudentName { get; set; }
+        public string ClassName { get; set; }
+        public string DepartmentName { get; set; }
+        public int TotalScore { get; set; }
+        public string Classification { get; set; }
+        public string Status { get; set; }
+    }
+
+    public class TermSelectItem
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public bool IsCurrent { get; set; }
+    }
+
+    public class DepartmentSelectItem
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
     }
 }
 

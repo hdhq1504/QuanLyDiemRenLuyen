@@ -47,20 +47,6 @@
         }
     </div>
 
-    <!-- Success/Error Messages -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div style="background: #d1fae5; border: 1px solid #10b981; color: #065f46; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div style="background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-        </div>
-    }
-
     <!-- Sessions Table -->
     <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
         @if (Model.Sessions != null && Model.Sessions.Any())

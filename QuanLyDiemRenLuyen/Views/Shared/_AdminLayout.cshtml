@@ -357,17 +357,13 @@
                 <i class="fas fa-database"></i>
                 <span>Quản trị Database</span>
             </a>
-            <a href="@Url.Action("ClassScores", "Admin")" class="nav-item">
-                <i class="fas fa-graduation-cap"></i>
-                <span>Quản lý điểm lớp</span>
-            </a>
-            <a href="@Url.Action("ApproveScores", "Admin")" class="nav-item">
+            <a href="@Url.RouteUrl("AdminScores", new { action = "Index" })" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Scores" ? "active" : "")">
                 <i class="fas fa-check-double"></i>
                 <span>Xét duyệt điểm</span>
             </a>
-            <a href="@Url.Action("ReviewRequests", "Admin")" class="nav-item">
-                <i class="fas fa-file-signature"></i>
-                <span>Phúc khảo điểm</span>
+            <a href="@Url.RouteUrl("AdminFeedbacks", new { action = "Index" })" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Feedbacks" ? "active" : "")">
+                <i class="fas fa-comments"></i>
+                <span>Phản hồi sinh viên</span>
             </a>
             <a href="@Url.Action("Reports", "Admin")" class="nav-item">
                 <i class="fas fa-chart-bar"></i>

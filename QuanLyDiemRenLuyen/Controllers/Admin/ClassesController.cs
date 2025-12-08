@@ -318,12 +318,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
                 // Get Assignment History
                 var assignmentHistory = new List<ClassAdvisorHistoryItem>();
-                string historyQuery = @"SELECT h.ID, h.LECTURER_ID, u.FULL_NAME, h.ASSIGNED_AT, h.REMOVED_AT,
-                                        h.ASSIGNED_BY, h.REMOVED_BY, h.NOTES
-                                        FROM CLASS_LECTURER_HISTORY h
-                                        JOIN USERS u ON h.LECTURER_ID = u.MAND
-                                        WHERE h.CLASS_ID = :ClassId
-                                        ORDER BY h.ASSIGNED_AT DESC";
+                string historyQuery = @"SELECT cl.ID, cl.LECTURER_ID, u.FULL_NAME, cl.ASSIGNED_AT, cl.REMOVED_AT,
+                                        cl.ASSIGNED_BY, cl.REMOVED_BY, cl.NOTES
+                                        FROM CLASS_LECTURER_ASSIGNMENTS cl
+                                        JOIN USERS u ON cl.LECTURER_ID = u.MAND
+                                        WHERE cl.CLASS_ID = :ClassId
+                                        ORDER BY cl.ASSIGNED_AT DESC";
                 var historyParams = new[] { OracleDbHelper.CreateParameter("ClassId", OracleDbType.Varchar2, id) };
                 DataTable dtHistory = OracleDbHelper.ExecuteQuery(historyQuery, historyParams);
 
@@ -485,7 +485,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             try
             {
-                string currentUser = Session["UserName"]?.ToString();
+                string currentUser = Session["MAND"]?.ToString();
                 string result = CallAssignAdvisorProcedure(request.ClassId, request.LecturerId, currentUser, request.Notes);
 
                 if (result.StartsWith("SUCCESS"))
@@ -515,7 +515,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             try
             {
-                string currentUser = Session["UserName"]?.ToString();
+                string currentUser = Session["MAND"]?.ToString();
                 string result = CallRemoveAdvisorProcedure(classId, currentUser, notes);
 
                 if (result.StartsWith("SUCCESS"))
@@ -589,7 +589,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             try
             {
-                string currentUser = Session["UserName"]?.ToString();
+                string currentUser = Session["MAND"]?.ToString();
                 var result = ProcessBulkAssignment(request, currentUser);
 
                 if (result.HasErrors)

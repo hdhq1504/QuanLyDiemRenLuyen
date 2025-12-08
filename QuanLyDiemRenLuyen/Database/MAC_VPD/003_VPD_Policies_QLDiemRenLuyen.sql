@@ -1,22 +1,22 @@
 -- =========================================================
--- MAC + VPD IMPLEMENTATION - PART C (Run as QLDiemRenLuyen)
+-- MAC + VPD - PHẦN C (Chạy với QLDiemRenLuyen)
 -- =========================================================
--- Connection: QLDiemRenLuyen (schema owner)
--- Purpose: Register VPD Policies using DBMS_RLS
--- Prerequisite: Run 001 and 002 scripts first!
+-- Kết nối: QLDiemRenLuyen (schema owner)
+-- Mục đích: Đăng ký VPD Policies sử dụng DBMS_RLS
+-- Điều kiện: Chạy script 001 và 002 trước!
 -- =========================================================
 --
--- VPD POLICIES:
--- 1. SCORES_SELECT_POLICY - Controls who can view scores
--- 2. SCORES_UPDATE_POLICY - Controls who can update/approve scores
+-- CHÍNH SÁCH VPD:
+-- 1. SCORES_SELECT_POLICY - Kiểm soát quyền xem điểm
+-- 2. SCORES_UPDATE_POLICY - Kiểm soát quyền cập nhật/duyệt điểm
 --
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 
 PROMPT '========================================';
-PROMPT 'MAC + VPD PART C - Registering VPD Policies';
-PROMPT 'Executing as: QLDiemRenLuyen';
+PROMPT 'MAC + VPD PHẦN C - Đăng ký VPD Policies';
+PROMPT 'Đang thực thi với: QLDiemRenLuyen';
 PROMPT '========================================';
 
 -- =========================================================

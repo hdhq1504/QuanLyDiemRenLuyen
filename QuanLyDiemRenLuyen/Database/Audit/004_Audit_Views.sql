@@ -1,25 +1,25 @@
 -- =========================================================
--- AUDITING - PART 6: VIEWS (Run as QLDiemRenLuyen)
+-- KIỂM TOÁN - CÁC VIEWS (Chạy với QLDiemRenLuyen)
 -- =========================================================
--- Connection: QLDiemRenLuyen
--- Purpose: Create unified views for audit data
--- Prerequisite: Run Parts 1-5 first!
+-- Kết nối: QLDiemRenLuyen
+-- Mục đích: Tạo các views thống nhất cho dữ liệu audit
+-- Điều kiện: Chạy các phần trước đó trước!
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 SET LINESIZE 200;
 
 PROMPT '========================================';
-PROMPT 'AUDITING PART 6 - Audit Views';
-PROMPT 'Executing as: QLDiemRenLuyen';
+PROMPT 'KIỂM TOÁN - Audit Views';
+PROMPT 'Đang thực thi với: QLDiemRenLuyen';
 PROMPT '========================================';
 
 -- =========================================================
--- STEP 1: CREATE VIEW FOR SCORE HISTORY
+-- BƯỚC 1: TẠO VIEW LỊCH SỬ ĐIỂM
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit views...';
+PROMPT 'Đang tạo các audit views...';
 
 CREATE OR REPLACE VIEW V_AUDIT_SCORES_HISTORY AS
 SELECT 
@@ -41,12 +41,12 @@ LEFT JOIN USERS u ON u.MAND = acl.PERFORMED_BY
 WHERE acl.TABLE_NAME = 'SCORES'
 ORDER BY acl.PERFORMED_AT DESC;
 
-COMMENT ON VIEW V_AUDIT_SCORES_HISTORY IS 'History of all changes to SCORES table';
+COMMENT ON VIEW V_AUDIT_SCORES_HISTORY IS 'Lịch sử tất cả thay đổi của bảng SCORES';
 
-PROMPT '✓ Created V_AUDIT_SCORES_HISTORY';
+PROMPT '✓ Đã tạo V_AUDIT_SCORES_HISTORY';
 
 -- =========================================================
--- STEP 2: CREATE VIEW FOR USER ACTIVITY
+-- BƯỚC 2: TẠO VIEW HOẠT ĐỘNG NGƯỜI DÙNG
 -- =========================================================
 
 CREATE OR REPLACE VIEW V_AUDIT_USER_ACTIVITY AS
@@ -65,12 +65,12 @@ WHERE acl.PERFORMED_BY IS NOT NULL
 GROUP BY acl.PERFORMED_BY, u.FULL_NAME, u.ROLE_NAME, acl.TABLE_NAME, acl.OPERATION
 ORDER BY acl.PERFORMED_BY, acl.TABLE_NAME;
 
-COMMENT ON VIEW V_AUDIT_USER_ACTIVITY IS 'Summary of user activities by table and operation';
+COMMENT ON VIEW V_AUDIT_USER_ACTIVITY IS 'Tổng hợp hoạt động người dùng theo bảng và thao tác';
 
-PROMPT '✓ Created V_AUDIT_USER_ACTIVITY';
+PROMPT '✓ Đã tạo V_AUDIT_USER_ACTIVITY';
 
 -- =========================================================
--- STEP 3: CREATE VIEW FOR DAILY SUMMARY
+-- BƯỚC 3: TẠO VIEW TỔNG HỢP THEO NGÀY
 -- =========================================================
 
 CREATE OR REPLACE VIEW V_AUDIT_DAILY_SUMMARY AS
@@ -85,12 +85,12 @@ FROM AUDIT_CHANGE_LOGS
 GROUP BY TRUNC(PERFORMED_AT), TABLE_NAME, OPERATION
 ORDER BY AUDIT_DATE DESC, TABLE_NAME, OPERATION;
 
-COMMENT ON VIEW V_AUDIT_DAILY_SUMMARY IS 'Daily summary of audit activities';
+COMMENT ON VIEW V_AUDIT_DAILY_SUMMARY IS 'Tổng hợp hoạt động audit theo ngày';
 
-PROMPT '✓ Created V_AUDIT_DAILY_SUMMARY';
+PROMPT '✓ Đã tạo V_AUDIT_DAILY_SUMMARY';
 
 -- =========================================================
--- STEP 4: CREATE VIEW FOR RECENT CHANGES
+-- BƯỚC 4: TẠO VIEW THAY ĐỔI GẦN ĐÂY
 -- =========================================================
 
 CREATE OR REPLACE VIEW V_AUDIT_RECENT_CHANGES AS
@@ -107,15 +107,15 @@ SELECT
     acl.CLIENT_IP
 FROM AUDIT_CHANGE_LOGS acl
 LEFT JOIN USERS u ON u.MAND = acl.PERFORMED_BY
-WHERE acl.PERFORMED_AT >= SYSDATE - 7  -- Last 7 days
+WHERE acl.PERFORMED_AT >= SYSDATE - 7  -- 7 ngày gần đây
 ORDER BY acl.PERFORMED_AT DESC;
 
-COMMENT ON VIEW V_AUDIT_RECENT_CHANGES IS 'Recent changes in the last 7 days';
+COMMENT ON VIEW V_AUDIT_RECENT_CHANGES IS 'Các thay đổi trong 7 ngày gần đây';
 
-PROMPT '✓ Created V_AUDIT_RECENT_CHANGES';
+PROMPT '✓ Đã tạo V_AUDIT_RECENT_CHANGES';
 
 -- =========================================================
--- STEP 5: CREATE VIEW FOR BUSINESS ACTIONS
+-- BƯỚC 5: TẠO VIEW HÀNH ĐỘNG NGHIỆP VỤ
 -- =========================================================
 
 CREATE OR REPLACE VIEW V_AUDIT_BUSINESS_ACTIONS AS
@@ -134,16 +134,16 @@ FROM AUDIT_BUSINESS_ACTIONS aba
 LEFT JOIN USERS u ON u.MAND = aba.PERFORMED_BY
 ORDER BY aba.PERFORMED_AT DESC;
 
-COMMENT ON VIEW V_AUDIT_BUSINESS_ACTIONS IS 'Business-level actions logged by application';
+COMMENT ON VIEW V_AUDIT_BUSINESS_ACTIONS IS 'Các hành động nghiệp vụ được ứng dụng ghi log';
 
-PROMPT '✓ Created V_AUDIT_BUSINESS_ACTIONS';
+PROMPT '✓ Đã tạo V_AUDIT_BUSINESS_ACTIONS';
 
 -- =========================================================
--- STEP 6: CREATE COMBINED AUDIT VIEW
+-- BƯỚC 6: TẠO VIEW AUDIT TỔNG HỢP
 -- =========================================================
 
 CREATE OR REPLACE VIEW V_AUDIT_ALL AS
--- Change logs
+-- Logs thay đổi
 SELECT 
     'CHANGE_LOG' AS SOURCE,
     ID AS AUDIT_ID,
@@ -159,7 +159,7 @@ FROM AUDIT_CHANGE_LOGS
 
 UNION ALL
 
--- Business actions
+-- Hành động nghiệp vụ
 SELECT 
     'BUSINESS_ACTION' AS SOURCE,
     ID AS AUDIT_ID,
@@ -173,12 +173,12 @@ SELECT
     DETAILS AS NEW_VALUES
 FROM AUDIT_BUSINESS_ACTIONS;
 
-COMMENT ON VIEW V_AUDIT_ALL IS 'Combined view of all audit sources';
+COMMENT ON VIEW V_AUDIT_ALL IS 'View kết hợp tất cả nguồn audit';
 
-PROMPT '✓ Created V_AUDIT_ALL';
+PROMPT '✓ Đã tạo V_AUDIT_ALL';
 
 -- =========================================================
--- STEP 7: CREATE VIEW FOR APPROVALS TRACKING
+-- BƯỚC 7: TẠO VIEW THEO DÕI PHÊ DUYỆT
 -- =========================================================
 
 CREATE OR REPLACE VIEW V_AUDIT_APPROVALS AS
@@ -203,16 +203,16 @@ WHERE acl.TABLE_NAME IN ('SCORES', 'ACTIVITIES', 'PROOFS')
   )
 ORDER BY acl.PERFORMED_AT DESC;
 
-COMMENT ON VIEW V_AUDIT_APPROVALS IS 'Tracking of all approval actions';
+COMMENT ON VIEW V_AUDIT_APPROVALS IS 'Theo dõi tất cả hành động phê duyệt';
 
-PROMPT '✓ Created V_AUDIT_APPROVALS';
+PROMPT '✓ Đã tạo V_AUDIT_APPROVALS';
 
 -- =========================================================
--- STEP 8: CREATE VIEW FOR SENSITIVE DATA ACCESS (FGA)
+-- BƯỚC 8: TẠO VIEW TRUY CẬP DỮ LIỆU NHẠY CẢM (FGA)
 -- =========================================================
 
--- Note: This view requires SELECT access on DBA_FGA_AUDIT_TRAIL
--- Run as SYSDBA: GRANT SELECT ON DBA_FGA_AUDIT_TRAIL TO QLDIEMRENLUYEN;
+-- Lưu ý: View này cần quyền SELECT trên DBA_FGA_AUDIT_TRAIL
+-- Chạy với SYSDBA: GRANT SELECT ON DBA_FGA_AUDIT_TRAIL TO QLDIEMRENLUYEN;
 
 CREATE OR REPLACE VIEW V_AUDIT_SENSITIVE_ACCESS AS
 SELECT 
@@ -230,21 +230,21 @@ WHERE fga.OBJECT_SCHEMA = 'QLDIEMRENLUYEN'
   AND fga.POLICY_NAME LIKE 'FGA_%'
 ORDER BY fga.TIMESTAMP DESC;
 
-COMMENT ON VIEW V_AUDIT_SENSITIVE_ACCESS IS 'FGA audit trail for sensitive data access';
+COMMENT ON VIEW V_AUDIT_SENSITIVE_ACCESS IS 'FGA audit trail cho truy cập dữ liệu nhạy cảm';
 
-PROMPT '✓ Created V_AUDIT_SENSITIVE_ACCESS';
+PROMPT '✓ Đã tạo V_AUDIT_SENSITIVE_ACCESS';
 
 -- =========================================================
--- VERIFICATION
+-- XÁC MINH
 -- =========================================================
 
 PROMPT '';
 PROMPT '========================================';
-PROMPT 'VERIFICATION - Audit Views';
+PROMPT 'XÁC MINH - Các Audit View';
 PROMPT '========================================';
 
 PROMPT '';
-PROMPT 'Views created:';
+PROMPT 'Các views đã tạo:';
 SELECT VIEW_NAME
 FROM USER_VIEWS
 WHERE VIEW_NAME LIKE 'V_AUDIT%'
@@ -252,16 +252,14 @@ ORDER BY VIEW_NAME;
 
 PROMPT '';
 PROMPT '========================================';
-PROMPT '✓ PART 6 COMPLETED!';
-PROMPT 'Views created:';
-PROMPT '  - V_AUDIT_SCORES_HISTORY';
-PROMPT '  - V_AUDIT_USER_ACTIVITY';
-PROMPT '  - V_AUDIT_DAILY_SUMMARY';
-PROMPT '  - V_AUDIT_RECENT_CHANGES';
-PROMPT '  - V_AUDIT_BUSINESS_ACTIONS';
-PROMPT '  - V_AUDIT_ALL';
-PROMPT '  - V_AUDIT_APPROVALS';
-PROMPT '  - V_AUDIT_SENSITIVE_ACCESS';
-PROMPT '';
-PROMPT 'Next: Run Part 7 for testing';
+PROMPT '✓ HOÀN THÀNH AUDIT VIEWS!';
+PROMPT 'Đã tạo:';
+PROMPT '  - V_AUDIT_SCORES_HISTORY (Lịch sử điểm)';
+PROMPT '  - V_AUDIT_USER_ACTIVITY (Hoạt động người dùng)';
+PROMPT '  - V_AUDIT_DAILY_SUMMARY (Tổng hợp theo ngày)';
+PROMPT '  - V_AUDIT_RECENT_CHANGES (Thay đổi gần đây)';
+PROMPT '  - V_AUDIT_BUSINESS_ACTIONS (Hành động nghiệp vụ)';
+PROMPT '  - V_AUDIT_ALL (Tổng hợp)';
+PROMPT '  - V_AUDIT_APPROVALS (Phê duyệt)';
+PROMPT '  - V_AUDIT_SENSITIVE_ACCESS (Truy cập nhạy cảm)';
 PROMPT '========================================';

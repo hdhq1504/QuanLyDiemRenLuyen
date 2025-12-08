@@ -96,4 +96,62 @@ namespace QuanLyDiemRenLuyen.Models
         public int ApprovedActivities { get; set; }
         public int TotalStudentsRegistered { get; set; }
     }
+
+    // ===== Lecturer Class Scores ViewModels =====
+    
+    public class MyClassScoresViewModel
+    {
+        public List<AssignedClassItem> Classes { get; set; } = new List<AssignedClassItem>();
+        public string CurrentTermId { get; set; }
+        public string CurrentTermName { get; set; }
+    }
+
+    public class AssignedClassItem
+    {
+        public string ClassId { get; set; }
+        public string ClassCode { get; set; }
+        public string ClassName { get; set; }
+        public string DepartmentName { get; set; }
+        public int TotalStudents { get; set; }
+        public int StudentsWithScores { get; set; }
+        public double AverageScore { get; set; }
+        public DateTime AssignedAt { get; set; }
+    }
+
+    public class LecturerClassScoreDetailViewModel
+    {
+        public string ClassId { get; set; }
+        public string ClassCode { get; set; }
+        public string ClassName { get; set; }
+        public string DepartmentName { get; set; }
+        public string TermId { get; set; }
+        public string TermName { get; set; }
+        public List<StudentScoreReadOnlyItem> Students { get; set; } = new List<StudentScoreReadOnlyItem>();
+        public ClassScoreStatisticsReadOnly Statistics { get; set; }
+    }
+
+    public class StudentScoreReadOnlyItem
+    {
+        public string StudentId { get; set; }
+        public string StudentCode { get; set; }
+        public string StudentName { get; set; }
+        public int TotalScore { get; set; }
+        public string Classification { get; set; }
+        public string Status { get; set; }
+        public int ActivityCount { get; set; }
+    }
+
+    public class ClassScoreStatisticsReadOnly
+    {
+        public int TotalStudents { get; set; }
+        public int ApprovedStudents { get; set; }
+        public double AverageScore { get; set; }
+        public int HighestScore { get; set; }
+        public int LowestScore { get; set; }
+        public int ExcellentCount { get; set; }
+        public int GoodCount { get; set; }
+        public int FairCount { get; set; }
+        public int AverageCount { get; set; }
+        public int WeakCount { get; set; }
+    }
 }

@@ -85,6 +85,13 @@ namespace QuanLyDiemRenLuyen
                 namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Lecturer" }
             );
 
+            routes.MapRoute(
+                name: "LecturerScores",
+                url: "Lecturer/Scores/{action}/{id}",
+                defaults: new { controller = "Scores", action = "MyClasses", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Lecturer" }
+            );
+
             // Routes cho Admin nested controllers
             routes.MapRoute(
                 name: "AdminDashboard",
@@ -146,6 +153,20 @@ namespace QuanLyDiemRenLuyen
                 name: "AdminDatabase",
                 url: "Admin/Database/{action}/{id}",
                 defaults: new { controller = "Database", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
+            routes.MapRoute(
+                name: "AdminSecurity",
+                url: "Admin/Security/{action}/{id}",
+                defaults: new { controller = "Security", action = "DatabaseUsers", id = UrlParameter.Optional },
+                namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
+            );
+
+            routes.MapRoute(
+                name: "AdminAuditLogs",
+                url: "Admin/AuditLogs/{action}/{id}",
+                defaults: new { controller = "AuditLogs", action = "Index", id = UrlParameter.Optional },
                 namespaces: new[] { "QuanLyDiemRenLuyen.Controllers.Admin" }
             );
 

@@ -1,16 +1,16 @@
 -- =========================================================
--- RBAC IMPLEMENTATION - PART B (Run as QLDiemRenLuyen)
+-- RBAC - PHẦN B (Chạy với QLDiemRenLuyen)
 -- =========================================================
--- Connection: QLDiemRenLuyen (schema owner)
--- Purpose: Grant object privileges and create supporting objects
--- Prerequisite: Run 001A_RBAC_Roles_SYSDBA.sql first!
+-- Kết nối: QLDiemRenLuyen (schema owner)
+-- Mục đích: Cấp quyền trên đối tượng và tạo các object hỗ trợ
+-- Điều kiện: Chạy 001A_RBAC_Roles_SYSDBA.sql trước!
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 
 PROMPT '========================================';
-PROMPT 'RBAC PART B - Granting Permissions';
-PROMPT 'Executing as: QLDiemRenLuyen';
+PROMPT 'RBAC PHẦN B - Cấp quyền trên đối tượng';
+PROMPT 'Đang thực thi với: QLDiemRenLuyen';
 PROMPT '========================================';
 
 -- =========================================================

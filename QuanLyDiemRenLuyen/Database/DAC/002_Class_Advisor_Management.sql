@@ -1,7 +1,7 @@
 -- ========================================
--- CLASS ADVISOR (CVHT) ASSIGNMENT FEATURE  
--- Migration Script: 002_Class_Advisor_Management.sql
--- Executing as: QLDiemRenLuyen
+-- QUẢN LÝ PHÂN CÔNG CVHT (CỐ VẤN HỌC TẬP)
+-- Script: 002_Class_Advisor_Management.sql
+-- Chạy với: QLDiemRenLuyen
 -- ========================================
 
 SET SERVEROUTPUT ON;

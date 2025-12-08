@@ -20,6 +20,14 @@ namespace QuanLyDiemRenLuyen.Helpers
         }
 
         /// <summary>
+        /// Lấy connection string từ cấu hình
+        /// </summary>
+        public static string GetConnectionString()
+        {
+            return ConnectionString;
+        }
+
+        /// <summary>
         /// Tạo và mở connection mới
         /// </summary>
         public static OracleConnection GetConnection()

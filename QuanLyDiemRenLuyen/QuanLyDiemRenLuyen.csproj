@@ -213,7 +213,6 @@
     <Compile Include="Controllers\Admin\DatabaseController.cs" />
     <Compile Include="Controllers\Admin\FeedbacksController.cs" />
     <Compile Include="Controllers\Admin\ProofsController.cs" />
-    <Compile Include="Controllers\Admin\ReviewRequestsController.cs" />
     <Compile Include="Controllers\Admin\ScoresController.cs" />
     <Compile Include="Controllers\Admin\SecurityController.cs" />
     <Compile Include="Controllers\Admin\UsersController.cs" />
@@ -221,6 +220,7 @@
     <Compile Include="Controllers\Lecturer\DashboardController.cs" />
     <Compile Include="Controllers\Lecturer\LecturerBaseController.cs" />
     <Compile Include="Controllers\Lecturer\PermissionsController.cs" />
+    <Compile Include="Controllers\Lecturer\ScoresController.cs" />
     <Compile Include="Controllers\Student\ActivitiesController.cs" />
     <Compile Include="Controllers\Student\DashboardController.cs" />
     <Compile Include="Controllers\Student\FeedbacksController.cs" />
@@ -232,7 +232,6 @@
     <Compile Include="Helpers\EncryptionHelper.cs" />
     <Compile Include="Helpers\OracleDbHelper.cs" />
     <Compile Include="Helpers\PasswordHelper.cs" />
-    <Compile Include="Helpers\RsaHelper.cs" />
     <Compile Include="Helpers\RsaKeyManager.cs" />
     <Compile Include="Models\ActivityViewModel.cs" />
     <Compile Include="Models\AdminViewModel.cs" />
@@ -259,13 +258,17 @@
     <Compile Include="Models\StudentProfileViewModel.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\UserViewModel.cs" />
+    <Compile Include="Services\AuditCryptoService.cs" />
     <Compile Include="Services\DigitalSignatureService.cs" />
     <Compile Include="Services\EncryptedFeedbackService.cs" />
+    <Compile Include="Services\FilePathCryptoService.cs" />
+    <Compile Include="Services\HybridCryptoService.cs" />
     <Compile Include="Services\SensitiveDataService.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\SessionTokenService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap\css\bootstrap-grid.css" />
@@ -346,7 +349,6 @@
     <Content Include="Views\Admin\ApproveScores.cshtml" />
     <Content Include="Views\Admin\ClassScores.cshtml" />
     <Content Include="Views\Admin\Dashboard.cshtml" />
-    <Content Include="Views\Admin\ReviewRequests.cshtml" />
     <Content Include="Views\Admin\ViewRegistrations.cshtml" />
     <Content Include="Views\Lecturer\Activities\Form.cshtml" />
     <Content Include="Views\Lecturer\Activities\Index.cshtml" />
@@ -381,6 +383,10 @@
     <Content Include="Views\Admin\AuditLogs\Detail.cshtml" />
     <Content Include="Views\Admin\AuditLogs\Index.cshtml" />
     <Content Include="Views\Admin\AuditLogs\_RecordHistory.cshtml" />
+    <Content Include="Views\Lecturer\Activities\Participants.cshtml" />
+    <Content Include="Views\Lecturer\Activities\Attendance.cshtml" />
+    <Content Include="Views\Lecturer\Scores\ClassDetail.cshtml" />
+    <Content Include="Views\Lecturer\Scores\MyClasses.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

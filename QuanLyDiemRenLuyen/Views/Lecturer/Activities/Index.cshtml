@@ -326,6 +326,17 @@
                                 <a href="@Url.RouteUrl("LecturerActivities", new { action = "Edit", id = item.Id })" class="btn btn-sm btn-outline-primary me-1" title="Chỉnh sửa">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                @if (item.ApprovalStatus == "APPROVED" && item.CurrentParticipants > 0)
+                                {
+                                    <a href="@Url.RouteUrl("LecturerActivities", new { action = "Attendance", id = item.Id })" 
+                                       class="btn btn-sm" style="background: #10b981; color: white; margin-right: 4px;" title="Điểm danh (Mới)">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </a>
+                                    <a href="@Url.RouteUrl("LecturerActivities", new { action = "Participants", id = item.Id })" 
+                                       class="btn btn-sm" style="background: #667eea; color: white; margin-right: 4px;" title="DS Tham gia">
+                                        <i class="fas fa-users"></i>
+                                    </a>
+                                }
                                 <button type="button" class="btn btn-sm btn-outline-danger" title="Xóa" 
                                         onclick="confirmDelete('@item.Id', '@item.Title')">
                                     <i class="fas fa-trash"></i>

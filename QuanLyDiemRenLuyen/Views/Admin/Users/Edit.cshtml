@@ -143,8 +143,14 @@
                 new SelectListItem { Text = "Sinh viên", Value = "STUDENT" },
                 new SelectListItem { Text = "Giảng viên", Value = "LECTURER" },
                 new SelectListItem { Text = "Quản trị viên", Value = "ADMIN" }
-            }, "Chọn vai trò", new { @class = "form-control" })
+            }, "Chọn vai trò", new { @class = "form-control", id = "RoleDropdown", onchange = "toggleClassDropdown()" })
             @Html.ValidationMessageFor(m => m.Role, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group" id="classGroup" style="@(Model.Role == "STUDENT" ? "" : "display: none;")">
+            @Html.LabelFor(m => m.ClassId)
+            @Html.DropDownListFor(m => m.ClassId, Model.Classes, "-- Chọn lớp --", new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.ClassId, "", new { @class = "text-danger" })
         </div>
 
         <div class="form-group checkbox-container">
@@ -171,3 +177,16 @@
         </div>
     }
 </div>
+
+<script>
+    function toggleClassDropdown() {
+        var roleDropdown = document.getElementById('RoleDropdown');
+        var classGroup = document.getElementById('classGroup');
+        
+        if (roleDropdown.value === 'STUDENT') {
+            classGroup.style.display = 'block';
+        } else {
+            classGroup.style.display = 'none';
+        }
+    }
+</script>

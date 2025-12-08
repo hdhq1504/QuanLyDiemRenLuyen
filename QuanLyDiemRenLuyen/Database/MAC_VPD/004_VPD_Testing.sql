@@ -1,9 +1,9 @@
 -- =========================================================
--- MAC + VPD IMPLEMENTATION - PART D (Run as QLDiemRenLuyen)
+-- MAC + VPD - PHẦN D (Chạy với QLDiemRenLuyen)
 -- =========================================================
--- Connection: QLDiemRenLuyen (schema owner)
--- Purpose: Test VPD policies with sample data
--- Prerequisite: Run 001, 002, 003 scripts first!
+-- Kết nối: QLDiemRenLuyen (schema owner)
+-- Mục đích: Kiểm thử chính sách VPD với dữ liệu mẫu
+-- Điều kiện: Chạy script 001, 002, 003 trước!
 -- =========================================================
 
 SET SERVEROUTPUT ON;
@@ -11,8 +11,8 @@ SET LINESIZE 200;
 SET PAGESIZE 50;
 
 PROMPT '========================================';
-PROMPT 'MAC + VPD PART D - Testing VPD Policies';
-PROMPT 'Executing as: QLDiemRenLuyen';
+PROMPT 'MAC + VPD PHẦN D - Kiểm thử VPD Policies';
+PROMPT 'Đang thực thi với: QLDiemRenLuyen';
 PROMPT '========================================';
 
 -- =========================================================

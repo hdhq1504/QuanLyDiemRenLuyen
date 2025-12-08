@@ -1,16 +1,22 @@
 using System;
+using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
 
 namespace QuanLyDiemRenLuyen.Services
 {
     /// <summary>
     /// Service xử lý mã hóa/giải mã dữ liệu nhạy cảm của sinh viên
-    /// Sử dụng RSA encryption với system key
+    /// Sử dụng Oracle PKG_STUDENT_ENCRYPTION (crypto4ora backend)
+    /// 
+    /// UPDATE: Now uses Oracle database packages for encryption instead of C# RSA.
+    /// This ensures encryption keys never leave the database, improving security.
     /// </summary>
     public class SensitiveDataService
     {
+        #region Phone Encryption
+
         /// <summary>
-        /// Mã hóa số điện thoại
+        /// Mã hóa số điện thoại using Oracle PKG_STUDENT_ENCRYPTION
         /// </summary>
         public static string EncryptStudentPhone(string phone)
         {
@@ -19,16 +25,19 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                // Lấy public key từ hệ thống
-                string publicKey = RsaKeyManager.GetSystemPublicKey();
-                
-                // Mã hóa
-                string encrypted = RsaHelper.Encrypt(phone.Trim(), publicKey);
-                
-                // Update key usage
-                RsaKeyManager.UpdateKeyUsage();
-                
-                return encrypted;
+                // Call Oracle package for encryption
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_STUDENT_ENCRYPTION.ENCRYPT_PHONE(:phone) FROM DUAL";
+                        cmd.Parameters.Add("phone", OracleDbType.Varchar2).Value = phone.Trim();
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -37,7 +46,7 @@ namespace QuanLyDiemRenLuyen.Services
         }
 
         /// <summary>
-        /// Giải mã số điện thoại
+        /// Giải mã số điện thoại using Oracle PKG_STUDENT_ENCRYPTION
         /// </summary>
         public static string DecryptStudentPhone(string encryptedPhone)
         {
@@ -46,24 +55,32 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                // Lấy private key từ hệ thống
-                string privateKey = RsaKeyManager.GetSystemPrivateKey();
-                
-                // Giải mã
-                string decrypted = RsaHelper.Decrypt(encryptedPhone, privateKey);
-                
-                return decrypted;
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_STUDENT_ENCRYPTION.DECRYPT_PHONE(:encrypted) FROM DUAL";
+                        cmd.Parameters.Add("encrypted", OracleDbType.Clob).Value = encryptedPhone;
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
+                }
             }
             catch (Exception ex)
             {
-                // Log error nhưng không expose chi tiết
                 System.Diagnostics.Debug.WriteLine("Decrypt phone error: " + ex.Message);
                 return "[Encrypted - Cannot Decrypt]";
             }
         }
 
+        #endregion
+
+        #region Address Encryption
+
         /// <summary>
-        /// Mã hóa địa chỉ
+        /// Mã hóa địa chỉ using Oracle PKG_STUDENT_ENCRYPTION
         /// </summary>
         public static string EncryptStudentAddress(string address)
         {
@@ -72,19 +89,18 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                string publicKey = RsaKeyManager.GetSystemPublicKey();
-                
-                // Nếu address quá dài, cần split và encrypt từng phần
-                // RSA 2048-bit chỉ encrypt được ~214 bytes
-                if (address.Length > 200)
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
                 {
-                    return EncryptLongText(address, publicKey);
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_STUDENT_ENCRYPTION.ENCRYPT_ADDRESS(:address) FROM DUAL";
+                        cmd.Parameters.Add("address", OracleDbType.Varchar2).Value = address.Trim();
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
                 }
-                
-                string encrypted = RsaHelper.Encrypt(address.Trim(), publicKey);
-                RsaKeyManager.UpdateKeyUsage();
-                
-                return encrypted;
             }
             catch (Exception ex)
             {
@@ -93,7 +109,7 @@ namespace QuanLyDiemRenLuyen.Services
         }
 
         /// <summary>
-        /// Giải mã địa chỉ
+        /// Giải mã địa chỉ using Oracle PKG_STUDENT_ENCRYPTION
         /// </summary>
         public static string DecryptStudentAddress(string encryptedAddress)
         {
@@ -102,16 +118,18 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                string privateKey = RsaKeyManager.GetSystemPrivateKey();
-                
-                // Check if this is multi-part encrypted data
-                if (encryptedAddress.StartsWith("[MULTI]"))
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
                 {
-                    return DecryptLongText(encryptedAddress, privateKey);
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_STUDENT_ENCRYPTION.DECRYPT_ADDRESS(:encrypted) FROM DUAL";
+                        cmd.Parameters.Add("encrypted", OracleDbType.Clob).Value = encryptedAddress;
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
                 }
-                
-                string decrypted = RsaHelper.Decrypt(encryptedAddress, privateKey);
-                return decrypted;
             }
             catch (Exception ex)
             {
@@ -120,8 +138,12 @@ namespace QuanLyDiemRenLuyen.Services
             }
         }
 
+        #endregion
+
+        #region ID Card Encryption
+
         /// <summary>
-        /// Mã hóa số CMND/CCCD
+        /// Mã hóa số CMND/CCCD using Oracle PKG_STUDENT_ENCRYPTION
         /// </summary>
         public static string EncryptIdCard(string idCard)
         {
@@ -130,12 +152,18 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                string publicKey = RsaKeyManager.GetSystemPublicKey();
-                string encrypted = RsaHelper.Encrypt(idCard.Trim(), publicKey);
-                
-                RsaKeyManager.UpdateKeyUsage();
-                
-                return encrypted;
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_STUDENT_ENCRYPTION.ENCRYPT_ID_CARD(:idcard) FROM DUAL";
+                        cmd.Parameters.Add("idcard", OracleDbType.Varchar2).Value = idCard.Trim();
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -144,7 +172,7 @@ namespace QuanLyDiemRenLuyen.Services
         }
 
         /// <summary>
-        /// Giải mã số CMND/CCCD
+        /// Giải mã số CMND/CCCD using Oracle PKG_STUDENT_ENCRYPTION
         /// </summary>
         public static string DecryptIdCard(string encryptedIdCard)
         {
@@ -153,10 +181,18 @@ namespace QuanLyDiemRenLuyen.Services
 
             try
             {
-                string privateKey = RsaKeyManager.GetSystemPrivateKey();
-                string decrypted = RsaHelper.Decrypt(encryptedIdCard, privateKey);
-                
-                return decrypted;
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT PKG_STUDENT_ENCRYPTION.DECRYPT_ID_CARD(:encrypted) FROM DUAL";
+                        cmd.Parameters.Add("encrypted", OracleDbType.Clob).Value = encryptedIdCard;
+                        
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -165,62 +201,107 @@ namespace QuanLyDiemRenLuyen.Services
             }
         }
 
+        #endregion
+
+        #region Batch Operations
+
         /// <summary>
-        /// Mã hóa text dài bằng cách split thành nhiều blocks
-        /// Format: [MULTI]block1|block2|block3
+        /// Encrypt and store all sensitive data for a student
         /// </summary>
-        private static string EncryptLongText(string text, string publicKey)
+        public static void EncryptAndStoreStudentData(int studentId, string phone, string address, string idCard)
         {
-            const int chunkSize = 180; // An toàn với 2048-bit RSA
-            var chunks = new System.Collections.Generic.List<string>();
-            
-            for (int i = 0; i < text.Length; i += chunkSize)
+            try
             {
-                int length = Math.Min(chunkSize, text.Length - i);
-                string chunk = text.Substring(i, length);
-                string encryptedChunk = RsaHelper.Encrypt(chunk, publicKey);
-                chunks.Add(encryptedChunk);
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "BEGIN PKG_STUDENT_ENCRYPTION.ENCRYPT_STUDENT_DATA(:sid, :phone, :address, :idcard); END;";
+                        cmd.Parameters.Add("sid", OracleDbType.Int32).Value = studentId;
+                        cmd.Parameters.Add("phone", OracleDbType.Varchar2).Value = (object)phone ?? DBNull.Value;
+                        cmd.Parameters.Add("address", OracleDbType.Varchar2).Value = (object)address ?? DBNull.Value;
+                        cmd.Parameters.Add("idcard", OracleDbType.Varchar2).Value = (object)idCard ?? DBNull.Value;
+                        
+                        cmd.ExecuteNonQuery();
+                    }
+                }
             }
-            
-            return "[MULTI]" + string.Join("|", chunks);
+            catch (Exception ex)
+            {
+                throw new Exception("Lỗi khi mã hóa dữ liệu sinh viên: " + ex.Message, ex);
+            }
         }
 
         /// <summary>
-        /// Giải mã text dài đã được split thành nhiều blocks
+        /// Get all decrypted sensitive data for a student
         /// </summary>
-        private static string DecryptLongText(string encryptedText, string privateKey)
+        public static (string Phone, string Address, string IdCard) GetDecryptedStudentData(int studentId)
         {
-            // Remove [MULTI] prefix
-            string data = encryptedText.Substring(7);
-            string[] chunks = data.Split('|');
-            
-            var decryptedChunks = new System.Collections.Generic.List<string>();
-            foreach (string chunk in chunks)
+            try
             {
-                string decrypted = RsaHelper.Decrypt(chunk, privateKey);
-                decryptedChunks.Add(decrypted);
+                using (var conn = new OracleConnection(OracleDbHelper.GetConnectionString()))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"
+                            DECLARE
+                                v_phone VARCHAR2(50);
+                                v_address VARCHAR2(500);
+                                v_idcard VARCHAR2(50);
+                            BEGIN
+                                PKG_STUDENT_ENCRYPTION.GET_STUDENT_SENSITIVE_DATA(:sid, v_phone, v_address, v_idcard);
+                                :phone := v_phone;
+                                :address := v_address;
+                                :idcard := v_idcard;
+                            END;";
+                        
+                        cmd.Parameters.Add("sid", OracleDbType.Int32).Value = studentId;
+                        cmd.Parameters.Add("phone", OracleDbType.Varchar2, 50).Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add("address", OracleDbType.Varchar2, 500).Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add("idcard", OracleDbType.Varchar2, 50).Direction = System.Data.ParameterDirection.Output;
+                        
+                        cmd.ExecuteNonQuery();
+                        
+                        return (
+                            cmd.Parameters["phone"].Value?.ToString(),
+                            cmd.Parameters["address"].Value?.ToString(),
+                            cmd.Parameters["idcard"].Value?.ToString()
+                        );
+                    }
+                }
             }
-            
-            return string.Join("", decryptedChunks);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Get student data error: " + ex.Message);
+                return (null, null, null);
+            }
         }
+
+        #endregion
+
+        #region Masking Utilities
 
         /// <summary>
         /// Mask sensitive data để hiển thị (ví dụ: 012****789)
         /// </summary>
         public static string MaskPhone(string phone)
         {
-            if (string.IsNullOrWhiteSpace(phone))
-                return "";
+            if (string.IsNullOrEmpty(phone) || phone.Length < 6)
+                return phone;
 
-            if (phone.Length <= 6)
-                return new string('*', phone.Length);
+            // Giữ 3 số đầu và 3 số cuối, còn lại thay bằng *
+            int visibleStart = 3;
+            int visibleEnd = 3;
+            int maskLength = phone.Length - visibleStart - visibleEnd;
 
-            // Show first 3 and last 3 digits
-            string first = phone.Substring(0, 3);
-            string last = phone.Substring(phone.Length - 3);
-            string middle = new string('*', phone.Length - 6);
+            if (maskLength <= 0)
+                return phone;
 
-            return first + middle + last;
+            return phone.Substring(0, visibleStart) 
+                   + new string('*', maskLength) 
+                   + phone.Substring(phone.Length - visibleEnd);
         }
 
         /// <summary>
@@ -228,17 +309,36 @@ namespace QuanLyDiemRenLuyen.Services
         /// </summary>
         public static string MaskIdCard(string idCard)
         {
-            if (string.IsNullOrWhiteSpace(idCard))
-                return "";
+            if (string.IsNullOrEmpty(idCard) || idCard.Length < 6)
+                return idCard;
 
-            if (idCard.Length <= 4)
-                return new string('*', idCard.Length);
+            // Giữ 4 số cuối
+            int visibleEnd = 4;
+            int maskLength = idCard.Length - visibleEnd;
 
-            // Show last 4 digits only
-            string masked = new string('*', idCard.Length - 4);
-            string last = idCard.Substring(idCard.Length - 4);
-
-            return masked + last;
+            return new string('*', maskLength) + idCard.Substring(idCard.Length - visibleEnd);
         }
+
+        /// <summary>
+        /// Mask address - show only district/city
+        /// </summary>
+        public static string MaskAddress(string address)
+        {
+            if (string.IsNullOrEmpty(address))
+                return address;
+
+            // Show only last part (typically district/city)
+            int lastComma = address.LastIndexOf(',');
+            if (lastComma > 0 && lastComma < address.Length - 1)
+            {
+                return "***" + address.Substring(lastComma);
+            }
+
+            // If no comma, mask first half
+            int halfLength = address.Length / 2;
+            return new string('*', halfLength) + address.Substring(halfLength);
+        }
+
+        #endregion
     }
 }

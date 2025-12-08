@@ -1,0 +1,157 @@
+@model QuanLyDiemRenLuyen.Models.MyClassScoresViewModel
+@{
+    ViewBag.Title = "Điểm Lớp Được Phân Công";
+    Layout = "~/Views/Shared/_LecturerLayout.cshtml";
+}
+
+<style>
+    .page-container { max-width: 1400px; margin: 0 auto; }
+
+    .page-header {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+
+    .page-header h1 { font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0; }
+    .page-header .subtitle { color: #64748b; font-size: 14px; }
+
+    .term-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: #0ea5e9;
+        color: white;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .classes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .class-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .class-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .class-header { padding: 20px; border-bottom: 1px solid #f1f5f9; }
+    .class-code { font-size: 12px; font-weight: 600; color: #0ea5e9; text-transform: uppercase; margin-bottom: 5px; }
+    .class-name { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0; }
+    .class-dept { font-size: 13px; color: #64748b; margin-top: 5px; }
+
+    .class-stats { padding: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+    .stat-label { font-size: 12px; color: #64748b; }
+    .stat-value.good { color: #10b981; }
+    .stat-value.warning { color: #f59e0b; }
+
+    .class-actions { padding: 15px 20px; background: #f8fafc; display: flex; gap: 10px; }
+
+    .btn {
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .btn-primary { background: #0ea5e9; color: white; }
+    .btn-primary:hover { background: #0284c7; }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state i { font-size: 64px; color: #e2e8f0; margin-bottom: 20px; }
+    .empty-state h3 { color: #64748b; margin-bottom: 10px; }
+    .empty-state p { color: #94a3b8; }
+</style>
+
+<div class="page-container">
+    <div class="page-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h1><i class="fas fa-graduation-cap"></i>Quản lý điểm lớp</h1>
+                <p class="subtitle">Xem điểm rèn luyện các lớp bạn quản lý</p>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.CurrentTermName))
+            {
+                <div class="term-badge">
+                    <i class="fas fa-calendar-alt"></i>
+                    @Model.CurrentTermName
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.Classes != null && Model.Classes.Count > 0)
+    {
+        <div class="classes-grid">
+            @foreach (var cls in Model.Classes)
+            {
+                <div class="class-card">
+                    <div class="class-header">
+                        <div class="class-code">@cls.ClassCode</div>
+                        <h3 class="class-name">@cls.ClassName</h3>
+                        <div class="class-dept"><i class="fas fa-building"></i> @cls.DepartmentName</div>
+                    </div>
+                    <div class="class-stats">
+                        <div class="stat">
+                            <div class="stat-value">@cls.TotalStudents</div>
+                            <div class="stat-label">Tổng SV</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value @(cls.StudentsWithScores == cls.TotalStudents ? "good" : "warning")">@cls.StudentsWithScores</div>
+                            <div class="stat-label">Có điểm</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value good">@cls.AverageScore.ToString("F1")</div>
+                            <div class="stat-label">ĐTB</div>
+                        </div>
+                    </div>
+                    <div class="class-actions">
+                        <a href="@Url.RouteUrl("LecturerScores", new { action = "ClassDetail", id = cls.ClassId })" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-school"></i>
+            <h3>Chưa được phân công lớp nào</h3>
+            <p>Bạn chưa được admin phân công làm CVHT của lớp nào.</p>
+        </div>
+    }
+</div>

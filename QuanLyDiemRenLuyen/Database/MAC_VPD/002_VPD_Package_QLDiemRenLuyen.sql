@@ -1,9 +1,9 @@
 -- =========================================================
--- MAC + VPD IMPLEMENTATION - PART B (Run as QLDiemRenLuyen)
+-- MAC + VPD - PHẦN B (Chạy với QLDiemRenLuyen)
 -- =========================================================
--- Connection: QLDiemRenLuyen (schema owner)
--- Purpose: Create VPD Context Package and Policy Functions
--- Prerequisite: Run 001_VPD_Context_SYSDBA.sql first!
+-- Kết nối: QLDiemRenLuyen (schema owner)
+-- Mục đích: Tạo VPD Context Package và Policy Functions
+-- Điều kiện: Chạy 001_VPD_Context_SYSDBA.sql trước!
 -- =========================================================
 -- 
 -- NGHIỆP VỤ: Xem & Duyệt điểm rèn luyện (SCORES)
@@ -20,8 +20,8 @@
 SET SERVEROUTPUT ON;
 
 PROMPT '========================================';
-PROMPT 'MAC + VPD PART B - VPD Context Package';
-PROMPT 'Executing as: QLDiemRenLuyen';
+PROMPT 'MAC + VPD PHẦN B - VPD Context Package';
+PROMPT 'Đang thực thi với: QLDiemRenLuyen';
 PROMPT '========================================';
 
 -- =========================================================
@@ -151,12 +151,13 @@ CREATE OR REPLACE PACKAGE BODY PKG_VPD_CONTEXT AS
         
         -- Log context setting
         BEGIN
-            INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC, CLIENT_IP)
+            INSERT INTO AUDIT_EVENTS(EVENT_TYPE, PERFORMED_BY, EVENT_AT_UTC, CLIENT_IP, DESCRIPTION)
             VALUES (
+                'VPD_CONTEXT_SET',
                 p_user_id,
-                'VPD_CONTEXT_SET|ROLE=' || p_role || '|CLIENT=' || v_client_id,
-                SYSTIMESTAMP,
-                SYS_CONTEXT('USERENV', 'IP_ADDRESS')
+                SYS_EXTRACT_UTC(SYSTIMESTAMP),
+                SYS_CONTEXT('USERENV', 'IP_ADDRESS'),
+                'ROLE=' || p_role || '|CLIENT=' || v_client_id
             );
             COMMIT;
         EXCEPTION
@@ -190,11 +191,12 @@ CREATE OR REPLACE PACKAGE BODY PKG_VPD_CONTEXT AS
         -- Log context clearing
         IF v_user_id IS NOT NULL THEN
             BEGIN
-                INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC)
+                INSERT INTO AUDIT_EVENTS(EVENT_TYPE, PERFORMED_BY, EVENT_AT_UTC, DESCRIPTION)
                 VALUES (
+                    'VPD_CONTEXT_CLEAR',
                     v_user_id,
-                    'VPD_CONTEXT_CLEAR|CLIENT=' || v_client_id,
-                    SYSTIMESTAMP
+                    SYS_EXTRACT_UTC(SYSTIMESTAMP),
+                    'CLIENT=' || v_client_id
                 );
                 COMMIT;
             EXCEPTION

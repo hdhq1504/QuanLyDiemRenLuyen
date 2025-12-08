@@ -54,17 +54,6 @@
         line-height: 1.6;
     }
 
-    .response-form textarea {
-        width: 100%;
-        min-height: 150px;
-        padding: 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        resize: vertical;
-        font-family: inherit;
-        margin-bottom: 15px;
-    }
-
     .btn {
         padding: 10px 20px;
         border-radius: 6px;
@@ -74,17 +63,12 @@
         transition: all 0.3s;
         border: none;
         cursor: pointer;
+        font-weight: 600;
     }
 
-    .btn-primary {
-        background: #667eea;
-        color: white;
-    }
-
-    .btn-secondary {
-        background: #95a5a6;
-        color: white;
-    }
+    .btn-success { background: #10b981; color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-secondary { background: #95a5a6; color: white; }
 
     .status-badge {
         display: inline-block;
@@ -94,29 +78,113 @@
         font-weight: 600;
     }
 
-    .status-submitted {
-        background: #fff3cd;
-        color: #856404;
+    .status-submitted { background: #fff3cd; color: #856404; }
+    .status-approved { background: #d4edda; color: #155724; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+
+    .activity-card {
+        background: #2563eb;
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
     }
 
-    .status-responded {
-        background: #d4edda;
-        color: #155724;
+    .activity-card .section-title {
+        color: white;
+        border-bottom-color: rgba(255,255,255,0.3);
+    }
+
+    .activity-card .info-label { color: rgba(255,255,255,0.8); }
+    .activity-card .info-value { color: white; }
+
+    .checkin-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+
+    .checkin-yes { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.5); }
+    .checkin-no { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.5); }
+
+    .points-badge {
+        font-size: 24px;
+        font-weight: 700;
+        background: rgba(255,255,255,0.2);
+        padding: 10px 20px;
+        border-radius: 8px;
+        display: inline-block;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .reject-form { margin-top: 15px; }
+    .reject-form textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        resize: vertical;
+        font-family: inherit;
+        margin-bottom: 10px;
     }
 </style>
 
 <div class="content-header" style="margin-bottom: 25px;">
-    <a href="@Url.Action("Index", "Feedbacks")" class="btn btn-secondary" style="margin-bottom: 15px;">
+    <a href="@Url.RouteUrl("AdminFeedbacks", new { action = "Index" })" class="btn btn-secondary" style="margin-bottom: 15px;">
         <i class="fas fa-arrow-left"></i> Quay lại
     </a>
     <h2>Chi tiết phản hồi</h2>
 </div>
 
 <div class="detail-container">
-    <!-- Left Column: Content & Response -->
+    <!-- Left Column -->
     <div class="main-content">
+        @if (!string.IsNullOrEmpty(Model.ActivityId))
+        {
+            <div class="activity-card">
+                <div class="section-title"><i class="fas fa-calendar-alt"></i> Hoạt động liên quan</div>
+                
+                <div class="info-row">
+                    <div class="info-label">Tên hoạt động</div>
+                    <div class="info-value" style="font-size: 18px;">@Model.ActivityTitle</div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div class="info-label">Điểm hoạt động</div>
+                        <div class="points-badge">+@Model.ActivityPoints điểm</div>
+                    </div>
+                    
+                    <div class="checkin-status @(Model.HasCheckedIn ? "checkin-yes" : "checkin-no")">
+                        @if (Model.HasCheckedIn)
+                        {
+                            <i class="fas fa-check-circle" style="font-size: 20px;"></i>
+                            <div>
+                                <div style="font-weight: 600;">Đã điểm danh</div>
+                            <div style="font-size: 12px; opacity: 0.8;">@(Model.CheckedInAt.HasValue ? Model.CheckedInAt.Value.ToString("dd/MM/yyyy HH:mm") : "")</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <i class="fas fa-times-circle" style="font-size: 20px;"></i>
+                            <div style="font-weight: 600;">Chưa điểm danh</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
         <div class="card">
-            <div class="section-title">Nội dung phản hồi</div>
+            <div class="section-title"><i class="fas fa-comment-alt"></i> Nội dung phản hồi</div>
             
             <div class="info-row">
                 <div class="info-label">Tiêu đề</div>
@@ -129,48 +197,69 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="section-title">Phản hồi của Admin</div>
+        @if (Model.Status == "SUBMITTED" && !string.IsNullOrEmpty(Model.ActivityId))
+        {
+            <div class="card">
+                <div class="section-title"><i class="fas fa-gavel"></i> Xử lý phản hồi</div>
+                
+                <div class="action-buttons">
+                    <form action="@Url.RouteUrl("AdminFeedbacks", new { action = "Approve" })" method="post" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Xác nhận duyệt và cộng @Model.ActivityPoints điểm cho sinh viên?');">
+                            <i class="fas fa-check"></i> Duyệt (+@Model.ActivityPoints điểm)
+                        </button>
+                    </form>
+                    
+                    <button type="button" class="btn btn-danger" onclick="document.getElementById('rejectForm').style.display='block'; this.style.display='none';">
+                        <i class="fas fa-times"></i> Từ chối
+                    </button>
+                </div>
 
-            @if (Model.Status == "RESPONDED")
-            {
+                <div id="rejectForm" class="reject-form" style="display: none;">
+                    <form action="@Url.RouteUrl("AdminFeedbacks", new { action = "Reject" })" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <label style="font-weight: 600; margin-bottom: 10px; display: block;">Lý do từ chối:</label>
+                        <textarea name="reason" required placeholder="Nhập lý do từ chối..."></textarea>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-paper-plane"></i> Gửi từ chối
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('rejectForm').style.display='none'; document.querySelector('.action-buttons .btn-danger').style.display='inline-block';">
+                            Hủy
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @if (Model.Status == "APPROVED" || Model.Status == "REJECTED")
+        {
+            <div class="card">
+                <div class="section-title"><i class="fas fa-reply"></i> Kết quả xử lý</div>
+                
                 <div class="info-row">
-                    <div class="info-label">Người phản hồi</div>
+                    <div class="info-label">Người xử lý</div>
                     <div class="info-value">@Model.RespondedBy</div>
                 </div>
                 <div class="info-row">
                     <div class="info-label">Thời gian</div>
-                    <div class="info-value">@Model.RespondedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                    <div class="info-value">@Model.RespondedAt?.ToString("dd/MM/yyyy HH:mm")</div>
                 </div>
                 <div class="info-row">
-                    <div class="info-label">Nội dung phản hồi</div>
-                    <div class="content-box" style="background: #e8f4f8; border-color: #bee5eb;">@Model.Response</div>
-                </div>
-            }
-            else
-            {
-                using (Html.BeginForm("Respond", "Feedbacks", FormMethod.Post, new { @class = "response-form" }))
-                {
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@Model.Id" />
-                    
-                    <div class="form-group">
-                        <label style="margin-bottom: 10px; display: block; font-weight: 600;">Nhập nội dung phản hồi:</label>
-                        <textarea name="response" required placeholder="Nhập câu trả lời cho sinh viên..."></textarea>
+                    <div class="info-label">Nội dung</div>
+                    <div class="content-box" style="background: @(Model.Status == "APPROVED" ? "#d4edda" : "#f8d7da"); border-color: @(Model.Status == "APPROVED" ? "#c3e6cb" : "#f5c6cb");">
+                        @Model.Response
                     </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane"></i> Gửi phản hồi
-                    </button>
-                }
-            }
-        </div>
+                </div>
+            </div>
+        }
     </div>
 
-    <!-- Right Column: Student Info -->
+    <!-- Right Column -->
     <div class="sidebar">
         <div class="card">
-            <div class="section-title">Thông tin sinh viên</div>
+            <div class="section-title"><i class="fas fa-user-graduate"></i> Thông tin sinh viên</div>
 
             <div class="info-row">
                 <div class="info-label">Họ tên</div>
@@ -197,11 +286,15 @@
                 <div class="info-value">
                     @if (Model.Status == "SUBMITTED")
                     {
-                        <span class="status-badge status-submitted">Chờ phản hồi</span>
+                        <span class="status-badge status-submitted">Chờ xử lý</span>
                     }
-                    else
+                    else if (Model.Status == "APPROVED")
                     {
-                        <span class="status-badge status-responded">Đã phản hồi</span>
+                        <span class="status-badge status-approved">Đã duyệt</span>
+                    }
+                    else if (Model.Status == "REJECTED")
+                    {
+                        <span class="status-badge status-rejected">Đã từ chối</span>
                     }
                 </div>
             </div>

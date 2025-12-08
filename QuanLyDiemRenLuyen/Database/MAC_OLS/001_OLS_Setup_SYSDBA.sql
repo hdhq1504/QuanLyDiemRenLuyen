@@ -1,15 +1,15 @@
 -- =========================================================
--- MAC + OLS IMPLEMENTATION - PART A (Run as SYSDBA)
+-- MAC + OLS - PHẦN A (Chạy với SYSDBA)
 -- =========================================================
--- Connection: SYSDBA (sys/sys)
--- Purpose: Setup Oracle Label Security (OLS) Policy and Components
+-- Kết nối: SYSDBA (sys/sys)
+-- Mục đích: Thiết lập chính sách Oracle Label Security (OLS)
 -- =========================================================
 --
--- PREREQUISITES:
--- 1. Oracle Enterprise Edition with OLS option enabled
--- 2. Run: SELECT * FROM V$OPTION WHERE PARAMETER = 'Oracle Label Security';
---    Result should show VALUE = 'TRUE'
--- 3. LBACSYS user must be unlocked
+-- ĐIỀU KIỆN TIÊN QUYẾT:
+-- 1. Oracle Enterprise Edition với tùy chọn OLS được bật
+-- 2. Chạy: SELECT * FROM V$OPTION WHERE PARAMETER = 'Oracle Label Security';
+--    Kết quả phải là VALUE = 'TRUE'
+-- 3. User LBACSYS phải được mở khóa
 --
 -- =========================================================
 
@@ -17,8 +17,8 @@ SET SERVEROUTPUT ON;
 SET LINESIZE 200;
 
 PROMPT '========================================';
-PROMPT 'MAC + OLS PART A - OLS Policy Setup';
-PROMPT 'Executing as: SYSDBA';
+PROMPT 'MAC + OLS PHẦN A - Thiết lập Chính sách OLS';
+PROMPT 'Đang thực thi với: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================

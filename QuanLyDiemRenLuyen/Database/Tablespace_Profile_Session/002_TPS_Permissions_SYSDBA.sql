@@ -1,10 +1,10 @@
 -- ============================================
--- GRANT PERMISSIONS FOR ORACLE DBA FEATURES
--- Run this script as SYSDBA user
+-- CẤP QUYỀN CHO CÁC TÍNH NĂNG DBA ORACLE
+-- Chạy script này với quyền SYSDBA
 -- ============================================
 
 -- User: QLDiemRenLuyen
--- Purpose: Grant necessary permissions for Database monitoring and management features
+-- Mục đích: Cấp các quyền cần thiết cho tính năng giám sát và quản lý Database
 
 -- ==================== TABLESPACE MONITORING ====================
 

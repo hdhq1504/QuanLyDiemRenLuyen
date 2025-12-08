@@ -1,0 +1,714 @@
+@model QuanLyDiemRenLuyen.Models.AttendanceViewModel
+@{
+    ViewBag.Title = "Điểm Danh - " + Model.ActivityTitle;
+    Layout = "~/Views/Shared/_LecturerLayout.cshtml";
+    
+    bool isConfirmed = Model.AttendanceStatus == "CONFIRMED";
+    bool canEdit = !isConfirmed;
+}
+
+<style>
+    .attendance-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-title h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 8px 0;
+    }
+
+    .page-title .subtitle {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-secondary { background: #64748b; color: white; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-outline {
+        background: white;
+        border: 2px solid #e2e8f0;
+        color: #475569;
+    }
+    .btn-outline:hover { border-color: #3b82f6; color: #3b82f6; }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Info Cards */
+    .info-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .info-card.highlight {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+    }
+
+    .info-card .label {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 5px;
+    }
+
+    .info-card.highlight .label {
+        color: rgba(255,255,255,0.8);
+    }
+
+    .info-card .value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .info-card.highlight .value {
+        color: white;
+    }
+
+    /* Stats Row */
+    .stats-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .stat-icon.total { background: #e0e7ff; color: #4f46e5; }
+    .stat-icon.present { background: #d1fae5; color: #059669; }
+    .stat-icon.absent { background: #fee2e2; color: #dc2626; }
+    .stat-icon.pending { background: #fef3c7; color: #d97706; }
+
+    .stat-info .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .stat-info .stat-label {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .quick-actions h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 15px 0;
+    }
+
+    .quick-buttons {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .quick-btn {
+        flex: 1;
+        min-width: 200px;
+        padding: 15px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .quick-btn.present-all {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .quick-btn.absent-all {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .quick-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .quick-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-in_progress { background: #dbeafe; color: #2563eb; }
+    .status-completed { background: #e0e7ff; color: #4f46e5; }
+    .status-confirmed { background: #d1fae5; color: #059669; }
+
+    /* Table */
+    .attendance-table-container {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .search-box input {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+        width: 250px;
+    }
+
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 12px 20px;
+        text-align: left;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #475569;
+        font-size: 13px;
+    }
+
+    tr:hover {
+        background: #f8fafc;
+    }
+
+    .student-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .student-code {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    /* Attendance Status Dropdown */
+    .attendance-select {
+        padding: 8px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        min-width: 140px;
+    }
+
+    .attendance-select.present {
+        border-color: #10b981;
+        color: #059669;
+        background: #ecfdf5;
+    }
+
+    .attendance-select.absent {
+        border-color: #ef4444;
+        color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .attendance-select.pending {
+        border-color: #f59e0b;
+        color: #d97706;
+        background: #fffbeb;
+    }
+
+    .attendance-select:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    /* Confirm Section */
+    .confirm-section {
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border: 2px solid #86efac;
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 25px;
+    }
+
+    .confirm-section.confirmed {
+        background: #f0fdf4;
+        border-color: #10b981;
+    }
+
+    .confirm-section h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #166534;
+        margin: 0 0 15px 0;
+    }
+
+    .score-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .score-item {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .score-item .label {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 5px;
+    }
+
+    .score-item .value {
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .score-item .value.positive { color: #059669; }
+    .score-item .value.negative { color: #dc2626; }
+
+    /* Alert Messages */
+    .alert {
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert-success { background: #d1fae5; color: #065f46; }
+    .alert-error { background: #fee2e2; color: #991b1b; }
+    .alert-warning { background: #fef3c7; color: #92400e; }
+    .alert-info { background: #dbeafe; color: #1e40af; }
+</style>
+
+<div class="attendance-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-title">
+            <h1><i class="fas fa-user-check"></i> Điểm Danh</h1>
+            <div class="subtitle">@Model.ActivityTitle</div>
+        </div>
+        <div class="header-actions">
+            <span class="status-badge status-@Model.AttendanceStatus.ToLower()">
+                @switch (Model.AttendanceStatus)
+                {
+                    case "PENDING":
+                        <i class="fas fa-clock"></i>
+                        <span>Chưa bắt đầu</span>
+                        break;
+                    case "IN_PROGRESS":
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Đang điểm danh</span>
+                        break;
+                    case "COMPLETED":
+                        <i class="fas fa-check"></i>
+                        <span>Hoàn thành</span>
+                        break;
+                    case "CONFIRMED":
+                        <i class="fas fa-check-double"></i>
+                        <span>Đã xác nhận</span>
+                        break;
+                }
+            </span>
+            <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index" })" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="info-cards">
+        <div class="info-card">
+            <div class="label">Thời gian</div>
+            <div class="value" style="font-size: 16px;">
+                @Model.ActivityStartAt.ToString("dd/MM/yyyy HH:mm")
+            </div>
+        </div>
+        <div class="info-card">
+            <div class="label">Địa điểm</div>
+            <div class="value" style="font-size: 16px;">@(string.IsNullOrEmpty(Model.Location) ? "Chưa xác định" : Model.Location)</div>
+        </div>
+        <div class="info-card highlight">
+            <div class="label">Điểm cộng khi có mặt</div>
+            <div class="value">+@Model.ActivityPoints điểm</div>
+        </div>
+        <div class="info-card" style="background: #fef2f2;">
+            <div class="label" style="color: #dc2626;">Điểm trừ khi vắng</div>
+            <div class="value" style="color: #dc2626;">-@Model.AbsencePenalty điểm</div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="stat-icon total"><i class="fas fa-users"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">@Model.TotalStudents</div>
+                <div class="stat-label">Tổng số</div>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-icon present"><i class="fas fa-check"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">@Model.PresentCount</div>
+                <div class="stat-label">Có mặt</div>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-icon absent"><i class="fas fa-times"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">@Model.AbsentCount</div>
+                <div class="stat-label">Vắng</div>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-icon pending"><i class="fas fa-clock"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">@Model.PendingCount</div>
+                <div class="stat-label">Chưa điểm danh</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    @if (canEdit && Model.TotalStudents > 0)
+    {
+        <div class="quick-actions">
+            <h3><i class="fas fa-bolt"></i> Điểm danh nhanh</h3>
+            <div class="quick-buttons">
+                @using (Html.BeginRouteForm("LecturerActivities", new { action = "MarkAllPresent" }, FormMethod.Post, new { style = "flex: 1;" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="activityId" value="@Model.ActivityId" />
+                    <button type="submit" class="quick-btn present-all" onclick="return confirm('Đánh dấu TẤT CẢ sinh viên CÓ MẶT?');">
+                        <i class="fas fa-check-double"></i> Tất cả CÓ MẶT
+                    </button>
+                }
+                @using (Html.BeginRouteForm("LecturerActivities", new { action = "MarkAllAbsent" }, FormMethod.Post, new { style = "flex: 1;" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="activityId" value="@Model.ActivityId" />
+                    <button type="submit" class="quick-btn absent-all" onclick="return confirm('Đánh dấu TẤT CẢ sinh viên VẮNG MẶT?');">
+                        <i class="fas fa-times"></i> Tất cả VẮNG
+                    </button>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Attendance Table -->
+    <div class="attendance-table-container">
+        <div class="table-header">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Tìm theo tên hoặc MSSV..." value="@Model.SearchKeyword" />
+                <select id="filterSelect" class="filter-select">
+                    <option value="ALL" @(Model.FilterStatus == "ALL" ? "selected" : "")>Tất cả</option>
+                    <option value="PENDING" @(Model.FilterStatus == "PENDING" ? "selected" : "")>Chưa điểm danh</option>
+                    <option value="PRESENT" @(Model.FilterStatus == "PRESENT" ? "selected" : "")>Có mặt</option>
+                    <option value="ABSENT" @(Model.FilterStatus == "ABSENT" ? "selected" : "")>Vắng</option>
+                </select>
+                <button class="btn btn-primary" onclick="applyFilter()">
+                    <i class="fas fa-search"></i> Lọc
+                </button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 60px;">STT</th>
+                    <th>Sinh viên</th>
+                    <th>Lớp</th>
+                    <th style="width: 180px;">Trạng thái</th>
+                    <th style="width: 150px;">Thời gian</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int stt = 1;
+                    foreach (var record in Model.Records)
+                    {
+                        string selectClass = record.AttendanceStatus.ToLower();
+                        <tr>
+                            <td>@(stt++)</td>
+                            <td>
+                                <div class="student-info">
+                                    <span class="student-name">@record.StudentName</span>
+                                    <span class="student-code">@record.StudentCode</span>
+                                </div>
+                            </td>
+                            <td>@record.ClassName</td>
+                            <td>
+                                @if (canEdit && !record.ScoreApplied)
+                                {
+                                    <select class="attendance-select @selectClass" 
+                                            data-registration-id="@record.RegistrationId"
+                                            data-activity-id="@Model.ActivityId"
+                                            onchange="updateAttendance(this)">
+                                        <option value="PENDING" @(record.AttendanceStatus == "PENDING" ? "selected" : "")>⏳ Chưa điểm danh</option>
+                                        <option value="PRESENT" @(record.AttendanceStatus == "PRESENT" ? "selected" : "")>✅ Có mặt</option>
+                                        <option value="ABSENT" @(record.AttendanceStatus == "ABSENT" ? "selected" : "")>❌ Vắng</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <span class="status-badge @(record.AttendanceStatus == "PRESENT" ? "status-confirmed" : "status-pending")">
+                                        @if (record.AttendanceStatus == "PRESENT")
+                                        {
+                                            <i class="fas fa-check"></i>
+                                            <span>Có mặt</span>
+                                        }
+                                        else if (record.AttendanceStatus == "ABSENT")
+                                        {
+                                            <i class="fas fa-times"></i>
+                                            <span>Vắng</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-clock"></i>
+                                            <span>Chưa điểm danh</span>
+                                        }
+                                    </span>
+                                    @if (record.ScoreApplied)
+                                    {
+                                        <span style="font-size: 11px; color: #64748b; display: block;">Đã tính điểm</span>
+                                    }
+                                }
+                            </td>
+                            <td>
+                                @if (record.CheckedInAt.HasValue)
+                                {
+                                    <span style="font-size: 13px; color: #64748b;">
+                                        @record.CheckedInAt.Value.ToString("dd/MM HH:mm")
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Confirm Section -->
+    @if (!isConfirmed && Model.TotalStudents > 0 && Model.PendingCount == 0)
+    {
+        <div class="confirm-section">
+            <h3><i class="fas fa-check-circle"></i> Xác nhận và Tính điểm</h3>
+            <div class="score-preview">
+                <div class="score-item">
+                    <div class="label">Có mặt (@Model.PresentCount SV)</div>
+                    <div class="value positive">+@(Model.PresentCount * Model.ActivityPoints) điểm</div>
+                </div>
+                <div class="score-item">
+                    <div class="label">Vắng (@Model.AbsentCount SV)</div>
+                    <div class="value negative">-@(Model.AbsentCount * Model.AbsencePenalty) điểm</div>
+                </div>
+            </div>
+            @using (Html.BeginRouteForm("LecturerActivities", new { action = "ConfirmAttendance" }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="activityId" value="@Model.ActivityId" />
+                <button type="submit" class="btn btn-success" style="font-size: 16px; padding: 15px 30px;"
+                        onclick="return confirm('Xác nhận điểm danh và tính điểm cho sinh viên?\n\nHành động này không thể hoàn tác!');">
+                    <i class="fas fa-check-double"></i> Xác nhận & Tính điểm
+                </button>
+            }
+        </div>
+    }
+
+    @if (isConfirmed)
+    {
+        <div class="confirm-section confirmed">
+            <h3><i class="fas fa-check-double"></i> Đã xác nhận điểm danh</h3>
+            <p style="margin: 0; color: #166534;">
+                Xác nhận bởi: <strong>@Model.ConfirmedByName</strong> lúc @Model.ConfirmedAt?.ToString("dd/MM/yyyy HH:mm")
+            </p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function applyFilter() {
+            var search = document.getElementById('searchInput').value;
+            var filter = document.getElementById('filterSelect').value;
+            var url = '@Url.RouteUrl("LecturerActivities", new { action = "Attendance", id = Model.ActivityId })';
+            url += '?filterStatus=' + filter;
+            if (search) {
+                url += '&search=' + encodeURIComponent(search);
+            }
+            window.location.href = url;
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                applyFilter();
+            }
+        });
+
+        function updateAttendance(selectElement) {
+            var regId = selectElement.getAttribute('data-registration-id');
+            var actId = selectElement.getAttribute('data-activity-id');
+            var status = selectElement.value;
+
+            // Update visual class
+            selectElement.className = 'attendance-select ' + status.toLowerCase();
+
+            // If selecting PENDING, don't send to server
+            if (status === 'PENDING') {
+                return;
+            }
+
+            // Send AJAX request
+            var formData = new FormData();
+            formData.append('registrationId', regId);
+            formData.append('status', status);
+            formData.append('activityId', actId);
+            formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+            fetch('@Url.RouteUrl("LecturerActivities", new { action = "UpdateAttendance" })', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('Lỗi: ' + data.message);
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra!');
+            });
+        }
+    </script>
+}

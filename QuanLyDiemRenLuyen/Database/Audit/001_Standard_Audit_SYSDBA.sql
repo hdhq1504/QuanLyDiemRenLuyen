@@ -1,12 +1,12 @@
 -- =========================================================
--- AUDITING - PART 1: STANDARD AUDIT SETUP (Run as SYSDBA)
+-- AUDIT - PHẦN 1: STANDARD AUDIT (Chạy với SYSDBA)
 -- =========================================================
--- Connection: SYSDBA (sys as sysdba)
--- Purpose: Enable AUDIT_TRAIL and create AUDIT statements
+-- Kết nối: SYSDBA (sys as sysdba)
+-- Mục đích: Bật AUDIT_TRAIL và tạo các câu lệnh AUDIT
 -- =========================================================
 --
--- IMPORTANT: After running this script, you MUST restart 
--- the database for AUDIT_TRAIL changes to take effect!
+-- QUAN TRỌNG: Sau khi chạy script này, BẮT BUỘC phải khởi động
+-- lại database để thay đổi AUDIT_TRAIL có hiệu lực!
 --
 -- =========================================================
 
@@ -14,151 +14,151 @@ SET SERVEROUTPUT ON;
 SET LINESIZE 200;
 
 PROMPT '========================================';
-PROMPT 'AUDITING PART 1 - Standard Audit Setup';
-PROMPT 'Executing as: SYSDBA';
+PROMPT 'KIỂM TOÁN PHẦN 1 - Standard Audit Setup';
+PROMPT 'Đang thực thi với quyền: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================
--- STEP 1: CHECK CURRENT AUDIT SETTINGS
+-- BƯỚC 1: KIỂM TRA CÀI ĐẶT AUDIT HIỆN TẠI
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Current audit settings:';
+PROMPT 'Cài đặt audit hiện tại:';
 
 SHOW PARAMETER AUDIT_TRAIL;
 
 -- =========================================================
--- STEP 2: ENABLE AUDIT_TRAIL=DB,EXTENDED
+-- BƯỚC 2: BẬT AUDIT_TRAIL=DB,EXTENDED
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Enabling AUDIT_TRAIL=DB,EXTENDED...';
+PROMPT 'Đang bật AUDIT_TRAIL=DB,EXTENDED...';
 
--- DB = Store audit records in SYS.AUD$ table
--- EXTENDED = Also capture SQL text and bind variables
+-- DB = Lưu bản ghi audit trong bảng SYS.AUD$
+-- EXTENDED = Cũng ghi lại SQL text và bind variables
 ALTER SYSTEM SET AUDIT_TRAIL=DB,EXTENDED SCOPE=SPFILE;
 
-PROMPT '✓ AUDIT_TRAIL=DB,EXTENDED set (requires restart)';
+PROMPT '✓ Đã đặt AUDIT_TRAIL=DB,EXTENDED (cần khởi động lại)';
 
 -- =========================================================
--- STEP 3: GRANT NECESSARY PRIVILEGES
+-- BƯỚC 3: CẤP QUYỀN CẦN THIẾT
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Granting audit privileges...';
+PROMPT 'Đang cấp quyền audit...';
 
--- Grant SELECT on audit views to schema owner
+-- Cấp quyền SELECT trên các view audit cho schema owner
 GRANT SELECT ON SYS.AUD$ TO QLDIEMRENLUYEN;
 GRANT SELECT ON SYS.DBA_AUDIT_TRAIL TO QLDIEMRENLUYEN;
 GRANT SELECT ON SYS.DBA_FGA_AUDIT_TRAIL TO QLDIEMRENLUYEN;
 
-PROMPT '✓ Granted audit view access to QLDiemRenLuyen';
+PROMPT '✓ Đã cấp quyền truy cập view audit cho QLDiemRenLuyen';
 
 -- =========================================================
--- STEP 4: CREATE AUDIT POLICIES FOR TABLES
+-- BƯỚC 4: TẠO CHÍNH SÁCH AUDIT CHO CÁC BẢNG
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit policies for tables...';
+PROMPT 'Đang tạo chính sách audit cho các bảng...';
 
--- Audit SCORES table (high importance)
+-- Audit bảng SCORES (độ quan trọng cao)
 AUDIT INSERT ON QLDIEMRENLUYEN.SCORES BY ACCESS;
 AUDIT UPDATE ON QLDIEMRENLUYEN.SCORES BY ACCESS;
 AUDIT DELETE ON QLDIEMRENLUYEN.SCORES BY ACCESS;
-PROMPT '✓ Audit enabled for SCORES';
+PROMPT '✓ Đã bật audit cho SCORES';
 
--- Audit USERS table (high importance)
+-- Audit bảng USERS (độ quan trọng cao)
 AUDIT INSERT ON QLDIEMRENLUYEN.USERS BY ACCESS;
 AUDIT UPDATE ON QLDIEMRENLUYEN.USERS BY ACCESS;
 AUDIT DELETE ON QLDIEMRENLUYEN.USERS BY ACCESS;
-PROMPT '✓ Audit enabled for USERS';
+PROMPT '✓ Đã bật audit cho USERS';
 
--- Audit FEEDBACKS table
+-- Audit bảng FEEDBACKS
 AUDIT INSERT ON QLDIEMRENLUYEN.FEEDBACKS BY ACCESS;
 AUDIT UPDATE ON QLDIEMRENLUYEN.FEEDBACKS BY ACCESS;
 AUDIT DELETE ON QLDIEMRENLUYEN.FEEDBACKS BY ACCESS;
-PROMPT '✓ Audit enabled for FEEDBACKS';
+PROMPT '✓ Đã bật audit cho FEEDBACKS';
 
--- Audit ACTIVITIES table (update only for approval)
+-- Audit bảng ACTIVITIES (chỉ update cho phê duyệt)
 AUDIT UPDATE ON QLDIEMRENLUYEN.ACTIVITIES BY ACCESS;
-PROMPT '✓ Audit enabled for ACTIVITIES';
+PROMPT '✓ Đã bật audit cho ACTIVITIES';
 
--- Audit PROOFS table (update only for status change)
+-- Audit bảng PROOFS (chỉ update cho thay đổi trạng thái)
 AUDIT UPDATE ON QLDIEMRENLUYEN.PROOFS BY ACCESS;
-PROMPT '✓ Audit enabled for PROOFS';
+PROMPT '✓ Đã bật audit cho PROOFS';
 
--- Audit CLASS_LECTURER_ASSIGNMENTS table
+-- Audit bảng CLASS_LECTURER_ASSIGNMENTS
 AUDIT INSERT ON QLDIEMRENLUYEN.CLASS_LECTURER_ASSIGNMENTS BY ACCESS;
 AUDIT UPDATE ON QLDIEMRENLUYEN.CLASS_LECTURER_ASSIGNMENTS BY ACCESS;
-PROMPT '✓ Audit enabled for CLASS_LECTURER_ASSIGNMENTS';
+PROMPT '✓ Đã bật audit cho CLASS_LECTURER_ASSIGNMENTS';
 
--- Audit REGISTRATIONS table
+-- Audit bảng REGISTRATIONS
 AUDIT UPDATE ON QLDIEMRENLUYEN.REGISTRATIONS BY ACCESS;
-PROMPT '✓ Audit enabled for REGISTRATIONS';
+PROMPT '✓ Đã bật audit cho REGISTRATIONS';
 
 -- =========================================================
--- STEP 5: CREATE AUDIT POLICIES FOR SYSTEM EVENTS
+-- BƯỚC 5: TẠO CHÍNH SÁCH AUDIT CHO SỰ KIỆN HỆ THỐNG
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating audit policies for system events...';
+PROMPT 'Đang tạo chính sách audit cho sự kiện hệ thống...';
 
--- Audit session events
+-- Audit sự kiện session
 AUDIT CREATE SESSION;
 AUDIT ALTER USER;
 AUDIT DROP USER;
-PROMPT '✓ Audit enabled for session/user events';
+PROMPT '✓ Đã bật audit cho sự kiện session/user';
 
--- Audit privilege events
+-- Audit sự kiện phân quyền
 AUDIT GRANT ANY PRIVILEGE;
 AUDIT REVOKE ANY PRIVILEGE;
 AUDIT GRANT ANY ROLE;
-PROMPT '✓ Audit enabled for privilege events';
+PROMPT '✓ Đã bật audit cho sự kiện phân quyền';
 
--- Audit DDL on sensitive objects
+-- Audit DDL trên các đối tượng nhạy cảm
 AUDIT ALTER ANY TABLE;
 AUDIT DROP ANY TABLE;
 AUDIT TRUNCATE TABLE;
-PROMPT '✓ Audit enabled for DDL events';
+PROMPT '✓ Đã bật audit cho sự kiện DDL';
 
 -- =========================================================
--- STEP 6: CONFIGURE AUDIT TRAIL CLEANUP (OPTIONAL)
+-- BƯỚC 6: CẤU HÌNH DỌN DẸP AUDIT TRAIL (TÙY CHỌN)
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Audit cleanup policy info:';
-PROMPT 'Use DBMS_AUDIT_MGMT to manage audit trail size';
-PROMPT 'Example: DBMS_AUDIT_MGMT.CLEAN_AUDIT_TRAIL(...)';
+PROMPT 'Thông tin chính sách dọn dẹp audit:';
+PROMPT 'Dùng DBMS_AUDIT_MGMT để quản lý kích thước audit trail';
+PROMPT 'Ví dụ: DBMS_AUDIT_MGMT.CLEAN_AUDIT_TRAIL(...)';
 
 -- =========================================================
--- VERIFICATION
+-- XÁC MINH
 -- =========================================================
 
 PROMPT '';
 PROMPT '========================================';
-PROMPT 'VERIFICATION';
+PROMPT 'XÁC MINH';
 PROMPT '========================================';
 
 PROMPT '';
-PROMPT 'Audit options set:';
+PROMPT 'Các tùy chọn audit đã đặt:';
 SELECT OBJECT_NAME, OBJECT_TYPE, INS, UPD, DEL
 FROM DBA_OBJ_AUDIT_OPTS
 WHERE OWNER = 'QLDIEMRENLUYEN'
 ORDER BY OBJECT_NAME;
 
 PROMPT '';
-PROMPT 'Statement audit options:';
+PROMPT 'Các tùy chọn audit câu lệnh:';
 SELECT AUDIT_OPTION, SUCCESS, FAILURE
 FROM DBA_STMT_AUDIT_OPTS
 ORDER BY AUDIT_OPTION;
 
 PROMPT '';
 PROMPT '========================================';
-PROMPT '⚠️  IMPORTANT: RESTART DATABASE NOW!';
+PROMPT '⚠️  QUAN TRỌNG: KHỞI ĐỘNG LẠI DATABASE NGAY!';
 PROMPT '========================================';
-PROMPT 'Run these commands to restart:';
+PROMPT 'Chạy các lệnh sau để khởi động lại:';
 PROMPT '  SHUTDOWN IMMEDIATE;';
 PROMPT '  STARTUP;';
 PROMPT '';
-PROMPT 'After restart, run Part 2 script.';
+PROMPT 'Sau khi khởi động lại, chạy script FGA.';
 PROMPT '========================================';

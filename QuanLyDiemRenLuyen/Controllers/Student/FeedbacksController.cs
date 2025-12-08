@@ -8,6 +8,7 @@ using System.Web.Mvc;
 using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
 using QuanLyDiemRenLuyen.Models;
+using QuanLyDiemRenLuyen.Services;
 
 namespace QuanLyDiemRenLuyen.Controllers.Student
 {
@@ -218,6 +219,24 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
 
+                // Encrypt file path using FilePathCryptoService
+                // Get the new attachment ID để encrypt path
+                try
+                {
+                    string getIdQuery = @"SELECT ID FROM FEEDBACK_ATTACHMENTS 
+                                         WHERE FEEDBACK_ID = :FeedbackId 
+                                         ORDER BY UPLOADED_AT DESC FETCH FIRST 1 ROW ONLY";
+                    var idResult = OracleDbHelper.ExecuteScalar(getIdQuery, new[] {
+                        OracleDbHelper.CreateParameter("FeedbackId", OracleDbType.Varchar2, feedbackId)
+                    });
+                    if (idResult != null)
+                    {
+                        var pathService = new FilePathCryptoService();
+                        pathService.EncryptAttachmentPath(idResult.ToString(), relativePath);
+                    }
+                }
+                catch { /* Continue nếu encryption lỗi - path vẫn lưu plain */ }
+
                 if (Request.IsAjaxRequest())
                 {
                     return Json(new { success = true, fileName = file.FileName, filePath = relativePath });
@@ -364,13 +383,19 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             var attachmentParams = new[] { OracleDbHelper.CreateParameter("FeedbackId", OracleDbType.Varchar2, feedbackId) };
             DataTable attachmentDt = OracleDbHelper.ExecuteQuery(attachmentQuery, attachmentParams);
 
+            var pathService = new FilePathCryptoService();
             foreach (DataRow attRow in attachmentDt.Rows)
             {
+                string attachmentId = attRow["ID"].ToString();
+                // Try to get decrypted path, fallback to plain stored path
+                string storedPath = pathService.GetAttachmentPath(attachmentId) 
+                                    ?? attRow["STORED_PATH"].ToString();
+                
                 viewModel.Attachments.Add(new FeedbackAttachmentItem
                 {
-                    Id = attRow["ID"].ToString(),
+                    Id = attachmentId,
                     FileName = EncryptionHelper.Decrypt(attRow["FILE_NAME"].ToString()), // Decrypt FileName
-                    StoredPath = attRow["STORED_PATH"].ToString(),
+                    StoredPath = storedPath,
                     ContentType = attRow["CONTENT_TYPE"].ToString(),
                     FileSize = Convert.ToInt32(attRow["FILE_SIZE"]),
                     UploadedAt = Convert.ToDateTime(attRow["UPLOADED_AT"])

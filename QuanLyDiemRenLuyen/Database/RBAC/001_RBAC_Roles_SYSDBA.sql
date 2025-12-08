@@ -1,15 +1,15 @@
 -- =========================================================
--- RBAC IMPLEMENTATION - PART A (Run as SYSDBA)
+-- RBAC - PHẦN A (Chạy với SYSDBA)
 -- =========================================================
--- Connection: sysDBA (SYSDBA role)
--- Purpose: Create database roles and grant system privileges
+-- Kết nối: SYSDBA 
+-- Mục đích: Tạo các database roles và cấp quyền hệ thống
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 
 PROMPT '========================================';
-PROMPT 'RBAC PART A - Creating Database Roles';
-PROMPT 'Executing as: SYSDBA';
+PROMPT 'RBAC PHẦN A - Tạo Database Roles';
+PROMPT 'Đang thực thi với: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================

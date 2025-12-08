@@ -1,17 +1,17 @@
 -- =========================================================
--- MAC + OLS IMPLEMENTATION - PART D (Run as SYSDBA)
+-- MAC + OLS - PHẦN D (Chạy với SYSDBA)
 -- =========================================================
--- Connection: SYSDBA (sys as sysdba)
--- Purpose: Test OLS policies
--- Prerequisite: Run 001, 002, 003 scripts first!
+-- Kết nối: SYSDBA (sys as sysdba)
+-- Mục đích: Kiểm thử chính sách OLS
+-- Điều kiện: Chạy script 001, 002, 003 trước!
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 SET LINESIZE 200;
 
 PROMPT '========================================';
-PROMPT 'MAC + OLS PART D - Testing OLS Policies';
-PROMPT 'Executing as: SYSDBA';
+PROMPT 'MAC + OLS PHẦN D - Kiểm thử OLS Policies';
+PROMPT 'Đang thực thi với: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================

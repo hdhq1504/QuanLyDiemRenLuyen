@@ -5,6 +5,7 @@ using System.Web.Mvc;
 using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
 using QuanLyDiemRenLuyen.Models;
+using QuanLyDiemRenLuyen.Services;
 
 namespace QuanLyDiemRenLuyen.Controllers.Admin
 {
@@ -167,17 +168,23 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             DataTable dt = OracleDbHelper.ExecuteQuery(pagingQuery, parameters.ToArray());
 
+            var pathService = new FilePathCryptoService();
             foreach (DataRow row in dt.Rows)
             {
+                string proofId = row["ID"].ToString();
+                // Try to get decrypted path, fallback to plain stored path
+                string storedPath = pathService.GetProofPath(proofId) 
+                                    ?? row["STORED_PATH"].ToString();
+                
                 list.Add(new ProofItem
                 {
-                    Id = row["ID"].ToString(),
+                    Id = proofId,
                     StudentId = row["STUDENT_ID"].ToString(),
                     StudentName = row["FULL_NAME"].ToString(),
                     ActivityId = row["ACTIVITY_ID"].ToString(),
                     ActivityTitle = row["TITLE"].ToString(),
                     FileName = EncryptionHelper.Decrypt(row["FILE_NAME"].ToString()), // Decrypt
-                    StoredPath = row["STORED_PATH"].ToString(),
+                    StoredPath = storedPath,
                     Status = row["STATUS"].ToString(),
                     CreatedAt = ((DateTimeOffset)row["CREATED_AT_UTC"]).DateTime
                 });
@@ -202,9 +209,16 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             if (dt.Rows.Count == 0) return null;
 
             DataRow row = dt.Rows[0];
+            string proofId = row["ID"].ToString();
+            
+            // Try to get decrypted path, fallback to plain stored path
+            var pathService = new FilePathCryptoService();
+            string storedPath = pathService.GetProofPath(proofId) 
+                                ?? row["STORED_PATH"].ToString();
+            
             return new ProofDetailViewModel
             {
-                Id = row["ID"].ToString(),
+                Id = proofId,
                 RegistrationId = row["REGISTRATION_ID"].ToString(),
                 StudentId = row["STUDENT_ID"].ToString(),
                 StudentName = row["FULL_NAME"].ToString(),
@@ -213,7 +227,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 ActivityTitle = row["ACTIVITY_TITLE"].ToString(),
                 ActivityDate = Convert.ToDateTime(row["START_AT"]),
                 FileName = EncryptionHelper.Decrypt(row["FILE_NAME"].ToString()),
-                StoredPath = row["STORED_PATH"].ToString(),
+                StoredPath = storedPath,
                 ContentType = row["CONTENT_TYPE"].ToString(),
                 FileSize = Convert.ToInt64(row["FILE_SIZE"]),
                 Note = row["NOTE"] != DBNull.Value ? row["NOTE"].ToString() : "",

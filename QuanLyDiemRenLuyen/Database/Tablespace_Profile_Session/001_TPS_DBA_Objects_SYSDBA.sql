@@ -1,6 +1,6 @@
 -- ============================================
--- CREATE DBA VIEWS AND PROCEDURES
--- Run this ENTIRE script as SYSDBA user
+-- TẠO VIEWS VÀ PROCEDURES DBA
+-- Chạy TOÀN BỘ script này với quyền SYSDBA
 -- ============================================
 
 -- ==================== CREATE VIEWS IN SYS SCHEMA ====================

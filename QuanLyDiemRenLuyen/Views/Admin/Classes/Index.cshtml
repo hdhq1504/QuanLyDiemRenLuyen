@@ -164,20 +164,6 @@
     }
 </style>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">
-        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-    </div>
-}
-
 <!-- Header Actions -->
 <div class="header-actions">
     <h3 style="margin: 0;"><i class="fas fa-school"></i> Quản Lý Lớp</h3>

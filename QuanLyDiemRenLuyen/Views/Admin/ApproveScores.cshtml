@@ -1,278 +1,380 @@
-@model QuanLyDiemRenLuyen.Models.ClassScoreListViewModel
+@model QuanLyDiemRenLuyen.Models.SchoolWideScoresViewModel
 @{
-    ViewBag.Title = "Xét Duyệt Điểm Rèn Luyện";
+    ViewBag.Title = "Công bố điểm rèn luyện";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
 <style>
-    .approve-container {
-        padding: 30px;
-    }
+    .scores-container { padding: 20px; }
 
-    .page-header {
-        background: white;
-        padding: 25px;
+    .status-banner {
+        padding: 20px 25px;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        margin-bottom: 30px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
     }
 
-    .page-header h1 {
-        font-size: 28px;
-        font-weight: 700;
-        color: #2c3e50;
+    .status-provisional { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+    .status-draft { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    .status-official { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
+
+    .status-info h2 { font-size: 20px; font-weight: 700; color: #2c3e50; margin-bottom: 5px; }
+    .status-info p { font-size: 14px; color: #555; margin: 0; }
+
+    .countdown-box {
+        background: rgba(255,255,255,0.8);
+        padding: 15px 25px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .countdown-box .time { font-size: 28px; font-weight: 700; color: #e74c3c; }
+    .countdown-box .label { font-size: 12px; color: #666; }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .stat-card .value { font-size: 28px; font-weight: 700; }
+    .stat-card .label { font-size: 13px; color: #888; margin-top: 5px; }
+
+    .stat-excellent .value { color: #27ae60; }
+    .stat-good .value { color: #3498db; }
+    .stat-fair .value { color: #f39c12; }
+    .stat-average .value { color: #e67e22; }
+    .stat-weak .value { color: #e74c3c; }
+
+    .filter-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
         margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
-    .filter-bar {
+    .filter-row {
         display: flex;
         gap: 15px;
         flex-wrap: wrap;
+        align-items: flex-end;
     }
 
-    .filter-group {
-        flex: 1;
-        min-width: 200px;
-    }
-
-    .filter-group label {
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        color: #666;
-        margin-bottom: 5px;
-    }
-
-    .filter-group select,
-    .filter-group input {
+    .filter-group { flex: 1; min-width: 150px; }
+    .filter-group label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
+    .filter-group select, .filter-group input {
         width: 100%;
-        padding: 10px 15px;
+        padding: 10px 12px;
         border: 1px solid #ddd;
         border-radius: 8px;
         font-size: 14px;
     }
 
-    .filter-group select:focus,
-    .filter-group input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-success { background: #27ae60; color: white; }
+    .btn-warning { background: #f39c12; color: white; }
+    .btn-secondary { background: #95a5a6; color: white; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
-    .btn-filter {
-        padding: 10px 24px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        align-self: flex-end;
-    }
-
-    .btn-filter:hover {
-        background: #5568d3;
-    }
-
-    .classes-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 20px;
-    }
-
-    .class-card {
+    .table-card {
         background: white;
         border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s;
-        cursor: pointer;
-    }
-
-    .class-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-    }
-
-    .class-card h3 {
-        font-size: 20px;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 10px;
-    }
-
-    .class-card .department {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    .class-stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    .stat-item {
-        text-align: center;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-
-    .stat-item .value {
-        font-size: 24px;
-        font-weight: 700;
-        color: #667eea;
-    }
-
-    .stat-item .label {
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
-    }
-
-    .progress-bar {
-        height: 8px;
-        background: #e9ecef;
-        border-radius: 4px;
         overflow: hidden;
-        margin-bottom: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    .table-header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
-    .progress-text {
-        font-size: 13px;
-        color: #666;
-        text-align: center;
-    }
+    .table-header h3 { font-size: 18px; font-weight: 600; color: #2c3e50; margin: 0; }
 
-    .btn-view-class {
-        width: 100%;
-        padding: 12px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
+    .scores-table { width: 100%; border-collapse: collapse; }
+    .scores-table th { padding: 14px 16px; text-align: left; font-weight: 600; color: #555; font-size: 13px; background: #f8f9fa; border-bottom: 2px solid #eee; }
+    .scores-table td { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    .scores-table tbody tr:hover { background: #fafbfc; }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
         font-weight: 600;
-        cursor: pointer;
-        margin-top: 15px;
-        text-decoration: none;
-        display: block;
-        text-align: center;
     }
 
-    .btn-view-class:hover {
-        background: #5568d3;
-    }
+    .badge-excellent { background: #d4edda; color: #155724; }
+    .badge-good { background: #cce5ff; color: #004085; }
+    .badge-fair { background: #fff3cd; color: #856404; }
+    .badge-average { background: #ffe5d0; color: #856404; }
+    .badge-weak { background: #f8d7da; color: #721c24; }
+
+    .action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+    .empty-state i { font-size: 48px; margin-bottom: 15px; display: block; }
 </style>
 
-<div class="approve-container">
-    <div class="page-header">
-        <h1><i class="fas fa-check-double"></i> Xét Duyệt Điểm Rèn Luyện</h1>
+<div class="scores-container">
+    <!-- Status Banner -->
+    <div class="status-banner @(Model.ScoreStatus == "OFFICIAL" ? "status-official" : Model.ScoreStatus == "DRAFT" ? "status-draft" : "status-provisional")">
+        <div class="status-info">
+            <h2>
+                @if (Model.ScoreStatus == "OFFICIAL")
+                {
+                    <i class="fas fa-check-circle"></i> @:Điểm chính thức
+                }
+                else if (Model.ScoreStatus == "DRAFT")
+                {
+                    <i class="fas fa-clock"></i> @:Điểm dự kiến - Đang chờ phản hồi
+                }
+                else
+                {
+                    <i class="fas fa-edit"></i> @:Điểm tạm tính
+                }
+            </h2>
+            <p>
+                @Model.TermName
+                @if (Model.DraftPublishedAt.HasValue)
+                {
+                    @: | Công bố dự kiến: @Model.DraftPublishedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                }
+                @if (Model.OfficialPublishedAt.HasValue)
+                {
+                    @: | Công bố chính thức: @Model.OfficialPublishedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                }
+            </p>
+        </div>
 
-        <form method="get" action="@Url.Action("ApproveScores", "Admin")">
-            <div class="filter-bar">
+        @if (Model.IsInFeedbackPeriod && Model.TimeRemaining.HasValue)
+        {
+            <div class="countdown-box">
+                <div class="time">
+                    @{
+                        var remaining = Model.TimeRemaining.Value;
+                        var days = (int)remaining.TotalDays;
+                        var hours = remaining.Hours;
+                        var minutes = remaining.Minutes;
+                    }
+                    @days ngày @hours giờ @minutes phút
+                </div>
+                <div class="label">Thời gian phản hồi còn lại</div>
+            </div>
+        }
+
+        @if (Model.PendingFeedbacks > 0)
+        {
+            <a href="@Url.RouteUrl("AdminFeedbacks", new { action = "Index" })" class="btn btn-warning">
+                <i class="fas fa-comment-dots"></i> @Model.PendingFeedbacks phản hồi chờ xử lý
+            </a>
+        }
+
+        <form method="post" action="@Url.Action("CreateNextTerm", "Scores")" style="display:inline;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Tạo học kỳ mới tự động dựa trên ngày hiện tại?');">
+                <i class="fas fa-plus"></i> Tạo HK mới
+            </button>
+        </form>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="value">@Model.TotalStudents</div>
+            <div class="label">Tổng sinh viên</div>
+        </div>
+        <div class="stat-card stat-excellent">
+            <div class="value">@Model.ExcellentCount</div>
+            <div class="label">Xuất sắc (≥90)</div>
+        </div>
+        <div class="stat-card stat-good">
+            <div class="value">@Model.GoodCount</div>
+            <div class="label">Giỏi (80-89)</div>
+        </div>
+        <div class="stat-card stat-fair">
+            <div class="value">@Model.FairCount</div>
+            <div class="label">Khá (65-79)</div>
+        </div>
+        <div class="stat-card stat-average">
+            <div class="value">@Model.AverageCount</div>
+            <div class="label">Trung bình (50-64)</div>
+        </div>
+        <div class="stat-card stat-weak">
+            <div class="value">@Model.WeakCount</div>
+            <div class="label">Yếu (<50)</div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-card">
+        <form method="get" action="@Url.Action("Index", "Scores")">
+            <div class="filter-row">
                 <div class="filter-group">
-                    <label><i class="fas fa-building"></i> Khoa</label>
-                    <select name="filterDepartment">
-                        <option value="">Tất cả khoa</option>
-                        <option value="CNTT" @(Model.FilterDepartment == "CNTT" ? "selected" : "")>Công nghệ thông tin
-                        </option>
-                        <option value="KTDL" @(Model.FilterDepartment == "KTDL" ? "selected" : "")>Kỹ thuật dữ liệu
-                        </option>
-                        <option value="KHMT" @(Model.FilterDepartment == "KHMT" ? "selected" : "")>Khoa học máy tính
-                        </option>
+                    <label>Học kỳ</label>
+                    <select name="term" onchange="this.form.submit()">
+                        @foreach (var t in Model.Terms)
+                        {
+                            <option value="@t.Id" @(t.Id == Model.TermId ? "selected" : "")>@t.Name @(t.IsCurrent ? "(Hiện tại)" : "")</option>
+                        }
+                    </select>
+                </div>
+                @{
+                    var selectedTerm = Model.Terms != null ? Model.Terms.FirstOrDefault(t => t.Id == Model.TermId) : null;
+                    bool isCurrentTerm = selectedTerm != null && selectedTerm.IsCurrent;
+                }
+                @if (!isCurrentTerm && !string.IsNullOrEmpty(Model.TermId))
+                {
+                    <div class="filter-group" style="min-width:auto;">
+                        <label>&nbsp;</label>
+                        <form method="post" action="@Url.Action("SetCurrentTerm", "Scores")" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="termId" value="@Model.TermId" />
+                            <input type="hidden" name="initializeScores" value="true" />
+                            <button type="submit" class="btn btn-success" onclick="return confirm('Chuyển sang học kỳ này và khởi tạo điểm 70 cho sinh viên?');">
+                                <i class="fas fa-exchange-alt"></i> Đặt làm HK hiện tại
+                            </button>
+                        </form>
+                    </div>
+                }
+                <div class="filter-group">
+                    <label>Khoa</label>
+                    <select name="department">
+                        <option value="">Tất cả</option>
+                        @foreach (var d in Model.Departments)
+                        {
+                            <option value="@d.Id" @(d.Id == Model.FilterDepartment ? "selected" : "")>@d.Name</option>
+                        }
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label><i class="fas fa-calendar"></i> Học kỳ</label>
-                    <select name="filterTerm">
-                        <option value="">Tất cả học kỳ</option>
-                        <option value="1" @(Model.FilterTerm == "1" ? "selected" : "")>Học kỳ 1 - 2024</option>
-                        <option value="2" @(Model.FilterTerm == "2" ? "selected" : "")>Học kỳ 2 - 2024</option>
+                    <label>Xếp loại</label>
+                    <select name="classification">
+                        <option value="">Tất cả</option>
+                        <option value="Xuất sắc" @(Model.FilterClassification == "Xuất sắc" ? "selected" : "")>Xuất sắc</option>
+                        <option value="Giỏi" @(Model.FilterClassification == "Giỏi" ? "selected" : "")>Giỏi</option>
+                        <option value="Khá" @(Model.FilterClassification == "Khá" ? "selected" : "")>Khá</option>
+                        <option value="Trung bình" @(Model.FilterClassification == "Trung bình" ? "selected" : "")>Trung bình</option>
+                        <option value="Yếu" @(Model.FilterClassification == "Yếu" ? "selected" : "")>Yếu</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label><i class="fas fa-search"></i> Tìm kiếm</label>
-                    <input type="text" name="searchKeyword" placeholder="Tên lớp, mã lớp..."
-                        value="@Model.SearchKeyword" />
+                    <label>Tìm kiếm</label>
+                    <input type="text" name="search" placeholder="MSSV, Họ tên..." value="@Model.SearchKeyword" />
                 </div>
-                <button type="submit" class="btn-filter">
-                    <i class="fas fa-filter"></i> Lọc
-                </button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Lọc</button>
             </div>
         </form>
     </div>
 
-    @if (Model.Classes != null && Model.Classes.Count > 0)
-    {
-        <div class="classes-grid">
-            @foreach (var classItem in Model.Classes)
-            {
-                <div class="class-card"
-                    onclick="window.location.href='@Url.Action("ClassScores", "Admin", new { classId = classItem.ClassId, termId = classItem.TermId })'">
-                    <h3><i class="fas fa-users-class"></i> @classItem.ClassName</h3>
-                    <div class="department"><i class="fas fa-building"></i> @classItem.DepartmentName</div>
+    <!-- Table -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3><i class="fas fa-list"></i> Danh sách điểm (@Model.TotalStudents sinh viên)</h3>
+            <div class="action-bar">
+                <a href="@Url.Action("ExportScores", "Scores", new { termId = Model.TermId })" class="btn btn-secondary">
+                    <i class="fas fa-file-csv"></i> Xuất CSV
+                </a>
 
-                    <div class="class-stats">
-                        <div class="stat-item">
-                            <div class="value">@classItem.TotalStudents</div>
-                            <div class="label">Sinh viên</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="value">@classItem.PendingApproval</div>
-                            <div class="label">Chờ duyệt</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="value">@classItem.ApprovedStudents</div>
-                            <div class="label">Đã duyệt</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="value">@classItem.AverageScore.ToString("F1")</div>
-                            <div class="label">Điểm TB</div>
-                        </div>
-                    </div>
-
-                    @{
-                        var approvalPercent = classItem.TotalStudents > 0
-                        ? (classItem.ApprovedStudents * 100.0 / classItem.TotalStudents)
-                        : 0;
+                @if (Model.CanPublishDraft)
+                {
+                    using (Html.BeginForm("PublishDraft", "Scores", FormMethod.Post, new { style = "display:inline;" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="termId" value="@Model.TermId" />
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Công bố điểm dự kiến? Sinh viên sẽ có 3 ngày để phản hồi.');">
+                            <i class="fas fa-bullhorn"></i> Công bố dự kiến
+                        </button>
                     }
+                }
 
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: @approvalPercent%"></div>
-                    </div>
-                    <div class="progress-text">
-                        Đã duyệt @classItem.ApprovedStudents/@classItem.TotalStudents (@approvalPercent.ToString("F1")%)
-                    </div>
+                @if (Model.CanPublishOfficial)
+                {
+                    using (Html.BeginForm("PublishOfficial", "Scores", FormMethod.Post, new { style = "display:inline;" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="termId" value="@Model.TermId" />
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Công bố điểm chính thức? Đây sẽ là kết quả cuối cùng.');">
+                            <i class="fas fa-check-circle"></i> Công bố chính thức
+                        </button>
+                    }
+                }
 
-                    <a href="@Url.Action("ClassScores", "Admin", new { classId = classItem.ClassId, termId = classItem.TermId })"
-                        class="btn-view-class" onclick="event.stopPropagation()">
-                        <i class="fas fa-eye"></i> Xem chi tiết
-                    </a>
-                </div>
-            }
+                @if (Model.ScoreStatus == "PROVISIONAL")
+                {
+                    using (Html.BeginForm("InitializeScores", "Scores", FormMethod.Post, new { style = "display:inline;" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="termId" value="@Model.TermId" />
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Khởi tạo điểm 70 cho tất cả sinh viên chưa có điểm?');">
+                            <i class="fas fa-plus-circle"></i> Khởi tạo điểm HK mới
+                        </button>
+                    }
+                }
+            </div>
         </div>
-    }
-    else
-    {
-        <div style="text-align: center; padding: 80px 20px; background: white; border-radius: 12px;">
-            <i class="fas fa-inbox" style="font-size: 64px; color: #ccc; display: block; margin-bottom: 20px;"></i>
-            <h3 style="color: #999;">Không tìm thấy lớp nào</h3>
-            <p style="color: #999;">Thử thay đổi bộ lọc để xem kết quả khác.</p>
-        </div>
-    }
+
+        @if (Model.Students != null && Model.Students.Count > 0)
+        {
+            <table class="scores-table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>MSSV</th>
+                        <th>Họ tên</th>
+                        <th>Lớp</th>
+                        <th>Khoa</th>
+                        <th>Điểm</th>
+                        <th>Xếp loại</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Students.Count; i++)
+                    {
+                        var student = Model.Students[i];
+                        var badgeClass = student.TotalScore >= 90 ? "badge-excellent" :
+                                         student.TotalScore >= 80 ? "badge-good" :
+                                         student.TotalScore >= 65 ? "badge-fair" :
+                                         student.TotalScore >= 50 ? "badge-average" : "badge-weak";
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td><strong>@student.StudentCode</strong></td>
+                            <td>@student.StudentName</td>
+                            <td>@student.ClassName</td>
+                            <td>@student.DepartmentName</td>
+                            <td><strong style="font-size:16px;">@student.TotalScore</strong></td>
+                            <td><span class="badge @badgeClass">@student.Classification</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>Chưa có dữ liệu điểm</h3>
+                <p>Học kỳ này chưa có điểm rèn luyện nào được ghi nhận.</p>
+            </div>
+        }
+    </div>
 </div>
-</style>
-
-<div class="approve-container">
-    <div class="page-header">
-        <h1><i class="fas fa-check-double"></i> Xét Duyệt Điểm Rèn Luyện</h1>

@@ -146,6 +146,22 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     IsActive = Convert.ToInt32(row["IS_ACTIVE"]) == 1
                 };
 
+                // Load classes list
+                model.Classes = GetClassesList();
+
+                // If STUDENT, get current class
+                if (model.Role == "STUDENT")
+                {
+                    string studentQuery = "SELECT CLASS_ID FROM STUDENTS WHERE USER_ID = :UserId";
+                    var studentParams = new[] { OracleDbHelper.CreateParameter("UserId", OracleDbType.Varchar2, id) };
+                    DataTable studentDt = OracleDbHelper.ExecuteQuery(studentQuery, studentParams);
+                    
+                    if (studentDt.Rows.Count > 0 && studentDt.Rows[0]["CLASS_ID"] != DBNull.Value)
+                    {
+                        model.ClassId = studentDt.Rows[0]["CLASS_ID"].ToString();
+                    }
+                }
+
                 return View("~/Views/Admin/Users/Edit.cshtml", model);
             }
             catch (Exception ex)
@@ -165,6 +181,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             if (!ModelState.IsValid)
             {
+                model.Classes = GetClassesList();
                 return View("~/Views/Admin/Users/Edit.cshtml", model);
             }
 
@@ -181,6 +198,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 if (count > 0)
                 {
                     ModelState.AddModelError("Email", "Email đã tồn tại");
+                    model.Classes = GetClassesList();
                     return View("~/Views/Admin/Users/Edit.cshtml", model);
                 }
 
@@ -219,12 +237,46 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     OracleDbHelper.ExecuteNonQuery(passQuery, passParams);
                 }
 
+                // Update class for STUDENT role
+                if (model.Role == "STUDENT" && !string.IsNullOrEmpty(model.ClassId))
+                {
+                    // Check if student record exists
+                    string checkStudentQuery = "SELECT COUNT(*) FROM STUDENTS WHERE USER_ID = :UserId";
+                    var checkStudentParams = new[] { OracleDbHelper.CreateParameter("UserId", OracleDbType.Varchar2, model.Id) };
+                    int studentCount = Convert.ToInt32(OracleDbHelper.ExecuteScalar(checkStudentQuery, checkStudentParams));
+
+                    if (studentCount > 0)
+                    {
+                        // Update existing student
+                        string updateStudentQuery = "UPDATE STUDENTS SET CLASS_ID = :ClassId WHERE USER_ID = :UserId";
+                        var updateStudentParams = new[]
+                        {
+                            OracleDbHelper.CreateParameter("ClassId", OracleDbType.Varchar2, model.ClassId),
+                            OracleDbHelper.CreateParameter("UserId", OracleDbType.Varchar2, model.Id)
+                        };
+                        OracleDbHelper.ExecuteNonQuery(updateStudentQuery, updateStudentParams);
+                    }
+                    else
+                    {
+                        // Insert new student record
+                        string insertStudentQuery = "INSERT INTO STUDENTS (USER_ID, STUDENT_CODE, CLASS_ID) VALUES (:UserId, :StudentCode, :ClassId)";
+                        var insertStudentParams = new[]
+                        {
+                            OracleDbHelper.CreateParameter("UserId", OracleDbType.Varchar2, model.Id),
+                            OracleDbHelper.CreateParameter("StudentCode", OracleDbType.Varchar2, model.Id),
+                            OracleDbHelper.CreateParameter("ClassId", OracleDbType.Varchar2, model.ClassId)
+                        };
+                        OracleDbHelper.ExecuteNonQuery(insertStudentQuery, insertStudentParams);
+                    }
+                }
+
                 TempData["SuccessMessage"] = "Cập nhật người dùng thành công";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
                 ViewBag.ErrorMessage = "Lỗi: " + ex.Message;
+                model.Classes = GetClassesList();
                 return View("~/Views/Admin/Users/Edit.cshtml", model);
             }
         }
@@ -361,6 +413,30 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             }
 
             return users;
+        }
+
+        private List<SelectListItem> GetClassesList()
+        {
+            var classes = new List<SelectListItem>();
+            try
+            {
+                string query = "SELECT ID, NAME FROM CLASSES ORDER BY NAME";
+                DataTable dt = OracleDbHelper.ExecuteQuery(query);
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    classes.Add(new SelectListItem
+                    {
+                        Value = row["ID"].ToString(),
+                        Text = row["NAME"].ToString()
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error loading classes: " + ex.Message);
+            }
+            return classes;
         }
 
         #endregion

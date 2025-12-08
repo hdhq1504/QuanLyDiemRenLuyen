@@ -1,17 +1,17 @@
 -- =========================================================
--- MAC + OLS IMPLEMENTATION - PART B (Run as SYSDBA)
+-- MAC + OLS - PHẦN B (Chạy với SYSDBA)
 -- =========================================================
--- Connection: SYSDBA (sys as sysdba)
--- Purpose: Apply OLS Policy to tables and update existing data
--- Prerequisite: Run 001_OLS_Setup_SYSDBA.sql first!
+-- Kết nối: SYSDBA (sys as sysdba)
+-- Mục đích: Áp dụng OLS Policy lên các bảng và cập nhật dữ liệu có sẵn
+-- Điều kiện: Chạy 001_OLS_Setup_SYSDBA.sql trước!
 -- =========================================================
 
 SET SERVEROUTPUT ON;
 SET LINESIZE 200;
 
 PROMPT '========================================';
-PROMPT 'MAC + OLS PART B - Applying Policy to Tables';
-PROMPT 'Executing as: SYSDBA';
+PROMPT 'MAC + OLS PHẦN B - Áp dụng Policy lên bảng';
+PROMPT 'Đang thực thi với: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================

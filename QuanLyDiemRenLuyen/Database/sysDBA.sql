@@ -1,13 +1,13 @@
 -- ============================================
--- SYSDBA SETUP SCRIPT
--- Run as: SYSDBA (sys/sys)
--- Purpose: Create schema user and grant privileges
+-- SCRIPT THIẾT LẬP SYSDBA
+-- Chạy với: SYSDBA (sys/sys)
+-- Mục đích: Tạo user schema và cấp quyền
 -- ============================================
 
 SET SERVEROUTPUT ON;
 
 PROMPT '========================================';
-PROMPT 'SYSDBA Setup - Create User & Privileges';
+PROMPT 'Thiết lập SYSDBA - Tạo User & Quyền';
 PROMPT '========================================';
 
 -- ============================================

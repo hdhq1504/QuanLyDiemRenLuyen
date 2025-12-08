@@ -1,14 +1,13 @@
 @model QuanLyDiemRenLuyen.Models.StudentFeedbackListViewModel
 @{
-    ViewBag.Title = "Phản hồi điểm rèn luyện";
+    ViewBag.Title = "Phản hồi điểm";
 }
 
 <div style="padding: 24px;">
     <!-- Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <div>
-            <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #0f172a;">Phản hồi điểm rèn luyện</h2>
-            <p style="margin: 8px 0 0 0; color: #64748b;">Gửi và theo dõi phản hồi về điểm rèn luyện của bạn</p>
+            <h3 style="color: #64748b;">Gửi và theo dõi phản hồi về điểm rèn luyện của bạn</h3>
         </div>
         <a href="@Url.Action("Create")" class="btn btn-primary" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
             <i class="fas fa-plus"></i> Tạo phản hồi mới

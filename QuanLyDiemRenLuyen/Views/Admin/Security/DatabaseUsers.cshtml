@@ -159,17 +159,6 @@
     }
 </style>
 
-<h2 style="margin-bottom: 25px; color: #2c3e50;">
-    <i class="fas fa-database"></i> Quản Lý Database Users (RBAC)
-</h2>
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-    </div>
-}
-
 @if (TempData["DbPassword"] != null)
 {
     <div class="password-display">
@@ -178,13 +167,6 @@
         <p style="margin-top: 10px; color: #856404; font-size: 13px;">
             <i class="fas fa-exclamation-triangle"></i> Mật khẩu này chỉ hiển thị một lần duy nhất. Vui lòng lưu lại!
         </p>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-error">
-        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
     </div>
 }
 

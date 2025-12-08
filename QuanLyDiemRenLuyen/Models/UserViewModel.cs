@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Web.Mvc;
 
 namespace QuanLyDiemRenLuyen.Models
 {
@@ -48,7 +49,7 @@ namespace QuanLyDiemRenLuyen.Models
 
         [DataType(DataType.Password)]
         [Display(Name = "Xác nhận mật khẩu")]
-        [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp.")]
+        [System.ComponentModel.DataAnnotations.Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp.")]
         public string ConfirmPassword { get; set; }
 
         [Required(ErrorMessage = "Vui lòng chọn Vai trò")]
@@ -83,6 +84,12 @@ namespace QuanLyDiemRenLuyen.Models
         [DataType(DataType.Password)]
         [Display(Name = "Mật khẩu mới (để trống nếu không đổi)")]
         public string NewPassword { get; set; }
+
+        // Class for STUDENT role
+        [Display(Name = "Lớp")]
+        public string ClassId { get; set; }
+        
+        public List<SelectListItem> Classes { get; set; } = new List<SelectListItem>();
     }
 
     public class UserIndexViewModel
