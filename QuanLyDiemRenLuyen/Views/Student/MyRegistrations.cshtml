@@ -201,8 +201,18 @@
         background: #10b981;
     }
 
+    .btn-disabled {
+        background: #cbd5e1;
+        color: #94a3b8;
+        cursor: not-allowed;
+    }
+
     .btn:hover {
         opacity: 0.9;
+    }
+
+    .btn-disabled:hover {
+        opacity: 1;
     }
 
     .pagination {
@@ -311,9 +321,19 @@
                             </a>
                             @if (item.ProofStatus != "APPROVED" && item.RegistrationStatus != "CANCELLED")
                             {
-                                <a href="@Url.Action("UploadProof", "Activities", new { id = item.ActivityId })" class="btn btn-upload">
-                                    <i class="fas fa-upload"></i> Nộp minh chứng
-                                </a>
+                                var hasStarted = DateTime.Now >= item.StartAt;
+                                if (hasStarted)
+                                {
+                                    <a href="@Url.Action("UploadProof", "Activities", new { id = item.ActivityId })" class="btn btn-upload">
+                                        <i class="fas fa-upload"></i> Nộp minh chứng
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="btn btn-disabled" title="Chỉ có thể nộp minh chứng sau khi hoạt động bắt đầu (@item.StartAt.ToString("dd/MM/yyyy HH:mm"))">
+                                        <i class="fas fa-lock"></i> Nộp minh chứng
+                                    </span>
+                                }
                             }
                         </div>
                     </div>

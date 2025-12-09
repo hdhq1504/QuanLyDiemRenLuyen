@@ -108,7 +108,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 string termId = termDt.Rows[0]["TERM_ID"].ToString();
 
                 // Update or create SCORES record
-                string checkScoreQuery = @"SELECT ID, TOTAL FROM SCORES WHERE STUDENT_ID = :StudentId AND TERM_ID = :TermId";
+                string checkScoreQuery = @"SELECT ID, TOTAL_SCORE FROM SCORES WHERE STUDENT_ID = :StudentId AND TERM_ID = :TermId";
                 var checkParams = new[]
                 {
                     OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentUserId),
@@ -122,29 +122,27 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 {
                     // Update existing score
                     string scoreId = scoreDt.Rows[0]["ID"].ToString();
-                    decimal currentTotal = Convert.ToDecimal(scoreDt.Rows[0]["TOTAL"]);
+                    decimal currentTotal = Convert.ToDecimal(scoreDt.Rows[0]["TOTAL_SCORE"]);
                     decimal newTotal = currentTotal + pointsToAdd;
 
-                    string updateScoreQuery = @"UPDATE SCORES SET TOTAL = :NewTotal WHERE ID = :ScoreId";
+                    string updateScoreQuery = @"UPDATE SCORES SET TOTAL_SCORE = :NewTotal WHERE ID = :ScoreId";
                     var updateParams = new[]
                     {
                         OracleDbHelper.CreateParameter("NewTotal", OracleDbType.Decimal, newTotal),
-                        OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId)
+                        OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Int32, Convert.ToInt32(scoreId))
                     };
                     OracleDbHelper.ExecuteNonQuery(updateScoreQuery, updateParams);
                 }
                 else
                 {
                     // Create new score record
-                    string newScoreId = "SC" + DateTime.Now.ToString("yyyyMMddHHmmss");
-                    string insertScoreQuery = @"INSERT INTO SCORES (ID, STUDENT_ID, TERM_ID, TOTAL, STATUS, CREATED_AT)
-                                               VALUES (:Id, :StudentId, :TermId, :Total, 'PENDING', SYSDATE)";
+                    string insertScoreQuery = @"INSERT INTO SCORES (STUDENT_ID, TERM_ID, TOTAL_SCORE, STATUS, CREATED_AT)
+                                               VALUES (:StudentId, :TermId, :TotalScore, 'PROVISIONAL', SYSDATE)";
                     var insertParams = new[]
                     {
-                        OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, newScoreId),
                         OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentUserId),
                         OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId),
-                        OracleDbHelper.CreateParameter("Total", OracleDbType.Decimal, pointsToAdd)
+                        OracleDbHelper.CreateParameter("TotalScore", OracleDbType.Decimal, 70 + pointsToAdd) // Base 70 + points
                     };
                     OracleDbHelper.ExecuteNonQuery(insertScoreQuery, insertParams);
                 }
@@ -318,7 +316,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             if (dt.Rows.Count == 0) return null;
 
             DataRow row = dt.Rows[0];
-            return new AdminFeedbackItem
+            var feedback = new AdminFeedbackItem
             {
                 Id = row["ID"].ToString(),
                 Title = row["TITLE"].ToString(),
@@ -337,6 +335,37 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 HasCheckedIn = row["REG_STATUS"] != DBNull.Value && row["REG_STATUS"].ToString() == "CHECKED_IN",
                 CheckedInAt = row["CHECKED_IN_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["CHECKED_IN_AT"]) : null
             };
+
+            // Fetch attachments
+            string attachmentQuery = @"SELECT ID, FILE_NAME, STORED_PATH, CONTENT_TYPE, FILE_SIZE, UPLOADED_AT
+                                       FROM FEEDBACK_ATTACHMENTS
+                                       WHERE FEEDBACK_ID = :FeedbackId
+                                       ORDER BY UPLOADED_AT DESC";
+
+            var attachmentParams = new[] { OracleDbHelper.CreateParameter("FeedbackId", OracleDbType.Varchar2, id) };
+            DataTable attachmentDt = OracleDbHelper.ExecuteQuery(attachmentQuery, attachmentParams);
+
+            foreach (DataRow attRow in attachmentDt.Rows)
+            {
+                string fileName = attRow["FILE_NAME"].ToString();
+                try
+                {
+                    fileName = EncryptionHelper.Decrypt(fileName);
+                }
+                catch { } // Fallback to original name if decrypt fails
+
+                feedback.Attachments.Add(new FeedbackAttachmentItem
+                {
+                    Id = attRow["ID"].ToString(),
+                    FileName = fileName,
+                    StoredPath = attRow["STORED_PATH"].ToString(),
+                    ContentType = attRow["CONTENT_TYPE"].ToString(),
+                    FileSize = Convert.ToInt64(attRow["FILE_SIZE"]),
+                    UploadedAt = Convert.ToDateTime(attRow["UPLOADED_AT"])
+                });
+            }
+
+            return feedback;
         }
 
         #endregion

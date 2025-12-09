@@ -3,7 +3,7 @@
 -- Chạy script này với quyền SYSDBA
 -- ============================================
 
--- User: QLDiemRenLuyen
+-- User: sysDBA
 -- Mục đích: Cấp các quyền cần thiết cho tính năng giám sát và quản lý Database
 
 -- ==================== TABLESPACE MONITORING ====================

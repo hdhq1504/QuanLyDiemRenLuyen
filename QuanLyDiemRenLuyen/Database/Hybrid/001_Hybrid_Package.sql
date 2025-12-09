@@ -127,7 +127,7 @@ CREATE OR REPLACE PACKAGE BODY PKG_HYBRID_CRYPTO AS
         v_aes_key := PKG_AES_CRYPTO.GENERATE_AES_KEY();
         
         -- Get RSA private key (crypto4ora uses private key for encrypt)
-        v_public_key := PKG_RSA.GET_PRIVATE_KEY('RSA_SYSTEM_KEY');
+        v_public_key := PKG_RSA_CRYPTO.GET_PRIVATE_KEY('RSA_SYSTEM_KEY');
         
         -- Encrypt the AES key with RSA
         v_encrypted_key := CRYPTO.RSA_ENCRYPT(
@@ -194,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY PKG_HYBRID_CRYPTO AS
         END IF;
         
         -- Get RSA public key (crypto4ora uses public key for decrypt)
-        v_private_key := PKG_RSA.GET_PUBLIC_KEY('RSA_SYSTEM_KEY');
+        v_private_key := PKG_RSA_CRYPTO.GET_PUBLIC_KEY('RSA_SYSTEM_KEY');
         
         -- Decrypt AES key with RSA
         v_aes_key_hex := CRYPTO.RSA_DECRYPT(

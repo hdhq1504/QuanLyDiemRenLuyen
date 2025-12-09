@@ -72,7 +72,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                TempData["ErrorMessage"] = "Đã xảy ra lỗi: " + ex.Message;
                 return RedirectToAction("Index");
             }
         }
@@ -85,9 +85,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 var authCheck = CheckAuth();
                 if (authCheck != null) return authCheck;
 
+                string mand = GetCurrentStudentId();
+
                 var model = new CreateFeedbackViewModel
                 {
-                    AvailableTerms = GetAvailableTerms()
+                    AvailableTerms = GetAvailableTerms(),
+                    AvailableActivities = GetParticipatedActivities(mand)
                 };
 
                 return View("~/Views/Student/CreateFeedback.cshtml", model);
@@ -102,18 +105,20 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
         // POST: Student/Feedbacks/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(CreateFeedbackViewModel model)
+        public ActionResult Create(CreateFeedbackViewModel model, HttpPostedFileBase[] attachments)
         {
+            string mand = null;
             try
             {
                 var authCheck = CheckAuth();
                 if (authCheck != null) return authCheck;
 
-                string mand = GetCurrentStudentId();
+                mand = GetCurrentStudentId();
 
                 if (!ModelState.IsValid)
                 {
                     model.AvailableTerms = GetAvailableTerms();
+                    model.AvailableActivities = GetParticipatedActivities(mand);
                     return View("~/Views/Student/CreateFeedback.cshtml", model);
                 }
 
@@ -122,20 +127,74 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 // Insert feedback
                 string insertQuery = @"INSERT INTO FEEDBACKS
-                                      (ID, STUDENT_ID, TERM_ID, TITLE, CONTENT, STATUS, CREATED_AT)
+                                      (ID, STUDENT_ID, TERM_ID, ACTIVITY_ID, TITLE, CONTENT, STATUS, CREATED_AT)
                                       VALUES
-                                      (:Id, :StudentId, :TermId, :Title, :Content, 'SUBMITTED', SYSDATE)";
+                                      (:Id, :StudentId, :TermId, :ActivityId, :Title, :Content, 'SUBMITTED', SYSDATE)";
 
                 var insertParams = new[]
                 {
                     OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, newId),
                     OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand),
                     OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, model.TermId),
+                    OracleDbHelper.CreateParameter("ActivityId", OracleDbType.Varchar2, string.IsNullOrEmpty(model.ActivityId) ? (object)DBNull.Value : model.ActivityId),
                     OracleDbHelper.CreateParameter("Title", OracleDbType.Varchar2, model.Title),
                     OracleDbHelper.CreateParameter("Content", OracleDbType.Clob, EncryptionHelper.Encrypt(model.Content)) // Encrypt Content
                 };
 
                 OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
+
+                // Handle file attachments
+                if (attachments != null && attachments.Length > 0)
+                {
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx" };
+                    string uploadFolder = Server.MapPath("~/Uploads/Feedbacks");
+                    if (!Directory.Exists(uploadFolder))
+                    {
+                        Directory.CreateDirectory(uploadFolder);
+                    }
+
+                    foreach (var file in attachments)
+                    {
+                        if (file != null && file.ContentLength > 0)
+                        {
+                            var fileExtension = Path.GetExtension(file.FileName).ToLower();
+                            if (!allowedExtensions.Contains(fileExtension))
+                            {
+                                continue; // Skip invalid file types
+                            }
+
+                            if (file.ContentLength > 10 * 1024 * 1024) // 10MB limit
+                            {
+                                continue; // Skip files too large
+                            }
+
+                            // Generate unique filename
+                            string fileName = $"{mand}_{newId}_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString("N").Substring(0, 8)}{fileExtension}";
+                            string filePath = Path.Combine(uploadFolder, fileName);
+                            string relativePath = $"/Uploads/Feedbacks/{fileName}";
+
+                            // Save file
+                            file.SaveAs(filePath);
+
+                            // Insert into database
+                            string attachInsertQuery = @"INSERT INTO FEEDBACK_ATTACHMENTS
+                                                        (ID, FEEDBACK_ID, FILE_NAME, STORED_PATH, CONTENT_TYPE, FILE_SIZE, UPLOADED_AT)
+                                                        VALUES
+                                                        (RAWTOHEX(SYS_GUID()), :FeedbackId, :FileName, :StoredPath, :ContentType, :FileSize, SYSDATE)";
+
+                            var attachParams = new[]
+                            {
+                                OracleDbHelper.CreateParameter("FeedbackId", OracleDbType.Varchar2, newId),
+                                OracleDbHelper.CreateParameter("FileName", OracleDbType.Varchar2, EncryptionHelper.Encrypt(file.FileName)), // Encrypt FileName
+                                OracleDbHelper.CreateParameter("StoredPath", OracleDbType.Varchar2, relativePath),
+                                OracleDbHelper.CreateParameter("ContentType", OracleDbType.Varchar2, file.ContentType),
+                                OracleDbHelper.CreateParameter("FileSize", OracleDbType.Int32, file.ContentLength)
+                            };
+
+                            OracleDbHelper.ExecuteNonQuery(attachInsertQuery, attachParams);
+                        }
+                    }
+                }
 
                 TempData["SuccessMessage"] = "Gửi phản hồi thành công!";
                 return RedirectToAction("Detail", new { id = newId });
@@ -144,6 +203,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             {
                 ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
                 model.AvailableTerms = GetAvailableTerms();
+                model.AvailableActivities = GetParticipatedActivities(mand);
                 return View("~/Views/Student/CreateFeedback.cshtml", model);
             }
         }
@@ -276,6 +336,36 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             return terms;
         }
 
+        private List<ActivityOption> GetParticipatedActivities(string studentId)
+        {
+            var activities = new List<ActivityOption>();
+            
+            // Get activities where student has CHECKED_IN (participated)
+            string query = @"SELECT a.ID, a.TITLE, a.START_AT, a.TERM_ID, a.POINTS
+                            FROM ACTIVITIES a
+                            INNER JOIN REGISTRATIONS r ON a.ID = r.ACTIVITY_ID
+                            WHERE r.STUDENT_ID = :StudentId
+                              AND r.STATUS = 'CHECKED_IN'
+                            ORDER BY a.START_AT DESC";
+
+            var parameters = new[] { OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentId) };
+            DataTable dt = OracleDbHelper.ExecuteQuery(query, parameters);
+
+            foreach (DataRow row in dt.Rows)
+            {
+                activities.Add(new ActivityOption
+                {
+                    Id = row["ID"].ToString(),
+                    Title = row["TITLE"].ToString(),
+                    StartAt = Convert.ToDateTime(row["START_AT"]),
+                    TermId = row["TERM_ID"].ToString(),
+                    Points = row["POINTS"] != DBNull.Value ? Convert.ToDecimal(row["POINTS"]) : (decimal?)null
+                });
+            }
+
+            return activities;
+        }
+
 
         private List<StudentFeedbackItem> GetFeedbacksList(string mand, string status, string termId, int page, int pageSize, out int totalCount)
         {
@@ -394,7 +484,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 viewModel.Attachments.Add(new FeedbackAttachmentItem
                 {
                     Id = attachmentId,
-                    FileName = EncryptionHelper.Decrypt(attRow["FILE_NAME"].ToString()), // Decrypt FileName
+                    FileName = TryDecrypt(attRow["FILE_NAME"].ToString()),
                     StoredPath = storedPath,
                     ContentType = attRow["CONTENT_TYPE"].ToString(),
                     FileSize = Convert.ToInt32(attRow["FILE_SIZE"]),
@@ -403,6 +493,20 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             }
 
             return viewModel;
+        }
+
+        private string TryDecrypt(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            try
+            {
+                return EncryptionHelper.Decrypt(value);
+            }
+            catch
+            {
+                // If decryption fails, return the original value (might be unencrypted)
+                return value;
+            }
         }
 
         #endregion

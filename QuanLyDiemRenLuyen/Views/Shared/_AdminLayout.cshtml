@@ -327,57 +327,74 @@
         </div>
 
         <div class="sidebar-menu">
+            @{
+                var currentController = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+                var currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+                var approvalStatus = Request.QueryString["approvalStatus"] ?? "";
+            }
+            
             <a href="@Url.Action("Dashboard", "Admin")"
-                class="nav-item @(ViewContext.RouteData.Values["action"].ToString() == "Dashboard" ? "active" : "")">
+                class="nav-item @(currentController == "Admin" && currentAction == "Dashboard" ? "active" : "")">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>
             <a href="@Url.Action("Activities", "Admin")"
-                class="nav-item @(ViewContext.RouteData.Values["action"].ToString() == "Activities" ? "active" : "")">
+                class="nav-item @(currentController == "Admin" && currentAction == "Activities" && string.IsNullOrEmpty(approvalStatus) ? "active" : "")">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Quản lý hoạt động</span>
             </a>
-            <a href="@Url.Action("Activities", "Admin", new { approvalStatus = "PENDING" })" class="nav-item">
+            <a href="@Url.Action("Activities", "Admin", new { approvalStatus = "PENDING" })" 
+                class="nav-item @(currentController == "Admin" && currentAction == "Activities" && approvalStatus == "PENDING" ? "active" : "")">
                 <i class="fas fa-check-circle"></i>
                 <span>Phê duyệt hoạt động</span>
             </a>
-            <a href="@Url.Action("Index", "Proofs")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Proofs" ? "active" : "")">
+            <a href="@Url.Action("Index", "Proofs")" 
+                class="nav-item @(currentController == "Proofs" ? "active" : "")">
                 <i class="fas fa-file-contract"></i>
                 <span>Quản lý minh chứng</span>
             </a>
-            <a href="@Url.Action("Index", "Users")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Users" ? "active" : "")">
+            <a href="@Url.Action("Index", "Users")" 
+                class="nav-item @(currentController == "Users" ? "active" : "")">
                 <i class="fas fa-users"></i>
                 <span>Quản lý người dùng</span>
             </a>
-            <a href="@Url.Action("Index", "Classes")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Classes" ? "active" : "")">
+            <a href="@Url.Action("Index", "Classes")" 
+                class="nav-item @(currentController == "Classes" ? "active" : "")">
                 <i class="fas fa-chalkboard-teacher"></i>
                 <span>Quản lý Lớp</span>
             </a>
-            <a href="@Url.Action("Index", "Database")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Database" ? "active" : "")">
+            <a href="@Url.Action("Index", "Database")" 
+                class="nav-item @(currentController == "Database" ? "active" : "")">
                 <i class="fas fa-database"></i>
                 <span>Quản trị Database</span>
             </a>
-            <a href="@Url.RouteUrl("AdminScores", new { action = "Index" })" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Scores" ? "active" : "")">
+            <a href="@Url.RouteUrl("AdminScores", new { action = "Index" })" 
+                class="nav-item @(currentController == "Scores" ? "active" : "")">
                 <i class="fas fa-check-double"></i>
                 <span>Xét duyệt điểm</span>
             </a>
-            <a href="@Url.RouteUrl("AdminFeedbacks", new { action = "Index" })" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Feedbacks" ? "active" : "")">
+            <a href="@Url.RouteUrl("AdminFeedbacks", new { action = "Index" })" 
+                class="nav-item @(currentController == "Feedbacks" ? "active" : "")">
                 <i class="fas fa-comments"></i>
                 <span>Phản hồi sinh viên</span>
             </a>
-            <a href="@Url.Action("Reports", "Admin")" class="nav-item">
+            <a href="@Url.Action("Reports", "Admin")" 
+                class="nav-item @(currentController == "Admin" && currentAction == "Reports" ? "active" : "")">
                 <i class="fas fa-chart-bar"></i>
                 <span>Báo cáo thống kê</span>
             </a>
-            <a href="@Url.Action("DatabaseUsers", "Security")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Security" ? "active" : "")">
+            <a href="@Url.Action("DatabaseUsers", "Security")" 
+                class="nav-item @(currentController == "Security" ? "active" : "")">
                 <i class="fas fa-shield-alt"></i>
                 <span>Security (RBAC)</span>
             </a>
-            <a href="@Url.Action("Index", "AuditLogs")" class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "AuditLogs" ? "active" : "")">
+            <a href="@Url.Action("Index", "AuditLogs")" 
+                class="nav-item @(currentController == "AuditLogs" ? "active" : "")">
                 <i class="fas fa-history"></i>
                 <span>Nhật ký hệ thống</span>
             </a>
-            <a href="@Url.Action("Settings", "Admin")" class="nav-item">
+            <a href="@Url.Action("Settings", "Admin")" 
+                class="nav-item @(currentController == "Admin" && currentAction == "Settings" ? "active" : "")">
                 <i class="fas fa-cog"></i>
                 <span>Cài đặt</span>
             </a>

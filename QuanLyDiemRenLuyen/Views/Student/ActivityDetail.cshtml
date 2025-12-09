@@ -169,6 +169,9 @@
     .btn-info { background: #0ea5e9; color: white; }
     .btn-info:hover { background: #0284c7; }
 
+    .btn-disabled { background: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+    .btn-disabled:hover { background: #cbd5e1; }
+
     .proof-section {
         background: #f8fafc;
         padding: 24px;
@@ -193,7 +196,7 @@
 
 <div class="detail-container">
     <a href="@Url.Action("Index", "Activities")" class="back-link">
-        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        <i class="fas fa-arrow-left"></i> Quay lại
     </a>
 
     @if (TempData["SuccessMessage"] != null)
@@ -364,9 +367,19 @@
 
         @if (Model.CanUploadProof)
         {
-            <a href="@Url.Action("UploadProof", "Activities", new { id = Model.Id })" class="btn btn-info">
-                <i class="fas fa-upload"></i> Upload minh chứng
-            </a>
+            var hasActivityStarted = DateTime.Now >= Model.StartAt;
+            if (hasActivityStarted)
+            {
+                <a href="@Url.Action("UploadProof", "Activities", new { id = Model.Id })" class="btn btn-info">
+                    <i class="fas fa-upload"></i> Upload minh chứng
+                </a>
+            }
+            else
+            {
+                <span class="btn btn-disabled" title="Chỉ có thể upload minh chứng sau khi hoạt động bắt đầu (@Model.StartAt.ToString("dd/MM/yyyy HH:mm"))">
+                    <i class="fas fa-lock"></i> Upload minh chứng
+                </span>
+            }
         }
     </div>
 </div>

@@ -4,134 +4,359 @@
     Layout = "~/Views/Shared/_LecturerLayout.cshtml";
 }
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3 mb-0 text-gray-800">@ViewBag.Title</h2>
-        <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index" })" class="btn btn-outline-secondary">
+<style>
+    .form-container {
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .btn-back {
+        padding: 8px 16px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .form-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 20px;
+    }
+
+    .form-section-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0 0 16px 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .form-label.required::after {
+        content: " *";
+        color: #dc2626;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #fff;
+        color: #0f172a;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0ea5e9;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    select.form-control {
+        cursor: pointer;
+    }
+
+    .form-hint {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
+    .validation-error {
+        font-size: 12px;
+        color: #dc2626;
+        margin-top: 4px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 16px;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+    }
+
+    .alert-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .form-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+        margin-top: 8px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-cancel {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+
+    .btn-submit {
+        background: #0ea5e9;
+        color: white;
+        border: none;
+    }
+
+    .info-note {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        color: #0369a1;
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+
+    .divider {
+        height: 1px;
+        background: #e2e8f0;
+        margin: 16px 0;
+    }
+
+    @@media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+    }
+</style>
+
+<div class="form-container">
+    <div class="form-header">
+        <h1 class="form-title">@ViewBag.Title</h1>
+        <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index" })" class="btn-back">
             <i class="fas fa-arrow-left"></i> Quay lại
         </a>
     </div>
 
-    <div class="card shadow mb-4">
-        <div class="card-body">
-            @using (Html.BeginRouteForm("LecturerActivities", new { action = "Save" }, FormMethod.Post))
-            {
-                @Html.AntiForgeryToken()
-                @Html.HiddenFor(m => m.Id)
+    @using (Html.BeginRouteForm("LecturerActivities", new { action = "Save" }, FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.Id)
 
-                if (!ViewData.ModelState.IsValid)
-                {
-                    <div class="alert alert-danger">
-                        @Html.ValidationSummary(false, "", new { @class = "mb-0" })
-                    </div>
-                }
+        if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert-error">
+                @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+            </div>
+        }
 
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.Title, new { @class = "form-label fw-bold" })
-                            @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Nhập tên hoạt động" })
-                            @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger small" })
-                        </div>
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.Description, new { @class = "form-label fw-bold" })
-                            @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "4", placeholder = "Mô tả chi tiết về hoạt động..." })
-                            @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                @Html.LabelFor(m => m.Requirements, new { @class = "form-label fw-bold" })
-                                @Html.TextAreaFor(m => m.Requirements, new { @class = "form-control", rows = "3", placeholder = "Yêu cầu đối với sinh viên..." })
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                @Html.LabelFor(m => m.Benefits, new { @class = "form-label fw-bold" })
-                                @Html.TextAreaFor(m => m.Benefits, new { @class = "form-control", rows = "3", placeholder = "Quyền lợi khi tham gia..." })
-                            </div>
-                        </div>
+        <div class="form-grid">
+            <!-- Cột trái: Thông tin hoạt động -->
+            <div>
+                <div class="form-card">
+                    <h2 class="form-section-title">Thông tin hoạt động</h2>
+                    
+                    <div class="form-group">
+                        <label class="form-label required">Tên hoạt động</label>
+                        @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Nhập tên hoạt động" })
+                        @Html.ValidationMessageFor(m => m.Title, "", new { @class = "validation-error" })
                     </div>
 
-                    <div class="col-md-4">
-                        <div class="card bg-light border-0 mb-3">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-3">Thông tin tổ chức</h6>
-                                
-                                <div class="mb-3">
-                                    @Html.LabelFor(m => m.TermId, new { @class = "form-label" })
-                                    @Html.DropDownListFor(m => m.TermId, (SelectList)ViewBag.Terms, "Chọn học kỳ", new { @class = "form-select" })
-                                    @Html.ValidationMessageFor(m => m.TermId, "", new { @class = "text-danger small" })
-                                </div>
+                    <div class="form-group">
+                        <label class="form-label">Mô tả</label>
+                        @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "4", placeholder = "Mô tả chi tiết về hoạt động..." })
+                    </div>
 
-                                <div class="mb-3">
-                                    @Html.LabelFor(m => m.Points, new { @class = "form-label" })
-                                    @Html.TextBoxFor(m => m.Points, new { @class = "form-control", type = "number", step = "0.1" })
-                                    @Html.ValidationMessageFor(m => m.Points, "", new { @class = "text-danger small" })
-                                </div>
-
-                                <div class="mb-3">
-                                    @Html.LabelFor(m => m.MaxSeats, new { @class = "form-label" })
-                                    @Html.TextBoxFor(m => m.MaxSeats, new { @class = "form-control", type = "number" })
-                                    @Html.ValidationMessageFor(m => m.MaxSeats, "", new { @class = "text-danger small" })
-                                </div>
-                            </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Yêu cầu</label>
+                            @Html.TextAreaFor(m => m.Requirements, new { @class = "form-control", rows = "3", placeholder = "Yêu cầu đối với sinh viên..." })
                         </div>
-
-                        <div class="card bg-light border-0">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-3">Thời gian & Địa điểm</h6>
-
-                                <div class="mb-3">
-                                    @Html.LabelFor(m => m.StartAt, new { @class = "form-label" })
-                                    @Html.TextBoxFor(m => m.StartAt, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
-                                    @Html.ValidationMessageFor(m => m.StartAt, "", new { @class = "text-danger small" })
-                                </div>
-
-                                <div class="mb-3">
-                                    @Html.LabelFor(m => m.EndAt, new { @class = "form-label" })
-                                    @Html.TextBoxFor(m => m.EndAt, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
-                                    @Html.ValidationMessageFor(m => m.EndAt, "", new { @class = "text-danger small" })
-                                </div>
-
-                                <hr class="my-3" />
-                                <p class="text-muted small mb-3">
-                                    <i class="fas fa-info-circle"></i> Thời hạn đăng ký (tùy chọn) - Để trống nếu cho phép đăng ký đến khi hoạt động bắt đầu
-                                </p>
-
-                                <div class="mb-3">
-                                    @Html.LabelFor(m => m.RegistrationStart, new { @class = "form-label" })
-                                    @Html.TextBoxFor(m => m.RegistrationStart, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
-                                    <small class="form-text text-muted">Thời điểm bắt đầu nhận đăng ký (tùy chọn)</small>
-                                </div>
-
-                                <div class="mb-3">
-                                    @Html.LabelFor(m => m.RegistrationDeadline, new { @class = "form-label" })
-                                    @Html.TextBoxFor(m => m.RegistrationDeadline, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
-                                    <small class="form-text text-muted">Hạn cuối đăng ký (tùy chọn)</small>
-                                </div>
-
-                                <hr class="my-3" />
-
-                                <div class="mb-3">
-                                    @Html.LabelFor(m => m.Location, new { @class = "form-label" })
-                                    @Html.TextBoxFor(m => m.Location, new { @class = "form-control", placeholder = "VD: Hội trường A" })
-                                </div>
-                            </div>
+                        <div class="form-group">
+                            <label class="form-label">Quyền lợi</label>
+                            @Html.TextAreaFor(m => m.Benefits, new { @class = "form-control", rows = "3", placeholder = "Quyền lợi khi tham gia..." })
                         </div>
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end mt-4 pt-3 border-top">
-                    <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index" })" class="btn btn-secondary me-2">Hủy bỏ</a>
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="fas fa-save"></i> Lưu hoạt động
-                    </button>
+                <div class="form-card">
+                    <h2 class="form-section-title">Thời gian & Địa điểm</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Thời gian bắt đầu</label>
+                            @Html.TextBoxFor(m => m.StartAt, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+                            @Html.ValidationMessageFor(m => m.StartAt, "", new { @class = "validation-error" })
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Thời gian kết thúc</label>
+                            @Html.TextBoxFor(m => m.EndAt, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+                            @Html.ValidationMessageFor(m => m.EndAt, "", new { @class = "validation-error" })
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Địa điểm</label>
+                        @Html.TextBoxFor(m => m.Location, new { @class = "form-control", placeholder = "VD: Hội trường A" })
+                    </div>
                 </div>
-            }
+            </div>
+
+            <!-- Cột phải: Cài đặt -->
+            <div>
+                <div class="form-card">
+                    <h2 class="form-section-title">Cài đặt</h2>
+                    
+                    <div class="form-group">
+                        <label class="form-label required">Học kỳ</label>
+                        @Html.DropDownListFor(m => m.TermId, (SelectList)ViewBag.Terms, "Chọn học kỳ", new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.TermId, "", new { @class = "validation-error" })
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Điểm rèn luyện</label>
+                        @Html.TextBoxFor(m => m.Points, new { @class = "form-control", type = "number", step = "1", min = "0" })
+                        <div class="form-hint">Số điểm sinh viên nhận được khi tham gia</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Số lượng tối đa</label>
+                        @Html.TextBoxFor(m => m.MaxSeats, new { @class = "form-control", type = "number", min = "1", placeholder = "Không giới hạn" })
+                        <div class="form-hint">Để trống nếu không giới hạn số lượng</div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h2 class="form-section-title">Thời hạn đăng ký</h2>
+                    
+                    <div class="info-note">
+                        <i class="fas fa-info-circle"></i> 
+                        Để trống nếu cho phép đăng ký đến khi hoạt động bắt đầu
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Bắt đầu nhận đăng ký</label>
+                        @Html.TextBoxFor(m => m.RegistrationStart, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Hạn cuối đăng ký</label>
+                        @Html.TextBoxFor(m => m.RegistrationDeadline, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <div class="form-footer">
+            <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index" })" class="btn btn-cancel">Hủy bỏ</a>
+            <button type="submit" class="btn btn-submit">
+                <i class="fas fa-save"></i> Lưu hoạt động
+            </button>
+        </div>
+    }
 </div>
 
 @section scripts {
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // Dữ liệu học kỳ từ server
+        var termsData = [
+            @foreach (var term in (SelectList)ViewBag.Terms)
+            {
+                <text>{ id: "@term.Value", start: "@term.Text.Split('|').LastOrDefault()?.Trim()" },</text>
+            }
+        ];
+        
+        // Lấy dữ liệu học kỳ từ API endpoint
+        document.addEventListener('DOMContentLoaded', function() {
+            var startAtInput = document.getElementById('StartAt');
+            var termSelect = document.getElementById('TermId');
+            
+            if (startAtInput && termSelect) {
+                startAtInput.addEventListener('change', function() {
+                    autoSelectTerm(this.value);
+                });
+            }
+        });
+        
+        function autoSelectTerm(dateTimeStr) {
+            if (!dateTimeStr) return;
+            
+            var selectedDate = new Date(dateTimeStr);
+            var termSelect = document.getElementById('TermId');
+            
+            // Gọi API để lấy học kỳ phù hợp
+            fetch('@Url.Action("GetTermByDate", "Activities")?date=' + encodeURIComponent(dateTimeStr))
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data && data.termId) {
+                        termSelect.value = data.termId;
+                    }
+                })
+                .catch(function(error) {
+                    console.log('Không tìm thấy học kỳ phù hợp');
+                });
+        }
+    </script>
 }

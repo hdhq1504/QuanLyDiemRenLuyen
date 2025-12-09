@@ -188,6 +188,14 @@ namespace QuanLyDiemRenLuyen.Models
         public decimal? ActivityPoints { get; set; }
         public bool HasCheckedIn { get; set; }
         public DateTime? CheckedInAt { get; set; }
+
+        // Attachments
+        public List<FeedbackAttachmentItem> Attachments { get; set; }
+
+        public AdminFeedbackItem()
+        {
+            Attachments = new List<FeedbackAttachmentItem>();
+        }
     }
 
     // ==================== SCHOOL-WIDE SCORES ====================

@@ -22,7 +22,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "BEGIN PKG_FILE_PATH_CRYPTO.ENCRYPT_PROOF_PATH(:p_proof_id, :p_stored_path); END;";
@@ -43,7 +42,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT PKG_FILE_PATH_CRYPTO.GET_PROOF_PATH(:p_proof_id) FROM DUAL";
@@ -62,7 +60,6 @@ namespace QuanLyDiemRenLuyen.Services
         {
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "BEGIN PKG_FILE_PATH_CRYPTO.ENCRYPT_ALL_PROOF_PATHS; END;";
@@ -85,7 +82,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "BEGIN PKG_FILE_PATH_CRYPTO.ENCRYPT_ATTACHMENT_PATH(:p_attachment_id, :p_stored_path); END;";
@@ -106,7 +102,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT PKG_FILE_PATH_CRYPTO.GET_ATTACHMENT_PATH(:p_attachment_id) FROM DUAL";
@@ -125,7 +120,6 @@ namespace QuanLyDiemRenLuyen.Services
         {
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "BEGIN PKG_FILE_PATH_CRYPTO.ENCRYPT_ALL_ATTACHMENT_PATHS; END;";

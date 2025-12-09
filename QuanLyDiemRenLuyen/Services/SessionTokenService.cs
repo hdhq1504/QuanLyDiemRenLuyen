@@ -28,7 +28,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT PKG_SESSION_TOKEN.CREATE_SESSION(:p_user_id, :p_expiry_hours) FROM DUAL";
@@ -53,7 +52,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT PKG_SESSION_TOKEN.VALIDATE_SESSION(:p_token_id) FROM DUAL";
@@ -75,7 +73,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT PKG_SESSION_TOKEN.GET_USER_FROM_SESSION(:p_token_id) FROM DUAL";
@@ -97,7 +94,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "BEGIN PKG_SESSION_TOKEN.INVALIDATE_SESSION(:p_token_id); END;";
@@ -117,7 +113,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT PKG_SESSION_TOKEN.REFRESH_SESSION(:p_token_id, :p_expiry_hours) FROM DUAL";
@@ -140,7 +135,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "BEGIN PKG_SESSION_TOKEN.INVALIDATE_USER_SESSIONS(:p_user_id); END;";
@@ -157,7 +151,6 @@ namespace QuanLyDiemRenLuyen.Services
         {
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "BEGIN PKG_SESSION_TOKEN.CLEANUP_EXPIRED; END;";

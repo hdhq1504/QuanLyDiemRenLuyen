@@ -60,23 +60,32 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 string mand = GetCurrentStudentId();
 
-                // MERGE để đảm bảo chỉ có một record
-                string mergeQuery = @"MERGE INTO NOTIFICATION_READS nr
-                                     USING (SELECT :NotificationId AS NID, :StudentId AS SID FROM DUAL) src
-                                     ON (nr.NOTIFICATION_ID = src.NID AND nr.STUDENT_ID = src.SID)
-                                     WHEN MATCHED THEN
-                                         UPDATE SET IS_READ = 1, READ_AT = SYSTIMESTAMP
-                                     WHEN NOT MATCHED THEN
-                                         INSERT (ID, NOTIFICATION_ID, STUDENT_ID, IS_READ, READ_AT)
-                                         VALUES (RAWTOHEX(SYS_GUID()), src.NID, src.SID, 1, SYSTIMESTAMP)";
-
-                var parameters = new[]
+                // Check if read record exists
+                string checkQuery = @"SELECT COUNT(*) FROM NOTIFICATION_READS 
+                                      WHERE NOTIFICATION_ID = :NotificationId AND STUDENT_ID = :StudentId";
+                var checkParams = new[]
                 {
                     OracleDbHelper.CreateParameter("NotificationId", OracleDbType.Varchar2, notificationId),
                     OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
                 };
+                int exists = Convert.ToInt32(OracleDbHelper.ExecuteScalar(checkQuery, checkParams));
 
-                int result = OracleDbHelper.ExecuteNonQuery(mergeQuery, parameters);
+                if (exists > 0)
+                {
+                    // UPDATE existing record
+                    string updateQuery = @"UPDATE NOTIFICATION_READS 
+                                           SET IS_READ = 1, READ_AT = SYSTIMESTAMP
+                                           WHERE NOTIFICATION_ID = :NotificationId AND STUDENT_ID = :StudentId";
+                    OracleDbHelper.ExecuteNonQuery(updateQuery, checkParams);
+                }
+                else
+                {
+                    // INSERT new record
+                    string insertQuery = @"INSERT INTO NOTIFICATION_READS (ID, NOTIFICATION_ID, STUDENT_ID, IS_READ, READ_AT)
+                                           VALUES (RAWTOHEX(SYS_GUID()), :NotificationId, :StudentId, 1, SYSTIMESTAMP)";
+                    OracleDbHelper.ExecuteNonQuery(insertQuery, checkParams);
+                }
+
                 int unreadCount = GetUnreadCount(mand);
 
                 return Json(new { success = true, unreadCount = unreadCount });
@@ -111,26 +120,34 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 var getParams = new[] { OracleDbHelper.CreateParameter("MAND", OracleDbType.Varchar2, mand) };
                 DataTable notificationsDt = OracleDbHelper.ExecuteQuery(getNotificationsQuery, getParams);
 
-                // MERGE từng notification
+                // Mark each notification as read using UPDATE or INSERT
                 foreach (DataRow row in notificationsDt.Rows)
                 {
                     string notificationId = row["ID"].ToString();
-                    string mergeQuery = @"MERGE INTO NOTIFICATION_READS nr
-                                         USING (SELECT :NotificationId AS NID, :StudentId AS SID FROM DUAL) src
-                                         ON (nr.NOTIFICATION_ID = src.NID AND nr.STUDENT_ID = src.SID)
-                                         WHEN MATCHED THEN
-                                             UPDATE SET IS_READ = 1, READ_AT = SYSTIMESTAMP
-                                         WHEN NOT MATCHED THEN
-                                             INSERT (ID, NOTIFICATION_ID, STUDENT_ID, IS_READ, READ_AT)
-                                             VALUES (RAWTOHEX(SYS_GUID()), src.NID, src.SID, 1, SYSTIMESTAMP)";
-
-                    var mergeParams = new[]
+                    
+                    // Check if read record exists
+                    string checkQuery = @"SELECT COUNT(*) FROM NOTIFICATION_READS 
+                                          WHERE NOTIFICATION_ID = :NotificationId AND STUDENT_ID = :StudentId";
+                    var checkParams = new[]
                     {
                         OracleDbHelper.CreateParameter("NotificationId", OracleDbType.Varchar2, notificationId),
                         OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
                     };
+                    int exists = Convert.ToInt32(OracleDbHelper.ExecuteScalar(checkQuery, checkParams));
 
-                    OracleDbHelper.ExecuteNonQuery(mergeQuery, mergeParams);
+                    if (exists > 0)
+                    {
+                        string updateQuery = @"UPDATE NOTIFICATION_READS 
+                                               SET IS_READ = 1, READ_AT = SYSTIMESTAMP
+                                               WHERE NOTIFICATION_ID = :NotificationId AND STUDENT_ID = :StudentId";
+                        OracleDbHelper.ExecuteNonQuery(updateQuery, checkParams);
+                    }
+                    else
+                    {
+                        string insertQuery = @"INSERT INTO NOTIFICATION_READS (ID, NOTIFICATION_ID, STUDENT_ID, IS_READ, READ_AT)
+                                               VALUES (RAWTOHEX(SYS_GUID()), :NotificationId, :StudentId, 1, SYSTIMESTAMP)";
+                        OracleDbHelper.ExecuteNonQuery(insertQuery, checkParams);
+                    }
                 }
 
                 return Json(new { success = true });

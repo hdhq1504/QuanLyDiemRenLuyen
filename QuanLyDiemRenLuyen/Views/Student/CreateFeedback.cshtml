@@ -32,6 +32,12 @@
             </div>
 
             <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a;">Hoạt động đã tham gia <span style="color: #64748b; font-weight: 400;">(Tùy chọn)</span></label>
+                @Html.DropDownListFor(m => m.ActivityId, new SelectList(Model.AvailableActivities, "Id", "DisplayText", Model.ActivityId), "-- Chọn hoạt động (nếu có) --", new { @class = "form-control", style = "width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" })
+                <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">Chọn hoạt động mà bạn đã tham gia để phản hồi liên quan</small>
+            </div>
+
+            <div style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #0f172a;">Tiêu đề <span style="color: #dc2626;">*</span></label>
                 @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = "Nhập tiêu đề phản hồi", style = "width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" })
                 @Html.ValidationMessageFor(m => m.Title, "", new { style = "color: #dc2626; font-size: 12px; margin-top: 4px; display: block;" })

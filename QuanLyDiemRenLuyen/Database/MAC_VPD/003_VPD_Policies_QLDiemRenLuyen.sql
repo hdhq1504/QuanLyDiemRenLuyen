@@ -184,11 +184,14 @@ BEGIN
     END IF;
     
     -- Log action
-    INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC)
+    INSERT INTO AUDIT_EVENTS(EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, ENTITY_TYPE, ENTITY_ID, DESCRIPTION)
     VALUES (
+        'BUSINESS',
+        'SCORE_APPROVED',
         p_approved_by,
-        'SCORE_APPROVED|SCORE_ID=' || p_score_id || '|STUDENT=' || v_student_id,
-        SYSTIMESTAMP
+        'SCORE',
+        TO_CHAR(p_score_id),
+        'Approved score for student: ' || v_student_id
     );
     
     COMMIT;
@@ -257,11 +260,14 @@ BEGIN
     p_count := SQL%ROWCOUNT;
     
     -- Log action
-    INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC)
+    INSERT INTO AUDIT_EVENTS(EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, ENTITY_TYPE, ENTITY_ID, DESCRIPTION)
     VALUES (
+        'BUSINESS',
+        'BULK_SCORE_APPROVED',
         p_approved_by,
-        'BULK_SCORE_APPROVED|CLASS=' || p_class_id || '|TERM=' || p_term_id || '|COUNT=' || p_count,
-        SYSTIMESTAMP
+        'CLASS',
+        p_class_id,
+        'Bulk approved ' || p_count || ' scores for term: ' || p_term_id
     );
     
     COMMIT;

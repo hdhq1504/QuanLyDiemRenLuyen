@@ -121,12 +121,14 @@ CREATE OR REPLACE PROCEDURE SP_LOG_BUSINESS_ACTION(
 BEGIN
     v_user_id := NVL(p_performed_by, SYS_CONTEXT('AUDIT_CTX', 'USER_ID'));
     
-    INSERT INTO AUDIT_BUSINESS_ACTIONS(
-        ACTION_TYPE, ACTION_DESC, ENTITY_TYPE, ENTITY_ID,
-        PERFORMED_BY, CLIENT_IP, DETAILS, STATUS
+    INSERT INTO AUDIT_EVENTS(
+        EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, 
+        ENTITY_TYPE, ENTITY_ID, DESCRIPTION,
+        CLIENT_IP, DETAILS, STATUS
     ) VALUES (
-        p_action_type, p_action_desc, p_entity_type, p_entity_id,
-        v_user_id, SYS_CONTEXT('USERENV', 'IP_ADDRESS'), p_details, p_status
+        'BUSINESS', p_action_type, v_user_id,
+        p_entity_type, p_entity_id, p_action_desc,
+        SYS_CONTEXT('USERENV', 'IP_ADDRESS'), p_details, p_status
     );
     
     COMMIT;

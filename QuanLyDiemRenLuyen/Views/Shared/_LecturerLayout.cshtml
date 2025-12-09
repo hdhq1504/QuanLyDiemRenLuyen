@@ -330,23 +330,28 @@
         </div>
 
         <div class="sidebar-menu">
+            @{
+                var currentController = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+                var currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+            }
+            
             <a href="@Url.Action("Dashboard", "Lecturer")"
-                class="nav-item @(ViewContext.RouteData.Values["action"].ToString() == "Dashboard" ? "active" : "")">
+                class="nav-item @(currentController == "Dashboard" || (currentController == "Lecturer" && currentAction == "Dashboard") ? "active" : "")">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>
             <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index" })"
-                class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Activities" ? "active" : "")">
+                class="nav-item @(currentController == "Activities" ? "active" : "")">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Quản lý hoạt động</span>
             </a>
             <a href="@Url.RouteUrl("LecturerScores", new { action = "MyClasses" })"
-                class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Scores" ? "active" : "")">
+                class="nav-item @(currentController == "Scores" ? "active" : "")">
                 <i class="fas fa-graduation-cap"></i>
                 <span>Quản lý điểm lớp</span>
             </a>
             <a href="@Url.Action("MyClasses", "Permissions")"
-                class="nav-item @(ViewContext.RouteData.Values["controller"].ToString() == "Permissions" ? "active" : "")">
+                class="nav-item @(currentController == "Permissions" ? "active" : "")">
                 <i class="fas fa-user-shield"></i>
                 <span>Quản lý phân quyền</span>
             </a>

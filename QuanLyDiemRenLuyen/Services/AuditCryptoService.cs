@@ -29,7 +29,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
@@ -82,7 +81,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
@@ -143,7 +141,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
@@ -191,7 +188,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
@@ -230,7 +226,6 @@ namespace QuanLyDiemRenLuyen.Services
 
             using (var conn = OracleDbHelper.GetConnection())
             {
-                conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"

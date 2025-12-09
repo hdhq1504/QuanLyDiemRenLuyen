@@ -106,10 +106,10 @@ DECLARE
 BEGIN
     DBMS_OUTPUT.PUT_LINE('Original: ' || v_test_data);
     
-    v_encrypted := PKG_RSA.ENCRYPT_WITH_SYSTEM_KEY(v_test_data);
+    v_encrypted := PKG_RSA_CRYPTO.ENCRYPT_WITH_SYSTEM_KEY(v_test_data);
     DBMS_OUTPUT.PUT_LINE('Encrypted length: ' || LENGTH(v_encrypted));
     
-    v_decrypted := PKG_RSA.DECRYPT_WITH_SYSTEM_KEY(v_encrypted);
+    v_decrypted := PKG_RSA_CRYPTO.DECRYPT_WITH_SYSTEM_KEY(v_encrypted);
     DBMS_OUTPUT.PUT_LINE('Decrypted: ' || v_decrypted);
     
     IF v_test_data = v_decrypted THEN

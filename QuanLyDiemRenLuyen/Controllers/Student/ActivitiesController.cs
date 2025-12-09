@@ -310,7 +310,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 if (proofFile == null || proofFile.ContentLength == 0)
                 {
                     ViewBag.ErrorMessage = "Vui lòng chọn file minh chứng";
-                    return View(GetUploadProofViewModel(activityId, mand));
+                    return View("~/Views/Student/UploadProof.cshtml", GetUploadProofViewModel(activityId, mand));
                 }
 
                 // Kiểm tra định dạng file
@@ -319,14 +319,14 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 if (!allowedExtensions.Contains(fileExtension))
                 {
                     ViewBag.ErrorMessage = "Chỉ chấp nhận file ảnh (jpg, png) hoặc PDF";
-                    return View(GetUploadProofViewModel(activityId, mand));
+                    return View("~/Views/Student/UploadProof.cshtml", GetUploadProofViewModel(activityId, mand));
                 }
 
                 // Kiểm tra kích thước file (max 5MB)
                 if (proofFile.ContentLength > 5 * 1024 * 1024)
                 {
                     ViewBag.ErrorMessage = "File không được vượt quá 5MB";
-                    return View(GetUploadProofViewModel(activityId, mand));
+                    return View("~/Views/Student/UploadProof.cshtml", GetUploadProofViewModel(activityId, mand));
                 }
 
                 // Tạo thư mục lưu file
@@ -357,7 +357,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 if (string.IsNullOrEmpty(registrationId))
                 {
                     ViewBag.ErrorMessage = "Không tìm thấy thông tin đăng ký";
-                    return View(GetUploadProofViewModel(activityId, mand));
+                    return View("~/Views/Student/UploadProof.cshtml", GetUploadProofViewModel(activityId, mand));
                 }
 
                 // Insert vào bảng PROOFS
@@ -389,13 +389,21 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 else
                 {
                     ViewBag.ErrorMessage = "Upload thất bại, vui lòng thử lại";
-                    return View(GetUploadProofViewModel(activityId, mand));
+                    return View("~/Views/Student/UploadProof.cshtml", GetUploadProofViewModel(activityId, mand));
                 }
             }
             catch (Exception ex)
             {
+                // Log lỗi chi tiết
+                System.Diagnostics.Debug.WriteLine($"Upload Proof Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                }
+                
                 ViewBag.ErrorMessage = "Lỗi: " + ex.Message;
-                return View(GetUploadProofViewModel(activityId, mand));
+                return View("~/Views/Student/UploadProof.cshtml", GetUploadProofViewModel(activityId, mand));
             }
         }
 

@@ -10,6 +10,11 @@ namespace QuanLyDiemRenLuyen.Helpers
     /// </summary>
     public class OracleDbHelper
     {
+        static OracleDbHelper()
+        {
+            Environment.SetEnvironmentVariable("NLS_LANG", "AMERICAN_AMERICA.WE8MSWIN1252");
+        }
+
         private static string ConnectionString
         {
             get

@@ -803,7 +803,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                                    AND SCORE_APPLIED = 0 
                                    AND STATUS != 'CANCELLED'
                                    AND ATTENDANCE_STATUS IN ('PRESENT', 'ABSENT')";
-                DataTable regDt = OracleDbHelper.ExecuteQuery(regQuery, actParams);
+                var regParams = new[] { OracleDbHelper.CreateParameter("ActivityId", OracleDbType.Varchar2, activityId) };
+                DataTable regDt = OracleDbHelper.ExecuteQuery(regQuery, regParams);
 
                 int presentCount = 0;
                 int absentCount = 0;
@@ -816,24 +817,47 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                     
                     int pointsToAdd = attendanceStatus == "PRESENT" ? activityPoints : -absencePenalty;
                     
-                    // Update or insert SCORES
-                    string scoreQuery = @"
-                        MERGE INTO SCORES s
-                        USING (SELECT :StudentId as STUDENT_ID, :TermId as TERM_ID FROM DUAL) src
-                        ON (s.STUDENT_ID = src.STUDENT_ID AND s.TERM_ID = src.TERM_ID)
-                        WHEN MATCHED THEN
-                            UPDATE SET TOTAL_SCORE = GREATEST(0, LEAST(100, TOTAL_SCORE + :Points))
-                        WHEN NOT MATCHED THEN
-                            INSERT (STUDENT_ID, TERM_ID, TOTAL_SCORE, STATUS)
-                            VALUES (:StudentId, :TermId, GREATEST(0, LEAST(100, 70 + :Points)), 'PROVISIONAL')";
-                    
-                    var scoreParams = new[] {
+                    // Check if SCORES record exists
+                    string checkScoreQuery = @"SELECT COUNT(*) FROM SCORES 
+                                               WHERE STUDENT_ID = :StudentId AND TERM_ID = :TermId";
+                    var checkParams = new[] {
                         OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentId),
-                        OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId),
-                        OracleDbHelper.CreateParameter("Points", OracleDbType.Int32, pointsToAdd)
+                        OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
                     };
+                    int scoreExists = Convert.ToInt32(OracleDbHelper.ExecuteScalar(checkScoreQuery, checkParams));
                     
-                    OracleDbHelper.ExecuteNonQuery(scoreQuery, scoreParams);
+                    if (scoreExists > 0)
+                    {
+                        // UPDATE existing score
+                        string updateScoreQuery = @"UPDATE SCORES 
+                                                    SET TOTAL_SCORE = GREATEST(0, LEAST(100, TOTAL_SCORE + :Points))
+                                                    WHERE STUDENT_ID = :StudentId AND TERM_ID = :TermId";
+                        var updateParams = new[] {
+                            OracleDbHelper.CreateParameter("Points", OracleDbType.Int32, pointsToAdd),
+                            OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentId),
+                            OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId)
+                        };
+                        OracleDbHelper.ExecuteNonQuery(updateScoreQuery, updateParams);
+                    }
+                    else
+                    {
+                        // INSERT new score record (start with 70 + points)
+                        int initialScore = Math.Max(0, Math.Min(100, 70 + pointsToAdd));
+                        string classification = initialScore >= 90 ? "Xuất sắc" : 
+                                               initialScore >= 80 ? "Giỏi" : 
+                                               initialScore >= 65 ? "Khá" : 
+                                               initialScore >= 50 ? "Trung bình" : "Yếu";
+                        
+                        string insertScoreQuery = @"INSERT INTO SCORES (STUDENT_ID, TERM_ID, TOTAL_SCORE, CLASSIFICATION, STATUS, CREATED_AT)
+                                                    VALUES (:StudentId, :TermId, :Score, :Classification, 'PROVISIONAL', SYSTIMESTAMP)";
+                        var insertParams = new[] {
+                            OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, studentId),
+                            OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId),
+                            OracleDbHelper.CreateParameter("Score", OracleDbType.Int32, initialScore),
+                            OracleDbHelper.CreateParameter("Classification", OracleDbType.Varchar2, classification)
+                        };
+                        OracleDbHelper.ExecuteNonQuery(insertScoreQuery, insertParams);
+                    }
                     
                     // Mark registration as scored
                     string updateRegQuery = @"UPDATE REGISTRATIONS 
@@ -866,6 +890,56 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
             {
                 TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
                 return RedirectToRoute("LecturerActivities", new { action = "Attendance", id = activityId });
+            }
+        }
+
+        // GET: Lecturer/Activities/GetTermByDate - API để tự động chọn học kỳ theo ngày
+        public ActionResult GetTermByDate(string date)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(date))
+                {
+                    return Json(new { termId = (string)null }, JsonRequestBehavior.AllowGet);
+                }
+
+                DateTime selectedDate;
+                if (!DateTime.TryParse(date, out selectedDate))
+                {
+                    return Json(new { termId = (string)null }, JsonRequestBehavior.AllowGet);
+                }
+
+                // Tìm học kỳ có START_DATE <= selectedDate <= END_DATE
+                string query = @"SELECT ID FROM TERMS 
+                                 WHERE :SelectedDate BETWEEN START_DATE AND END_DATE 
+                                 ORDER BY START_DATE DESC
+                                 FETCH FIRST 1 ROW ONLY";
+                
+                var parameters = new[] { OracleDbHelper.CreateParameter("SelectedDate", OracleDbType.Date, selectedDate.Date) };
+                DataTable dt = OracleDbHelper.ExecuteQuery(query, parameters);
+                
+                if (dt.Rows.Count > 0)
+                {
+                    return Json(new { termId = dt.Rows[0]["ID"].ToString() }, JsonRequestBehavior.AllowGet);
+                }
+
+                // Nếu không tìm thấy, thử tìm học kỳ gần nhất
+                string fallbackQuery = @"SELECT ID FROM TERMS 
+                                         WHERE START_DATE <= :SelectedDate 
+                                         ORDER BY START_DATE DESC
+                                         FETCH FIRST 1 ROW ONLY";
+                dt = OracleDbHelper.ExecuteQuery(fallbackQuery, parameters);
+                
+                if (dt.Rows.Count > 0)
+                {
+                    return Json(new { termId = dt.Rows[0]["ID"].ToString() }, JsonRequestBehavior.AllowGet);
+                }
+
+                return Json(new { termId = (string)null }, JsonRequestBehavior.AllowGet);
+            }
+            catch
+            {
+                return Json(new { termId = (string)null }, JsonRequestBehavior.AllowGet);
             }
         }
 

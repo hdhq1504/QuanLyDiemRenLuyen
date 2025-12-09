@@ -189,7 +189,7 @@
             </a>
         }
 
-        <form method="post" action="@Url.Action("CreateNextTerm", "Scores")" style="display:inline;">
+        <form method="post" action="@Url.RouteUrl("AdminScores", new { action = "CreateNextTerm" })" style="display:inline;">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-primary" onclick="return confirm('Tạo học kỳ mới tự động dựa trên ngày hiện tại?');">
                 <i class="fas fa-plus"></i> Tạo HK mới
@@ -253,7 +253,7 @@
                 {
                     <div class="filter-group" style="min-width:auto;">
                         <label>&nbsp;</label>
-                        <form method="post" action="@Url.Action("SetCurrentTerm", "Scores")" style="display:inline;">
+                        <form method="post" action="@Url.RouteUrl("AdminScores", new { action = "SetCurrentTerm" })" style="display:inline;">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="termId" value="@Model.TermId" />
                             <input type="hidden" name="initializeScores" value="true" />
@@ -306,14 +306,13 @@
                 {
                     if (Model.CanPublishDraft)
                     {
-                        using (Html.BeginForm("PublishDraft", "Scores", FormMethod.Post, new { style = "display:inline;" }))
-                        {
+                        <form method="post" action="@Url.RouteUrl("AdminScores", new { action = "PublishDraft" })" style="display:inline;">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="termId" value="@Model.TermId" />
                             <button type="submit" class="btn btn-warning" onclick="return confirm('Công bố điểm dự kiến? Sinh viên sẽ có 3 ngày để phản hồi.');">
                                 <i class="fas fa-bullhorn"></i> Công bố dự kiến
                             </button>
-                        }
+                        </form>
                     }
                     else
                     {
@@ -325,26 +324,24 @@
 
                 @if (Model.CanPublishOfficial)
                 {
-                    using (Html.BeginForm("PublishOfficial", "Scores", FormMethod.Post, new { style = "display:inline;" }))
-                    {
+                    <form method="post" action="@Url.RouteUrl("AdminScores", new { action = "PublishOfficial" })" style="display:inline;">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="termId" value="@Model.TermId" />
                         <button type="submit" class="btn btn-success" onclick="return confirm('Công bố điểm chính thức? Đây sẽ là kết quả cuối cùng.');">
                             <i class="fas fa-check-circle"></i> Công bố chính thức
                         </button>
-                    }
+                    </form>
                 }
 
                 @if (Model.ScoreStatus == "PROVISIONAL")
                 {
-                    using (Html.BeginForm("InitializeScores", "Scores", FormMethod.Post, new { style = "display:inline;" }))
-                    {
+                    <form method="post" action="@Url.RouteUrl("AdminScores", new { action = "InitializeScores" })" style="display:inline;">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="termId" value="@Model.TermId" />
                         <button type="submit" class="btn btn-primary" onclick="return confirm('Khởi tạo điểm 70 cho tất cả sinh viên chưa có điểm?');">
                             <i class="fas fa-plus-circle"></i> Khởi tạo điểm HK mới
                         </button>
-                    }
+                    </form>
                 }
             </div>
         </div>

@@ -271,9 +271,9 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 }
                 string termId = termIdObj.ToString();
 
-                // Cập nhật status tất cả điểm trong lớp thành SUBMITTED
+                // Cập nhật status tất cả điểm trong lớp thành DRAFT_PUBLISHED
                 string updateQuery = @"UPDATE SCORES sc
-                                      SET sc.STATUS = 'SUBMITTED'
+                                      SET sc.STATUS = 'DRAFT_PUBLISHED'
                                       WHERE sc.TERM_ID = :TermId
                                       AND sc.STATUS = 'PROVISIONAL'
                                       AND sc.STUDENT_ID IN (SELECT USER_ID FROM STUDENTS WHERE CLASS_ID = :ClassId)";
@@ -285,22 +285,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 };
 
                 int result = OracleDbHelper.ExecuteNonQuery(updateQuery, updateParams);
-
-                // Log action
-                string historyId = "SH" + DateTime.Now.ToString("yyyyMMddHHmmss") + "SUB";
-                string insertHistoryQuery = @"INSERT INTO SCORE_HISTORY
-                                             (ID, SCORE_ID, ACTION, CHANGED_BY, REASON, CHANGED_AT)
-                                             VALUES
-                                             (:Id, 0, 'SUBMIT_CLASS', :ChangedBy, :Reason, SYSDATE)";
-
-                var historyParams = new[]
-                {
-                    OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, historyId),
-                    OracleDbHelper.CreateParameter("ChangedBy", OracleDbType.Varchar2, mand),
-                    OracleDbHelper.CreateParameter("Reason", OracleDbType.Varchar2, "Chốt danh sách điểm lớp " + classId)
-                };
-
-                OracleDbHelper.ExecuteNonQuery(insertHistoryQuery, historyParams);
 
                 return Json(new { success = true, message = $"Đã chốt {result} điểm và gửi cho Admin xem xét" });
             }
@@ -545,7 +529,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 });
 
                 if (status == "APPROVED" || status == "OFFICIAL") approvedCount++;
-                if (status == "SUBMITTED") submittedCount++;
+                if (status == "DRAFT_PUBLISHED") submittedCount++;
 
                 if (totalScore >= 90) excellentCount++;
                 else if (totalScore >= 80) goodCount++;

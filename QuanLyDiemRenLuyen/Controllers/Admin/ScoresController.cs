@@ -41,14 +41,14 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 if (string.IsNullOrEmpty(classId))
                 {
                     TempData["ErrorMessage"] = "Không tìm thấy lớp học";
-                    return RedirectToAction("Index");
+                    return RedirectToRoute("AdminScores", new { action = "Index" });
                 }
 
                 var viewModel = GetClassScoresViewModel(classId);
                 if (viewModel == null)
                 {
                     TempData["ErrorMessage"] = "Không tìm thấy lớp học";
-                    return RedirectToAction("Index");
+                    return RedirectToRoute("AdminScores", new { action = "Index" });
                 }
 
                 return View("~/Views/Admin/ClassScores.cshtml", viewModel);
@@ -56,7 +56,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             catch (Exception ex)
             {
                 ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
-                return RedirectToAction("Index");
+                return RedirectToRoute("AdminScores", new { action = "Index" });
             }
         }
 
@@ -76,7 +76,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 string mand = Session["MAND"].ToString();
 
                 // Lấy điểm cũ
-                string getOldScoreQuery = "SELECT TOTAL FROM SCORES WHERE ID = :ScoreId";
+                string getOldScoreQuery = "SELECT TOTAL_SCORE FROM SCORES WHERE ID = :ScoreId";
                 var getParams = new[] { OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId) };
                 object oldScoreObj = OracleDbHelper.ExecuteScalar(getOldScoreQuery, getParams);
 
@@ -89,7 +89,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
                 // Cập nhật điểm
                 string updateQuery = @"UPDATE SCORES
-                                      SET TOTAL = :NewScore,
+                                      SET TOTAL_SCORE = :NewScore,
                                           STATUS = 'PROVISIONAL'
                                       WHERE ID = :ScoreId";
 
@@ -364,7 +364,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             // Lấy danh sách sinh viên và điểm
             string studentsQuery = @"SELECT s.USER_ID, st.STUDENT_CODE, u.FULL_NAME,
-                                           sc.ID as SCORE_ID, sc.TOTAL, sc.STATUS,
+                                           sc.ID as SCORE_ID, sc.TOTAL_SCORE, sc.STATUS,
                                            (SELECT COUNT(*) FROM REGISTRATIONS r
                                             INNER JOIN ACTIVITIES a ON r.ACTIVITY_ID = a.ID
                                             WHERE r.STUDENT_ID = s.USER_ID
@@ -386,7 +386,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             foreach (DataRow row in studentsDt.Rows)
             {
-                int total = row["TOTAL"] != DBNull.Value ? Convert.ToInt32(row["TOTAL"]) : 0;
+                int total = row["TOTAL_SCORE"] != DBNull.Value ? Convert.ToInt32(row["TOTAL_SCORE"]) : 0;
                 string status = row["STATUS"] != DBNull.Value ? row["STATUS"].ToString() : "PROVISIONAL";
 
                 viewModel.Students.Add(new StudentScoreItem
@@ -452,7 +452,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                                            INNER JOIN STUDENTS s ON sc.STUDENT_ID = s.USER_ID
                                            WHERE s.CLASS_ID = c.ID AND sc.TERM_ID = :TermId
                                            AND sc.STATUS = 'APPROVED') as APPROVED_STUDENTS,
-                                          (SELECT AVG(sc.TOTAL) FROM SCORES sc
+                                          (SELECT AVG(sc.TOTAL_SCORE) FROM SCORES sc
                                            INNER JOIN STUDENTS s ON sc.STUDENT_ID = s.USER_ID
                                            WHERE s.CLASS_ID = c.ID AND sc.TERM_ID = :TermId) as AVG_SCORE
                                    FROM CLASSES c
@@ -587,7 +587,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                      SELECT 1 FROM SCORES sc 
                      WHERE sc.STUDENT_ID = s.USER_ID 
                      AND sc.TERM_ID = :TermId 
-                     AND sc.STATUS = 'SUBMITTED'
+                     AND sc.STATUS = 'DRAFT_PUBLISHED'
                  )) as SUBMITTED_CLASSES
                 FROM DUAL";
             var progressParams = new[] { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
@@ -753,12 +753,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 OracleDbHelper.ExecuteNonQuery(insertNotificationQuery, notiParams);
 
                 TempData["SuccessMessage"] = $"Đã công bố điểm dự kiến. Sinh viên có thể phản hồi đến {deadline:dd/MM/yyyy HH:mm}";
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
         }
 
@@ -813,12 +813,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 OracleDbHelper.ExecuteNonQuery(insertNotificationQuery, notiParams);
 
                 TempData["SuccessMessage"] = "Đã công bố điểm chính thức!";
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
         }
 
@@ -848,7 +848,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi xuất file: " + ex.Message;
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
         }
 
@@ -887,12 +887,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     TempData["SuccessMessage"] = "Tất cả sinh viên đã có điểm trong học kỳ này";
                 }
 
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
         }
 
@@ -944,12 +944,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 }
                 TempData["SuccessMessage"] = message;
 
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
-                return RedirectToAction("Index");
+                return RedirectToRoute("AdminScores", new { action = "Index" });
             }
         }
 
@@ -1017,7 +1017,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 if (existsObj != null && Convert.ToInt32(existsObj) > 0)
                 {
                     TempData["ErrorMessage"] = $"Học kỳ '{termName}' đã tồn tại!";
-                    return RedirectToAction("Index");
+                    return RedirectToRoute("AdminScores", new { action = "Index" });
                 }
 
                 // Create new term
@@ -1035,12 +1035,12 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 OracleDbHelper.ExecuteNonQuery(insertQuery, insertParams);
 
                 TempData["SuccessMessage"] = $"Đã tạo '{termName}'. Chọn học kỳ và click 'Đặt làm HK hiện tại' để kích hoạt.";
-                return RedirectToAction("Index", new { term = termId });
+                return RedirectToRoute("AdminScores", new { action = "Index", term = termId });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = "Lỗi: " + ex.Message;
-                return RedirectToAction("Index");
+                return RedirectToRoute("AdminScores", new { action = "Index" });
             }
         }
 

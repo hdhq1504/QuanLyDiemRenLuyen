@@ -197,6 +197,35 @@
             </div>
         </div>
 
+        @if (Model.Attachments != null && Model.Attachments.Count > 0)
+        {
+            <div class="card">
+                <div class="section-title"><i class="fas fa-paperclip"></i> File đính kèm (@Model.Attachments.Count)</div>
+                
+                <div style="display: grid; gap: 12px;">
+                    @foreach (var attachment in Model.Attachments)
+                    {
+                        var fileIcon = attachment.ContentType.Contains("pdf") ? "fa-file-pdf" : 
+                                       attachment.ContentType.Contains("word") ? "fa-file-word" : 
+                                       attachment.ContentType.Contains("image") ? "fa-file-image" : "fa-file";
+                        var fileColor = attachment.ContentType.Contains("pdf") ? "#dc2626" : 
+                                       attachment.ContentType.Contains("word") ? "#2563eb" : 
+                                       attachment.ContentType.Contains("image") ? "#16a34a" : "#64748b";
+                        var fileSizeMB = (attachment.FileSize / 1024.0 / 1024.0).ToString("0.00");
+                        
+                        <a href="@attachment.StoredPath" target="_blank" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; text-decoration: none; color: inherit; transition: all 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                            <i class="fas @fileIcon" style="font-size: 32px; color: @fileColor;"></i>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #2c3e50; margin-bottom: 4px;">@attachment.FileName</div>
+                                <div style="font-size: 12px; color: #7f8c8d;">@fileSizeMB MB • Tải lên lúc @attachment.UploadedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                            <i class="fas fa-download" style="color: #667eea; font-size: 18px;"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
         @if (Model.Status == "SUBMITTED" && !string.IsNullOrEmpty(Model.ActivityId))
         {
             <div class="card">

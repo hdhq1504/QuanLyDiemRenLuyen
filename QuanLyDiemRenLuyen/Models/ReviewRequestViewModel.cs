@@ -227,6 +227,11 @@ namespace QuanLyDiemRenLuyen.Models
 
         public string TermName { get; set; }
 
+        /// <summary>
+        /// ID hoạt động mà sinh viên đã tham gia (optional)
+        /// </summary>
+        public string ActivityId { get; set; }
+
         [Required(ErrorMessage = "Vui lòng nhập tiêu đề")]
         [StringLength(255, ErrorMessage = "Tiêu đề không được vượt quá 255 ký tự")]
         public string Title { get; set; }
@@ -236,9 +241,15 @@ namespace QuanLyDiemRenLuyen.Models
 
         public List<TermOption> AvailableTerms { get; set; }
 
+        /// <summary>
+        /// Danh sách hoạt động mà sinh viên đã tham gia
+        /// </summary>
+        public List<ActivityOption> AvailableActivities { get; set; }
+
         public CreateFeedbackViewModel()
         {
             AvailableTerms = new List<TermOption>();
+            AvailableActivities = new List<ActivityOption>();
         }
     }
 
@@ -250,5 +261,29 @@ namespace QuanLyDiemRenLuyen.Models
         public string Id { get; set; }
         public string Name { get; set; }
         public int Year { get; set; }
+    }
+
+    /// <summary>
+    /// Option cho dropdown hoạt động đã tham gia
+    /// </summary>
+    public class ActivityOption
+    {
+        public string Id { get; set; }
+        public string Title { get; set; }
+        public DateTime StartAt { get; set; }
+        public string TermId { get; set; }
+        public decimal? Points { get; set; }
+
+        /// <summary>
+        /// Display text for dropdown
+        /// </summary>
+        public string DisplayText
+        {
+            get
+            {
+                var points = Points.HasValue ? $" (+{Points.Value:F0} điểm)" : "";
+                return $"{Title} - {StartAt:dd/MM/yyyy}{points}";
+            }
+        }
     }
 }

@@ -166,8 +166,7 @@
 </style>
 
 <div class="filter-bar">
-    @using (Html.BeginForm("Index", "Feedbacks", FormMethod.Get, new { @class = "" }))
-    {
+    <form action="@Url.RouteUrl("AdminFeedbacks", new { action = "Index" })" method="get" class="">
         <div class="filter-row">
             <div class="form-group">
                 <label>Tìm kiếm</label>
@@ -187,7 +186,7 @@
                 </button>
             </div>
         </div>
-    }
+    </form>
 </div>
 
 <div class="card">

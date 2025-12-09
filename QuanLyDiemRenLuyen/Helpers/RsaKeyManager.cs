@@ -27,12 +27,12 @@ namespace QuanLyDiemRenLuyen.Helpers
                     return;
                 }
 
-                // Sử dụng Oracle PKG_RSA để tạo keys
+                // Sử dụng Oracle PKG_RSA_CRYPTO để tạo keys
                 System.Diagnostics.Debug.WriteLine("Đang tạo RSA key pair mới cho hệ thống bằng crypto4ora...");
                 
                 string initQuery = @"
                     BEGIN
-                        PKG_RSA.INIT_SYSTEM_KEY(:KeyName);
+                        PKG_RSA_CRYPTO.INIT_SYSTEM_KEY(:KeyName);
                     END;";
 
                 var parameters = new[]

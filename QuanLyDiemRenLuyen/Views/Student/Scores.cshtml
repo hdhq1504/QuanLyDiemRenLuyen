@@ -268,10 +268,16 @@
                                 <span class="score-badge @badgeClass">@score.Classification</span>
                             </td>
                             <td>
-                                @if (score.Status == "APPROVED")
+                                @if (score.Status == "APPROVED" || score.Status == "OFFICIAL")
                                 {
                                     <span class="status-badge status-approved">
-                                        <i class="fas fa-check-circle"></i> Đã duyệt
+                                        <i class="fas fa-check-circle"></i> @(score.Status == "OFFICIAL" ? "Chính thức" : "Đã duyệt")
+                                    </span>
+                                }
+                                else if (score.Status == "DRAFT_PUBLISHED")
+                                {
+                                    <span class="status-badge" style="background: #dbeafe; color: #1e40af;">
+                                        <i class="fas fa-bullhorn"></i> Dự kiến
                                     </span>
                                 }
                                 else
@@ -292,7 +298,7 @@
                                 }
                             </td>
                             <td>
-                                <a href="@Url.Action("ScoreDetail", "Student", new { scoreId = score.ScoreId })"
+                                <a href="@Url.Action("Detail", "Scores", new { scoreId = score.ScoreId })"
                                    class="btn-view-detail">
                                     <i class="fas fa-eye"></i> Chi tiết
                                 </a>

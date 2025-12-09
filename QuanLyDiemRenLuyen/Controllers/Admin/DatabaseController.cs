@@ -38,7 +38,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                TempData["ErrorMessage"] = "Đã xảy ra lỗi khi tải dữ liệu: " + ex.Message;
                 return View("~/Views/Admin/Database/Index.cshtml", new DatabaseDashboardViewModel());
             }
         }

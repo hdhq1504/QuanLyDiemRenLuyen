@@ -56,14 +56,15 @@ END;
 */
 
 -- ============================================================================
--- Step 4: Grant execute permission to application schema
+-- Step 4: Grant execute permission to roles
 -- ============================================================================
+-- Note: CRYPTO package is installed in QLDiemRenLuyen schema, NOT in SYS
+-- QLDiemRenLuyen is the owner, so no need to grant to itself
 
--- Grant execute to the application user
-GRANT EXECUTE ON CRYPTO TO QLDiemRenLuyen;
-
--- Grant to roles for access control
-GRANT EXECUTE ON CRYPTO TO ROLE_ADMIN;
+-- Grant to roles for access control (run these as QLDiemRenLuyen, not SYSDBA)
+-- GRANT EXECUTE ON CRYPTO TO ROLE_ADMIN;
+-- If running with SYSDBA, use full qualified name:
+GRANT EXECUTE ON QLDiemRenLuyen.CRYPTO TO ROLE_ADMIN;
 
 -- ============================================================================
 -- Step 5: Verify installation
@@ -80,33 +81,15 @@ WHERE OBJECT_NAME = 'CRYPTO'
 -- Step 6: Test RSA key generation (basic test)
 -- ============================================================================
 
+-- Test RSA key generation (run as QLDiemRenLuyen user):
 /*
--- Test RSA key generation (uncomment after installation):
 DECLARE
     v_key_pair CLOB;
 BEGIN
     -- Generate 2048-bit RSA key pair
-    v_key_pair := CRYPTO.RSA_GENERATE_KEY_PAIR(2048);
+    v_key_pair := CRYPTO.RSA_GENERATE_KEYS(2048);
     DBMS_OUTPUT.PUT_LINE('Key pair generated successfully');
     DBMS_OUTPUT.PUT_LINE('Length: ' || LENGTH(v_key_pair));
 END;
 /
 */
-
--- ============================================================================
--- MANUAL STEPS REQUIRED:
--- 
--- 1. Download crypto4ora.jar from GitHub:
---    https://github.com/AlessandroVaccarino/crypto4ora/releases
---
--- 2. Open command prompt as administrator/DBA
---
--- 3. Run loadjava:
---    loadjava -user QLDiemRenLuyen/password@orcl -resolve crypto4ora.jar
---
--- 4. Run the crypto4ora.sql script that comes with the jar:
---    sqlplus QLDiemRenLuyen/password@orcl @crypto4ora.sql
---
--- 5. Run this script to grant permissions
---
--- ============================================================================

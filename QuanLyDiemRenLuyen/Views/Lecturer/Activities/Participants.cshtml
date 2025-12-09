@@ -5,22 +5,30 @@
 }
 
 <div style="padding: 24px;">
-    <!-- Header with Back Button -->
     <div style="margin-bottom: 24px;">
         <a href="@Url.RouteUrl("LecturerActivities", new { action = "Index" })" style="color: #64748b; text-decoration: none; font-weight: 500;">
-            <i class="fas fa-arrow-left"></i> Quay lại danh sách hoạt động
+            <i class="fas fa-arrow-left"></i> Quay lại
         </a>
     </div>
 
     <!-- Activity Info Card -->
     <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px;">
         <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #0f172a;">
-            <i class="fas fa-user-check" style="color: #667eea;"></i> Điểm danh: @Model.ActivityTitle
+            @Model.ActivityTitle
         </h2>
         <div style="display: flex; gap: 24px; color: #64748b; font-size: 14px;">
             <span><i class="fas fa-calendar"></i> @Model.ActivityStartAt.ToString("dd/MM/yyyy HH:mm")</span>
             <span><i class="fas fa-clock"></i> @Model.ActivityEndAt.ToString("dd/MM/yyyy HH:mm")</span>
         </div>
+        @{
+            var hasActivityStarted = DateTime.Now >= Model.ActivityStartAt;
+        }
+        @if (!hasActivityStarted)
+        {
+            <div style="margin-top: 16px; padding: 12px 16px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; color: #92400e; font-size: 14px;">
+                <i class="fas fa-lock"></i> <strong>Chưa thể điểm danh:</strong> Hoạt động chưa bắt đầu. Điểm danh sẽ mở lúc @Model.ActivityStartAt.ToString("dd/MM/yyyy HH:mm").
+            </div>
+        }
     </div>
 
     <!-- Statistics Cards -->
@@ -70,8 +78,9 @@
             </a>
 
             <button type="button" id="btnBulkCheckIn" 
-                    style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-left: auto;">
-                <i class="fas fa-check-double"></i> Điểm danh hàng loạt (<span id="selectedCount">0</span>)
+                    style="padding: 10px 20px; background: @(hasActivityStarted ? "#10b981" : "#cbd5e1"); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: @(hasActivityStarted ? "pointer" : "not-allowed"); margin-left: auto;"
+                    @(hasActivityStarted ? "" : "disabled") title="@(hasActivityStarted ? "" : "Chưa thể điểm danh - hoạt động chưa bắt đầu")">
+                <i class="fas @(hasActivityStarted ? "fa-check-double" : "fa-lock")"></i> Điểm danh hàng loạt (<span id="selectedCount">0</span>)
             </button>
         }
     </div>
@@ -83,16 +92,16 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
                     <tr>
-                        <th style="padding: 16px; text-align: left;">
+                        <th style="padding: 16px; text-align: center; width: 40px;">
                             <input type="checkbox" id="checkAll" style="cursor: pointer;" />
                         </th>
-                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">MSSV</th>
-                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Họ và tên</th>
-                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Lớp</th>
-                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Trạng thái</th>
-                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Thời gian ĐK</th>
-                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a;">Minh chứng</th>
-                        <th style="padding: 16px; text-align: center; font-weight: 700; color: #0f172a; width: 150px;">Thao tác</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a; width: 120px;">MSSV</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a; width: 200px;">Họ và tên</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a; width: 140px;">Lớp</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a; width: 160px;">Trạng thái</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a; width: 140px;">Thời gian ĐK</th>
+                        <th style="padding: 16px; text-align: left; font-weight: 700; color: #0f172a; width: 100px;">Minh chứng</th>
+                        <th style="padding: 16px; text-align: center; font-weight: 700; color: #0f172a; width: 130px;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -123,7 +132,7 @@
                                     <span style="background: #d1fae5; color: #065f46; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
                                         <i class="fas fa-check-circle"></i> Đã điểm danh
                                     </span>
-                                    @if (participant.CheckedInAt.HasValue)
+                                    if (participant.CheckedInAt.HasValue)
                                     {
                                         <div style="color: #64748b; font-size: 12px; margin-top: 4px;">
                                             @participant.CheckedInAt.Value.ToString("dd/MM HH:mm")
@@ -179,11 +188,20 @@
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="registrationId" value="@participant.RegistrationId" />
                                         <input type="hidden" name="activityId" value="@Model.ActivityId" />
-                                        <button type="submit" 
-                                                style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;"
-                                                onclick="return confirm('Xác nhận điểm danh sinh viên @participant.StudentName?')">
-                                            <i class="fas fa-user-check"></i> Điểm danh
-                                        </button>
+                                        if (hasActivityStarted)
+                                        {
+                                            <button type="submit" 
+                                                    style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;"
+                                                    onclick="return confirm('Xác nhận điểm danh sinh viên @participant.StudentName?')">
+                                                Điểm danh
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span style="padding: 8px 16px; background: #cbd5e1; color: #94a3b8; border-radius: 6px; font-weight: 600; font-size: 13px; display: inline-block;" title="Chưa thể điểm danh - hoạt động chưa bắt đầu">
+                                                <i class="fas fa-lock"></i> Điểm danh
+                                            </span>
+                                        }
                                     }
                                 }
                                 else
@@ -193,11 +211,20 @@
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="registrationId" value="@participant.RegistrationId" />
                                         <input type="hidden" name="activityId" value="@Model.ActivityId" />
-                                        <button type="submit" 
-                                                style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;"
-                                                onclick="return confirm('Xác nhận HỦY điểm danh sinh viên @participant.StudentName?')">
-                                            <i class="fas fa-undo"></i> Hủy điểm danh
-                                        </button>
+                                        if (hasActivityStarted)
+                                        {
+                                            <button type="submit" 
+                                                    style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;"
+                                                    onclick="return confirm('Xác nhận HỦY điểm danh sinh viên @participant.StudentName?')">
+                                                Hủy điểm danh
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span style="padding: 8px 16px; background: #cbd5e1; color: #94a3b8; border-radius: 6px; font-weight: 600; font-size: 13px; display: inline-block;" title="Chưa thể thao tác - hoạt động chưa bắt đầu">
+                                                <i class="fas fa-lock"></i> Hủy điểm danh
+                                            </span>
+                                        }
                                     }
                                 }
                             </td>
@@ -208,7 +235,7 @@
         </div>
 
         <!-- Pagination -->
-        @if (Model.TotalPages > 1)
+        if (Model.TotalPages > 1)
         {
             <div style="margin-top: 24px; display: flex; justify-content: center; gap: 8px;">
                 @for (int i = 1; i <= Model.TotalPages; i++)

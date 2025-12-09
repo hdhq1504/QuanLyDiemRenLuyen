@@ -8,255 +8,378 @@
     .upload-container {
         max-width: 700px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 24px;
     }
 
     .back-link {
-        display: inline-block;
-        margin-bottom: 20px;
-        color: #3498db;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 24px;
+        color: #64748b;
         text-decoration: none;
+        font-weight: 500;
     }
 
     .back-link:hover {
-        text-decoration: underline;
+        color: #2563eb;
     }
 
     .upload-card {
         background: white;
         border-radius: 8px;
-        padding: 30px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 32px;
+        border: 1px solid #e2e8f0;
     }
 
     .page-title {
         font-size: 24px;
         font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 10px;
+        color: #0f172a;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
     .activity-name {
-        color: #3498db;
-        font-size: 18px;
-        margin-bottom: 30px;
+        color: #2563eb;
+        font-size: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
     }
 
     .form-group {
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
 
     .form-label {
         display: block;
         font-weight: 500;
-        color: #555;
+        color: #374151;
         margin-bottom: 8px;
+        font-size: 14px;
     }
 
     .form-label.required::after {
         content: " *";
-        color: #e74c3c;
+        color: #dc2626;
     }
 
     .form-control {
         width: 100%;
         padding: 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
         font-size: 14px;
+        background: #fff;
     }
 
     .form-control:focus {
         outline: none;
-        border-color: #3498db;
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        border-color: #2563eb;
     }
 
-    .file-input-wrapper {
-        position: relative;
-        overflow: hidden;
-        display: inline-block;
-        width: 100%;
-    }
-
-    .file-input-wrapper input[type=file] {
-        position: absolute;
-        left: -9999px;
-    }
-
-    .file-input-label {
-        display: block;
-        padding: 12px;
-        background: #f8f9fa;
-        border: 2px dashed #ddd;
-        border-radius: 4px;
+    .file-upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 32px;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s;
+        background: #f8fafc;
     }
 
-    .file-input-label:hover {
-        background: #e9ecef;
-        border-color: #3498db;
+    .file-upload-area:hover {
+        border-color: #2563eb;
+        background: #eff6ff;
     }
 
-    .file-name {
-        margin-top: 10px;
-        color: #666;
+    .file-upload-area.has-file {
+        border-color: #10b981;
+        background: #f0fdf4;
+    }
+
+    .file-upload-icon {
+        font-size: 48px;
+        color: #94a3b8;
+        margin-bottom: 16px;
+    }
+
+    .file-upload-area.has-file .file-upload-icon {
+        color: #10b981;
+    }
+
+    .file-upload-text {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+
+    .file-upload-hint {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    .selected-file {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 6px;
+        color: #166534;
         font-size: 14px;
     }
 
-    .help-text {
-        font-size: 13px;
-        color: #999;
-        margin-top: 5px;
+    .current-proof {
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        border: 1px solid #e2e8f0;
     }
 
-    .current-proof {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 20px;
+    .current-proof-title {
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .current-proof-info {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .badge {
-        padding: 5px 12px;
-        border-radius: 20px;
+        padding: 4px 10px;
+        border-radius: 4px;
         font-size: 12px;
-        font-weight: 500;
+        font-weight: 600;
     }
 
-    .badge-warning {
-        background: #f39c12;
-        color: white;
-    }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
 
-    .badge-success {
-        background: #27ae60;
-        color: white;
-    }
-
-    .badge-danger {
-        background: #e74c3c;
-        color: white;
+    .form-hint {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 6px;
     }
 
     .btn-group {
         display: flex;
-        gap: 15px;
-        margin-top: 30px;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
     }
 
     .btn {
-        padding: 12px 30px;
+        padding: 12px 24px;
         border: none;
         border-radius: 6px;
         cursor: pointer;
-        font-size: 16px;
-        font-weight: 500;
-        transition: all 0.3s;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
     }
 
     .btn-primary {
-        background: #3498db;
+        background: #2563eb;
+        color: white;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+
+    .alert {
+        padding: 14px 16px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .alert-danger {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .alert-info {
+        background: #eff6ff;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
 </style>
 
 <div class="upload-container">
-    <a href="@Url.Action("ActivityDetail", "Student", new { id = Model.ActivityId })" class="back-link">← Quay lại chi
-        tiết hoạt động</a>
+    <a href="@Url.Action("Detail", "Activities", new { id = Model.ActivityId })" class="back-link">
+        <i class="fas fa-arrow-left"></i> Quay lại chi tiết hoạt động
+    </a>
 
     @if (ViewBag.ErrorMessage != null)
     {
-        <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i> @ViewBag.ErrorMessage
+        </div>
     }
 
     <div class="upload-card">
-        <h1 class="page-title">📤 Upload minh chứng tham gia</h1>
-        <p class="activity-name">@Model.ActivityTitle</p>
+        <h1 class="page-title">
+            <i class="fas fa-cloud-upload-alt" style="color: #2563eb;"></i>
+            Upload minh chứng
+        </h1>
+        <p class="activity-name">
+            <i class="fas fa-calendar-check"></i> @Model.ActivityTitle
+        </p>
 
         @if (!string.IsNullOrEmpty(Model.CurrentProofFilePath))
         {
             <div class="current-proof">
-                <h3>Minh chứng hiện tại</h3>
-                <p>
-                    <strong>Trạng thái:</strong>
+                <div class="current-proof-title">
+                    <i class="fas fa-file-alt"></i> Minh chứng hiện tại
+                </div>
+                <div class="current-proof-info">
+                    <i class="fas fa-info-circle"></i> Trạng thái:
                     @if (Model.CurrentProofStatus == "PENDING")
                     {
-                        <span class="badge badge-warning">Chờ duyệt</span>
+                        <span class="badge badge-warning"><i class="fas fa-clock"></i> Chờ duyệt</span>
                     }
                     else if (Model.CurrentProofStatus == "APPROVED")
                     {
-                        <span class="badge badge-success">Đã duyệt</span>
+                        <span class="badge badge-success"><i class="fas fa-check"></i> Đã duyệt</span>
                     }
                     else if (Model.CurrentProofStatus == "REJECTED")
                     {
-                        <span class="badge badge-danger">Bị từ chối</span>
+                        <span class="badge badge-danger"><i class="fas fa-times"></i> Bị từ chối</span>
                     }
-                </p>
-                <p><strong>Đã upload:</strong> @Model.CurrentProofUploadedAt?.ToString("dd/MM/yyyy HH:mm")</p>
-                <p><small>Upload file mới sẽ thay thế file cũ</small></p>
+                </div>
+                <div class="current-proof-info">
+                    <i class="fas fa-clock"></i> Đã upload: @Model.CurrentProofUploadedAt?.ToString("dd/MM/yyyy HH:mm")
+                </div>
+                <div class="alert alert-info" style="margin: 12px 0 0 0;">
+                    <i class="fas fa-info-circle"></i> Upload file mới sẽ thay thế file cũ
+                </div>
             </div>
         }
 
-        @using (Html.BeginForm("UploadProof", "Student", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        @using (Html.BeginForm("UploadProof", "Activities", FormMethod.Post, new { enctype = "multipart/form-data" }))
         {
             @Html.AntiForgeryToken()
             <input type="hidden" name="activityId" value="@Model.ActivityId" />
 
             <div class="form-group">
                 <label class="form-label required">File minh chứng</label>
-                <div class="file-input-wrapper">
-                    <input type="file" name="proofFile" id="proofFile" accept=".jpg,.jpeg,.png,.pdf" required />
-                    <label for="proofFile" class="file-input-label">
-                        📁 Chọn file (JPG, PNG, PDF)
-                    </label>
+                <div class="file-upload-area" id="dropArea" onclick="document.getElementById('proofFile').click()">
+                    <input type="file" name="proofFile" id="proofFile" accept=".jpg,.jpeg,.png,.pdf" required style="display: none;" />
+                    <div class="file-upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="file-upload-text">
+                        <i class="fas fa-mouse-pointer"></i> Nhấn để chọn file hoặc kéo thả vào đây
+                    </div>
+                    <div class="file-upload-hint">
+                        <i class="fas fa-file-image"></i> JPG, PNG hoặc PDF - Tối đa 5MB
+                    </div>
                 </div>
-                <div class="file-name" id="fileName"></div>
-                <p class="help-text">Chấp nhận file ảnh (JPG, PNG) hoặc PDF. Kích thước tối đa: 5MB</p>
+                <div class="selected-file" id="selectedFile" style="display: none;">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="fileName"></span>
+                </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Ghi chú</label>
-                <textarea name="note" class="form-control" rows="4" placeholder="Nhập ghi chú (nếu có)..."></textarea>
-                <p class="help-text">Tối đa 500 ký tự</p>
+                <label class="form-label"><i class="fas fa-sticky-note"></i> Ghi chú</label>
+                <textarea name="note" class="form-control" rows="3" placeholder="Nhập ghi chú bổ sung (nếu có)..."></textarea>
+                <p class="form-hint"><i class="fas fa-info-circle"></i> Tối đa 500 ký tự</p>
             </div>
 
             <div class="btn-group">
-                <button type="submit" class="btn btn-primary">
-                    ✅ Upload minh chứng
-                </button>
-                <a href="@Url.Action("ActivityDetail", "Student", new { id = Model.ActivityId })" class="btn btn-secondary">
-                    ❌ Hủy
+                <a href="@Url.Action("Detail", "Activities", new { id = Model.ActivityId })" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Hủy
                 </a>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-upload"></i> Upload minh chứng
+                </button>
             </div>
         }
     </div>
 </div>
 
 <script>
-    // Display selected file name
-    document.getElementById('proofFile').addEventListener('change', function (e) {
-        const fileName = e.target.files[0]?.name;
-        const fileNameDisplay = document.getElementById('fileName');
-        if (fileName) {
-            fileNameDisplay.textContent = '✓ Đã chọn: ' + fileName;
-            fileNameDisplay.style.color = '#27ae60';
-        } else {
-            fileNameDisplay.textContent = '';
+    var proofInput = document.getElementById('proofFile');
+    var dropArea = document.getElementById('dropArea');
+    var selectedFile = document.getElementById('selectedFile');
+    var fileName = document.getElementById('fileName');
+
+    proofInput.addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            showSelectedFile(e.target.files[0]);
         }
     });
 
-    // Handle form submission
-    document.querySelector('form').addEventListener('submit', function (e) {
-        const fileInput = document.getElementById('proofFile');
-        if (!fileInput.files || !fileInput.files[0]) {
+    // Drag and drop
+    dropArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropArea.style.borderColor = '#2563eb';
+        dropArea.style.background = '#eff6ff';
+    });
+
+    dropArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropArea.style.borderColor = '#d1d5db';
+        dropArea.style.background = '#f8fafc';
+    });
+
+    dropArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropArea.style.borderColor = '#d1d5db';
+        dropArea.style.background = '#f8fafc';
+        
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            proofInput.files = e.dataTransfer.files;
+            showSelectedFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    function showSelectedFile(file) {
+        fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+        selectedFile.style.display = 'flex';
+        dropArea.classList.add('has-file');
+    }
+
+    // Form submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!proofInput.files || !proofInput.files[0]) {
             e.preventDefault();
             alert('Vui lòng chọn file minh chứng');
             return false;
         }
 
-        const file = fileInput.files[0];
-        const maxSize = 5 * 1024 * 1024; // 5MB
+        var file = proofInput.files[0];
+        var maxSize = 5 * 1024 * 1024; // 5MB
 
         if (file.size > maxSize) {
             e.preventDefault();
@@ -264,37 +387,8 @@
             return false;
         }
 
-        const button = this.querySelector('button[type="submit"]');
-        button.disabled = true;
-        button.textContent = '⏳ Đang upload...';
+        var submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang upload...';
     });
 </script>
-
-color: white;
-flex: 1;
-}
-
-.btn-primary:hover {
-background: #2980b9;
-}
-
-.btn-secondary {
-background: #95a5a6;
-color: white;
-}
-
-.btn-secondary:hover {
-background: #7f8c8d;
-}
-
-.alert {
-padding: 15px;
-border-radius: 6px;
-margin-bottom: 20px;
-}
-
-.alert-danger {
-background: #f8d7da;
-color: #721c24;
-border: 1px solid #f5c6cb;
-}

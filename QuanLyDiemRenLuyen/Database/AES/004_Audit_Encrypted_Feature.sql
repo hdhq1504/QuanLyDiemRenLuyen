@@ -5,7 +5,6 @@
 
 -- ============================================================================
 -- Gói Ghi nhật ký Audit có Mã hóa
--- Sử dụng các cột của bảng AUDIT_EVENTS
 -- ============================================================================
 
 CREATE OR REPLACE PACKAGE PKG_AUDIT_CRYPTO AS
@@ -49,17 +48,19 @@ CREATE OR REPLACE PACKAGE BODY PKG_AUDIT_CRYPTO AS
             v_is_encrypted := 1;
         END IF;
         
-        INSERT INTO AUDIT_TRAIL (
-            WHO,
-            ACTION,
+        INSERT INTO AUDIT_EVENTS (
+            EVENT_CATEGORY,
+            EVENT_TYPE,
+            PERFORMED_BY,
             EVENT_AT_UTC,
             CLIENT_IP,
             USER_AGENT,
             DETAILS_ENCRYPTED,
             IS_DETAILS_ENCRYPTED
         ) VALUES (
-            p_who,
+            'SECURITY',
             p_action,
+            p_who,
             SYS_EXTRACT_UTC(SYSTIMESTAMP),
             p_client_ip,
             p_user_agent,
@@ -76,7 +77,7 @@ CREATE OR REPLACE PACKAGE BODY PKG_AUDIT_CRYPTO AS
     BEGIN
         SELECT DETAILS_ENCRYPTED, NVL(IS_DETAILS_ENCRYPTED, 0)
         INTO v_encrypted_details, v_is_encrypted
-        FROM AUDIT_TRAIL
+        FROM AUDIT_EVENTS
         WHERE ID = p_audit_id;
         
         IF v_is_encrypted = 1 AND v_encrypted_details IS NOT NULL THEN
@@ -98,8 +99,8 @@ CREATE OR REPLACE PACKAGE BODY PKG_AUDIT_CRYPTO AS
         OPEN v_cursor FOR
             SELECT 
                 ID,
-                WHO,
-                ACTION,
+                PERFORMED_BY AS WHO,
+                EVENT_TYPE AS ACTION,
                 EVENT_AT_UTC,
                 CLIENT_IP,
                 USER_AGENT,
@@ -109,9 +110,9 @@ CREATE OR REPLACE PACKAGE BODY PKG_AUDIT_CRYPTO AS
                     ELSE 
                         NULL
                 END AS SENSITIVE_DETAILS
-            FROM AUDIT_TRAIL
-            WHERE (p_who IS NULL OR WHO = p_who)
-              AND (p_action_like IS NULL OR ACTION LIKE '%' || p_action_like || '%')
+            FROM AUDIT_EVENTS
+            WHERE (p_who IS NULL OR PERFORMED_BY = p_who)
+              AND (p_action_like IS NULL OR EVENT_TYPE LIKE '%' || p_action_like || '%')
             ORDER BY EVENT_AT_UTC DESC
             FETCH FIRST p_limit ROWS ONLY;
         

@@ -347,33 +347,34 @@
             <!-- Navigation -->
             <nav class="sidebar-nav">
                 @{
+                    var currentController = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
                     var currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
                 }
-                <a href="@Url.Action("Dashboard", "Student")" class="nav-item @(currentAction == "Dashboard" ? "active" : "")">
+                <a href="@Url.Action("Dashboard", "Student")" class="nav-item @(currentController == "Dashboard" || (currentController == "Student" && currentAction == "Dashboard") ? "active" : "")">
                     <i class="fas fa-home"></i>
                     <span class="nav-text">Dashboard</span>
                 </a>
-                <a href="@Url.Action("Scores", "Student")" class="nav-item @(currentAction == "Scores" || currentAction == "ScoreDetail" ? "active" : "")">
+                <a href="@Url.Action("Scores", "Student")" class="nav-item @((currentController == "Student" && (currentAction == "Scores" || currentAction == "ScoreDetail" || currentAction == "Detail" || currentAction == "CreateReviewRequest")) || currentController == "Scores" ? "active" : "")">
                     <i class="fas fa-star"></i>
                     <span class="nav-text">Điểm rèn luyện</span>
                 </a>
-                <a href="@Url.Action("Feedbacks", "Student")" class="nav-item @(currentAction == "Feedbacks" || currentAction == "CreateFeedback" || currentAction == "FeedbackDetail" ? "active" : "")">
+                <a href="@Url.Action("Feedbacks", "Student")" class="nav-item @((currentController == "Student" && (currentAction == "Feedbacks" || currentAction == "CreateFeedback" || currentAction == "FeedbackDetail")) || currentController == "Feedbacks" ? "active" : "")">
                     <i class="fas fa-comment-dots"></i>
                     <span class="nav-text">Phản hồi điểm</span>
                 </a>
-                <a href="@Url.Action("Activities", "Student")" class="nav-item @(currentAction == "Activities" || currentAction == "ActivityDetail" ? "active" : "")">
+                <a href="@Url.Action("Activities", "Student")" class="nav-item @((currentController == "Student" && (currentAction == "Activities" || currentAction == "ActivityDetail")) ? "active" : "")">
                     <i class="fas fa-calendar-alt"></i>
                     <span class="nav-text">Hoạt động</span>
                 </a>
-                <a href="@Url.Action("MyRegistrations", "Activities")" class="nav-item @(currentAction == "MyRegistrations" ? "active" : "")">
+                <a href="@Url.Action("MyRegistrations", "Activities")" class="nav-item @(currentController == "Activities" && currentAction == "MyRegistrations" ? "active" : "")">
                     <i class="fas fa-calendar-check"></i>
                     <span class="nav-text">Hoạt động của tôi</span>
                 </a>
-                <a href="@Url.Action("Notifications", "Student")" class="nav-item @(currentAction == "Notifications" ? "active" : "")">
+                <a href="@Url.Action("Notifications", "Student")" class="nav-item @((currentController == "Student" && currentAction == "Notifications") || currentController == "Notifications" ? "active" : "")">
                     <i class="fas fa-bell"></i>
                     <span class="nav-text">Thông báo</span>
                 </a>
-                <a href="@Url.Action("Profile", "Student")" class="nav-item @(currentAction == "Profile" || currentAction == "EditProfile" ? "active" : "")">
+                <a href="@Url.Action("Profile", "Student")" class="nav-item @((currentController == "Student" && (currentAction == "Profile" || currentAction == "EditProfile")) || currentController == "Profile" ? "active" : "")">
                     <i class="fas fa-user"></i>
                     <span class="nav-text">Hồ sơ</span>
                 </a>

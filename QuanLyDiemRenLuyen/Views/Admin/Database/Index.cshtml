@@ -5,6 +5,19 @@
 }
 
 <div style="padding: 24px;">
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <i class="fas fa-exclamation-circle"></i> @ViewBag.ErrorMessage
+        </div>
+    }
+    
     <!-- Statistics Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 32px;">
         <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">

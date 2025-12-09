@@ -28,39 +28,56 @@ CREATE OR REPLACE PACKAGE BODY PKG_SESSION_TOKEN AS
 
     FUNCTION CREATE_SESSION_TOKEN(p_user_id IN VARCHAR2) RETURN VARCHAR2 IS
         v_token VARCHAR2(64);
-        v_encrypted_token RAW(256);
+        v_token_hash VARCHAR2(128);
+        v_encrypted_token RAW(2000);
         v_expiry TIMESTAMP;
     BEGIN
         v_token := GENERATE_TOKEN();
+        v_token_hash := RAWTOHEX(DBMS_CRYPTO.HASH(UTL_RAW.CAST_TO_RAW(v_token), DBMS_CRYPTO.HASH_SH256));
         v_encrypted_token := PKG_AES_CRYPTO.ENCRYPT_WITH_SYSTEM_KEY(v_token);
         v_expiry := SYSTIMESTAMP + INTERVAL '1' HOUR * G_SESSION_DURATION_HOURS;
         
-        UPDATE USERS
-        SET SESSION_TOKEN_ENCRYPTED = v_encrypted_token,
-            SESSION_EXPIRES_AT = v_expiry
-        WHERE MAND = p_user_id;
+        -- Xóa token cũ của user
+        DELETE FROM SESSION_TOKENS WHERE USER_MAND = p_user_id;
+        
+        -- Tạo token mới
+        INSERT INTO SESSION_TOKENS (
+            USER_MAND, TOKEN_HASH, TOKEN_ENCRYPTED, 
+            EXPIRES_AT, IS_VALID, CLIENT_IP
+        ) VALUES (
+            p_user_id, v_token_hash, v_encrypted_token,
+            v_expiry, 1, SYS_CONTEXT('USERENV', 'IP_ADDRESS')
+        );
         
         COMMIT;
         RETURN v_token;
     END CREATE_SESSION_TOKEN;
 
     FUNCTION VALIDATE_SESSION_TOKEN(p_user_id IN VARCHAR2, p_token IN VARCHAR2) RETURN NUMBER IS
-        v_encrypted_token RAW(256);
+        v_encrypted_token RAW(2000);
         v_stored_token VARCHAR2(64);
         v_expiry TIMESTAMP;
+        v_is_valid NUMBER;
     BEGIN
-        SELECT SESSION_TOKEN_ENCRYPTED, SESSION_EXPIRES_AT
-        INTO v_encrypted_token, v_expiry
-        FROM USERS
-        WHERE MAND = p_user_id;
+        SELECT TOKEN_ENCRYPTED, EXPIRES_AT, IS_VALID
+        INTO v_encrypted_token, v_expiry, v_is_valid
+        FROM SESSION_TOKENS
+        WHERE USER_MAND = p_user_id
+          AND IS_VALID = 1
+          AND ROWNUM = 1;
         
-        IF v_expiry IS NULL OR v_expiry < SYSTIMESTAMP THEN
+        IF v_is_valid = 0 OR v_expiry IS NULL OR v_expiry < SYSTIMESTAMP THEN
             RETURN 0;
         END IF;
         
         v_stored_token := PKG_AES_CRYPTO.DECRYPT_WITH_SYSTEM_KEY(v_encrypted_token);
         
         IF v_stored_token = p_token THEN
+            -- Cập nhật LAST_USED_AT
+            UPDATE SESSION_TOKENS 
+            SET LAST_USED_AT = SYSTIMESTAMP
+            WHERE USER_MAND = p_user_id AND IS_VALID = 1;
+            COMMIT;
             RETURN 1;
         ELSE
             RETURN 0;
@@ -72,26 +89,32 @@ CREATE OR REPLACE PACKAGE BODY PKG_SESSION_TOKEN AS
 
     PROCEDURE CLEAR_SESSION_TOKEN(p_user_id IN VARCHAR2) IS
     BEGIN
-        UPDATE USERS
-        SET SESSION_TOKEN_ENCRYPTED = NULL,
-            SESSION_EXPIRES_AT = NULL
-        WHERE MAND = p_user_id;
+        UPDATE SESSION_TOKENS
+        SET IS_VALID = 0
+        WHERE USER_MAND = p_user_id;
         COMMIT;
     END CLEAR_SESSION_TOKEN;
 
     FUNCTION GET_USER_BY_TOKEN(p_token IN VARCHAR2) RETURN VARCHAR2 IS
+        v_token_hash VARCHAR2(128);
+        v_encrypted_token RAW(2000);
         v_stored_token VARCHAR2(64);
+        v_user_id VARCHAR2(50);
     BEGIN
+        v_token_hash := RAWTOHEX(DBMS_CRYPTO.HASH(UTL_RAW.CAST_TO_RAW(p_token), DBMS_CRYPTO.HASH_SH256));
+        
+        -- Tìm theo hash trước (nhanh hơn)
         FOR rec IN (
-            SELECT MAND, SESSION_TOKEN_ENCRYPTED
-            FROM USERS
-            WHERE SESSION_EXPIRES_AT > SYSTIMESTAMP
-              AND SESSION_TOKEN_ENCRYPTED IS NOT NULL
+            SELECT USER_MAND, TOKEN_ENCRYPTED
+            FROM SESSION_TOKENS
+            WHERE TOKEN_HASH = v_token_hash
+              AND IS_VALID = 1
+              AND EXPIRES_AT > SYSTIMESTAMP
         ) LOOP
             BEGIN
-                v_stored_token := PKG_AES_CRYPTO.DECRYPT_WITH_SYSTEM_KEY(rec.SESSION_TOKEN_ENCRYPTED);
+                v_stored_token := PKG_AES_CRYPTO.DECRYPT_WITH_SYSTEM_KEY(rec.TOKEN_ENCRYPTED);
                 IF v_stored_token = p_token THEN
-                    RETURN rec.MAND;
+                    RETURN rec.USER_MAND;
                 END IF;
             EXCEPTION
                 WHEN OTHERS THEN NULL;

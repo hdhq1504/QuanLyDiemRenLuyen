@@ -43,16 +43,18 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 string mand = GetCurrentStudentId();
 
+                System.Diagnostics.Debug.WriteLine($"[ScoreDetail] scoreId={scoreId}, mand={mand}");
+
                 if (string.IsNullOrEmpty(scoreId))
                 {
-                    TempData["ErrorMessage"] = "Không tìm thấy điểm";
+                    TempData["ErrorMessage"] = "Không tìm thấy điểm (scoreId rỗng)";
                     return RedirectToAction("Index");
                 }
 
                 var viewModel = GetScoreDetailViewModel(mand, scoreId);
                 if (viewModel == null)
                 {
-                    TempData["ErrorMessage"] = "Không tìm thấy điểm";
+                    TempData["ErrorMessage"] = $"Không tìm thấy điểm với scoreId={scoreId}";
                     return RedirectToAction("Index");
                 }
 
@@ -60,7 +62,9 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
             }
             catch (Exception ex)
             {
-                ViewBag.ErrorMessage = "Đã xảy ra lỗi: " + ex.Message;
+                System.Diagnostics.Debug.WriteLine($"[ScoreDetail] Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ScoreDetail] StackTrace: {ex.StackTrace}");
+                TempData["ErrorMessage"] = "Đã xảy ra lỗi: " + ex.Message;
                 return RedirectToAction("Index");
             }
         }
@@ -297,7 +301,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
             var scoreParams = new[]
             {
-                OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId),
+                OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Int32, int.Parse(scoreId)),
                 OracleDbHelper.CreateParameter("StudentId", OracleDbType.Varchar2, mand)
             };
 
@@ -357,30 +361,37 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                 });
             }
 
-            // Lấy lịch sử thay đổi điểm
-            string historyQuery = @"SELECT ACTION, OLD_VALUE, NEW_VALUE, CHANGED_BY,
-                                          u.FULL_NAME as CHANGED_BY_NAME, REASON, CHANGED_AT
-                                   FROM SCORE_HISTORY sh
-                                   LEFT JOIN USERS u ON sh.CHANGED_BY = u.MAND
-                                   WHERE sh.SCORE_ID = :ScoreId
-                                   ORDER BY sh.CHANGED_AT DESC";
-
-            var historyParams = new[] { OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Varchar2, scoreId) };
-            DataTable historyDt = OracleDbHelper.ExecuteQuery(historyQuery, historyParams);
-
+            // Lấy lịch sử thay đổi điểm (bảng có thể không tồn tại)
             viewModel.History = new List<ScoreHistoryItem>();
-            foreach (DataRow row in historyDt.Rows)
+            try
             {
-                viewModel.History.Add(new ScoreHistoryItem
+                string historyQuery = @"SELECT ACTION, OLD_VALUE, NEW_VALUE, CHANGED_BY,
+                                              u.FULL_NAME as CHANGED_BY_NAME, REASON, CHANGED_AT
+                                       FROM SCORE_HISTORY sh
+                                       LEFT JOIN USERS u ON sh.CHANGED_BY = u.MAND
+                                       WHERE sh.SCORE_ID = :ScoreId
+                                       ORDER BY sh.CHANGED_AT DESC";
+
+                var historyParams = new[] { OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Int32, int.Parse(scoreId)) };
+                DataTable historyDt = OracleDbHelper.ExecuteQuery(historyQuery, historyParams);
+
+                foreach (DataRow row in historyDt.Rows)
                 {
-                    Action = row["ACTION"].ToString(),
-                    OldValue = row["OLD_VALUE"] != DBNull.Value ? row["OLD_VALUE"].ToString() : null,
-                    NewValue = row["NEW_VALUE"] != DBNull.Value ? row["NEW_VALUE"].ToString() : null,
-                    ChangedBy = row["CHANGED_BY"] != DBNull.Value ? row["CHANGED_BY"].ToString() : null,
-                    ChangedByName = row["CHANGED_BY_NAME"] != DBNull.Value ? row["CHANGED_BY_NAME"].ToString() : "Hệ thống",
-                    Reason = row["REASON"] != DBNull.Value ? row["REASON"].ToString() : null,
-                    ChangedAt = Convert.ToDateTime(row["CHANGED_AT"])
-                });
+                    viewModel.History.Add(new ScoreHistoryItem
+                    {
+                        Action = row["ACTION"].ToString(),
+                        OldValue = row["OLD_VALUE"] != DBNull.Value ? row["OLD_VALUE"].ToString() : null,
+                        NewValue = row["NEW_VALUE"] != DBNull.Value ? row["NEW_VALUE"].ToString() : null,
+                        ChangedBy = row["CHANGED_BY"] != DBNull.Value ? row["CHANGED_BY"].ToString() : null,
+                        ChangedByName = row["CHANGED_BY_NAME"] != DBNull.Value ? row["CHANGED_BY_NAME"].ToString() : "Hệ thống",
+                        Reason = row["REASON"] != DBNull.Value ? row["REASON"].ToString() : null,
+                        ChangedAt = Convert.ToDateTime(row["CHANGED_AT"])
+                    });
+                }
+            }
+            catch
+            {
+                // Table may not exist - ignore
             }
 
             // Lấy thông tin đơn phúc khảo (nếu có)

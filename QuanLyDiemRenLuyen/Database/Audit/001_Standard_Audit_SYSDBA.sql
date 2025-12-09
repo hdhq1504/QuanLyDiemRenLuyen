@@ -111,14 +111,14 @@ PROMPT '✓ Đã bật audit cho sự kiện session/user';
 
 -- Audit sự kiện phân quyền
 AUDIT GRANT ANY PRIVILEGE;
-AUDIT REVOKE ANY PRIVILEGE;
 AUDIT GRANT ANY ROLE;
+AUDIT ROLE;
 PROMPT '✓ Đã bật audit cho sự kiện phân quyền';
 
 -- Audit DDL trên các đối tượng nhạy cảm
 AUDIT ALTER ANY TABLE;
 AUDIT DROP ANY TABLE;
-AUDIT TRUNCATE TABLE;
+AUDIT CREATE ANY TABLE;
 PROMPT '✓ Đã bật audit cho sự kiện DDL';
 
 -- =========================================================
