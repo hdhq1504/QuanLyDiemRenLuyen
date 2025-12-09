@@ -264,6 +264,7 @@
     <Compile Include="Services\EncryptedFeedbackService.cs" />
     <Compile Include="Services\FilePathCryptoService.cs" />
     <Compile Include="Services\HybridCryptoService.cs" />
+    <Compile Include="Services\SecurityContextService.cs" />
     <Compile Include="Services\SensitiveDataService.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>

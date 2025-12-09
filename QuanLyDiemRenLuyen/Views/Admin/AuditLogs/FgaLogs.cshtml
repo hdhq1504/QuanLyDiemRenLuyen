@@ -1,0 +1,451 @@
+@model QuanLyDiemRenLuyen.Models.FgaLogsViewModel
+@{
+    ViewBag.Title = "Fine-Grained Auditing";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .audit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .audit-header h2 {
+        margin: 0;
+        color: #0f172a;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .stat-card h3 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2563eb;
+        margin: 0 0 4px 0;
+    }
+
+    .stat-card p {
+        color: #64748b;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .stat-card.danger h3 { color: #dc2626; }
+    .stat-card.success h3 { color: #059669; }
+    .stat-card.warning h3 { color: #d97706; }
+
+    .filter-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 24px;
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 4px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background: #f8fafc;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #0f172a;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 13px;
+    }
+
+    .table td {
+        padding: 12px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        vertical-align: top;
+    }
+
+    .table tr:hover {
+        background: #f8fafc;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-secondary { background: #f1f5f9; color: #475569; }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+    }
+
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1e40af; color: white; }
+    .btn-secondary { background: #f1f5f9; color: #475569; }
+    .btn-secondary:hover { background: #e2e8f0; color: #475569; text-decoration: none; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding: 20px;
+    }
+
+    .pagination a, .pagination span {
+        padding: 8px 14px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 13px;
+    }
+
+    .pagination a { background: #f1f5f9; color: #475569; }
+    .pagination a:hover { background: #e2e8f0; }
+    .pagination .active { background: #2563eb; color: white; }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    .sql-text {
+        font-family: monospace;
+        font-size: 11px;
+        color: #475569;
+        max-width: 300px;
+        word-break: break-all;
+        display: block;
+    }
+
+    .alert {
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+</style>
+
+<div class="audit-header">
+    <h2><i class="fas fa-search-plus"></i> Fine-Grained Auditing (FGA)</h2>
+    <div>
+        <a href="@Url.Action("Index", "AuditLogs")" class="btn btn-secondary">
+            <i class="fas fa-list"></i> Trigger Audit
+        </a>
+        <a href="@Url.Action("DailySummary", "AuditLogs")" class="btn btn-secondary" style="margin-left: 8px;">
+            <i class="fas fa-chart-bar"></i> Thống kê
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i> @ViewBag.ErrorMessage
+        @if (!string.IsNullOrEmpty(ViewBag.ErrorDetails))
+        {
+            <br /><small>@ViewBag.ErrorDetails</small>
+        }
+    </div>
+}
+
+<!-- Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>@Model.Statistics.TodayCount</h3>
+        <p>Truy cập hôm nay</p>
+    </div>
+    <div class="stat-card">
+        <h3>@Model.Statistics.WeekCount</h3>
+        <p>Truy cập 7 ngày</p>
+    </div>
+    <div class="stat-card danger">
+        <h3>@Model.Statistics.SensitiveAccessCount</h3>
+        <p>Dữ liệu nhạy cảm (7d)</p>
+    </div>
+    <div class="stat-card success">
+        <h3>@Model.Statistics.UniqueUsersAccessing</h3>
+        <p>Người dùng hôm nay</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-card">
+    <form method="get" action="@Url.Action("FgaLogs")">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Policy</label>
+                <select name="policyName">
+                    <option value="">-- Tất cả --</option>
+                    @foreach (var policy in Model.AvailablePolicies)
+                    {
+                        <option value="@policy" @(Model.PolicyName == policy ? "selected" : "")>@policy</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Đối tượng</label>
+                <select name="objectName">
+                    <option value="">-- Tất cả --</option>
+                    @foreach (var obj in Model.AvailableObjects)
+                    {
+                        <option value="@obj" @(Model.ObjectName == obj ? "selected" : "")>@obj</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>DB User</label>
+                <input type="text" name="dbUser" value="@Model.DbUser" placeholder="Tên user..." />
+            </div>
+            <div class="filter-group">
+                <label>Từ ngày</label>
+                <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="filter-group">
+                <label>Đến ngày</label>
+                <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="filter-group" style="flex: 0;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Lọc
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- FGA Logs Table -->
+<div class="card">
+    @if (Model.FgaLogs != null && Model.FgaLogs.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>DB User</th>
+                    <th>Policy</th>
+                    <th>Đối tượng</th>
+                    <th>Loại</th>
+                    <th>SQL (tóm tắt)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model.FgaLogs)
+                {
+                    <tr>
+                        <td>
+                            <div>@log.Timestamp.ToString("dd/MM/yyyy")</div>
+                            <div style="font-size: 11px; color: #94a3b8;">@log.Timestamp.ToString("HH:mm:ss")</div>
+                        </td>
+                        <td>
+                            <span class="badge badge-secondary">@log.DbUser</span>
+                            @if (!string.IsNullOrEmpty(log.UserHost))
+                            {
+                                <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">@log.UserHost</div>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge @GetPolicyBadgeClass(log.PolicyName)">@log.PolicyDisplayName</span>
+                        </td>
+                        <td>@log.ObjectDisplayName</td>
+                        <td>
+                            <span class="badge badge-secondary">@log.StatementType</span>
+                        </td>
+                        <td>
+                            <span class="sql-text">@log.TruncatedSqlText</span>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="showFgaDetail('@log.SessionId', '@log.EntryId')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (Model.FgaLogs != null && Model.FgaLogs.Count > 0 && Model.TotalPages > 1)
+    {
+        <div class="pagination">
+            @if (Model.CurrentPage > 1)
+            {
+                <a href="@BuildPaginationUrl(Model.CurrentPage - 1)">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            }
+
+            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+            {
+                if (i == Model.CurrentPage)
+                {
+                    <span class="active">@i</span>
+                }
+                else
+                {
+                    <a href="@BuildPaginationUrl(i)">@i</a>
+                }
+            }
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a href="@BuildPaginationUrl(Model.CurrentPage + 1)">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            }
+        </div>
+    }
+
+    @if (Model.FgaLogs == null || Model.FgaLogs.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <p>Không có dữ liệu FGA trong khoảng thời gian này</p>
+        </div>
+    }
+</div>
+
+<!-- FGA Detail Panel -->
+<div id="fgaDetailPanel" class="card" style="display: none; margin-top: 24px;">
+    <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <h4 style="margin: 0; font-size: 16px;"><i class="fas fa-info-circle"></i> Chi tiết FGA Log</h4>
+        <button onclick="closeFgaDetail()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">&times;</button>
+    </div>
+    <div id="fgaDetailContent" style="padding: 20px;">
+        <p>Đang tải...</p>
+    </div>
+</div>
+
+@functions {
+    string GetPolicyBadgeClass(string policyName)
+    {
+        switch (policyName)
+        {
+            case "FGA_STUDENTS_SENSITIVE":
+            case "FGA_USERS_PASSWORD":
+                return "badge-danger";
+            case "FGA_SCORES_READ":
+                return "badge-warning";
+            case "FGA_FEEDBACKS_CONTENT":
+                return "badge-info";
+            default:
+                return "badge-secondary";
+        }
+    }
+
+    string BuildPaginationUrl(int page)
+    {
+        var routeValues = new System.Web.Routing.RouteValueDictionary
+        {
+            { "page", page },
+            { "policyName", Model.PolicyName },
+            { "objectName", Model.ObjectName },
+            { "dbUser", Model.DbUser },
+            { "fromDate", Model.FromDate.ToString("yyyy-MM-dd") },
+            { "toDate", Model.ToDate.ToString("yyyy-MM-dd") }
+        };
+        return Url.Action("FgaLogs", routeValues);
+    }
+}
+
+@section Scripts {
+    <script>
+        function showFgaDetail(sessionId, entryId) {
+            $('#fgaDetailContent').html('<p style="text-align: center; color: #64748b;"><i class="fas fa-spinner fa-spin"></i> Đang tải...</p>');
+            $('#fgaDetailPanel').slideDown();
+
+            // Scroll to detail panel
+            $('html, body').animate({
+                scrollTop: $('#fgaDetailPanel').offset().top - 100
+            }, 300);
+
+            $.get('@Url.Action("FgaDetail", "AuditLogs")' + '?sessionId=' + sessionId + '&entryId=' + entryId, function(data) {
+                $('#fgaDetailContent').html(data);
+            }).fail(function(xhr, status, error) {
+                $('#fgaDetailContent').html('<p style="color: #dc2626; text-align: center;"><i class="fas fa-exclamation-circle"></i> Không thể tải chi tiết: ' + error + '</p>');
+            });
+        }
+
+        function closeFgaDetail() {
+            $('#fgaDetailPanel').slideUp();
+        }
+    </script>
+}

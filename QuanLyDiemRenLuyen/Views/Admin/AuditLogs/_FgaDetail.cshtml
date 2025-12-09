@@ -1,0 +1,198 @@
+@model QuanLyDiemRenLuyen.Models.FgaLogItem
+
+<style>
+    .fga-detail-section {
+        margin-bottom: 20px;
+    }
+
+    .fga-detail-section h6 {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .fga-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .fga-detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .fga-detail-item label {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-bottom: 2px;
+    }
+
+    .fga-detail-item span {
+        font-size: 13px;
+        color: #0f172a;
+    }
+
+    .fga-detail-item .badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-secondary { background: #f1f5f9; color: #475569; }
+
+    .sql-box {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: 8px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    .bind-box {
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .alert-warning-custom {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+</style>
+
+<div class="fga-detail-grid">
+    <!-- Left Column -->
+    <div>
+        <div class="fga-detail-section">
+            <h6><i class="fas fa-clock"></i> Thông tin truy cập</h6>
+            <div class="fga-detail-item" style="margin-bottom: 12px;">
+                <label>Thời gian</label>
+                <span><strong>@Model.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")</strong></span>
+            </div>
+            <div class="fga-detail-item" style="margin-bottom: 12px;">
+                <label>Session ID</label>
+                <span style="font-family: monospace;">@Model.SessionId</span>
+            </div>
+            <div class="fga-detail-item">
+                <label>Entry ID</label>
+                <span style="font-family: monospace;">@Model.EntryId</span>
+            </div>
+        </div>
+
+        <div class="fga-detail-section">
+            <h6><i class="fas fa-user"></i> Người thực hiện</h6>
+            <div class="fga-detail-item" style="margin-bottom: 12px;">
+                <label>DB User</label>
+                <span><span class="badge badge-secondary">@Model.DbUser</span></span>
+            </div>
+            <div class="fga-detail-item" style="margin-bottom: 12px;">
+                <label>OS User</label>
+                <span>@(Model.OsUser ?? "N/A")</span>
+            </div>
+            <div class="fga-detail-item">
+                <label>User Host</label>
+                <span style="font-size: 12px;">@(Model.UserHost ?? "N/A")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div>
+        <div class="fga-detail-section">
+            <h6><i class="fas fa-database"></i> Đối tượng truy cập</h6>
+            <div class="fga-detail-item" style="margin-bottom: 12px;">
+                <label>Schema / Object</label>
+                <span><strong>@Model.ObjectSchema</strong>.@Model.ObjectName</span>
+            </div>
+            <div class="fga-detail-item">
+                <label>Đối tượng</label>
+                <span>@Model.ObjectDisplayName</span>
+            </div>
+        </div>
+
+        <div class="fga-detail-section">
+            <h6><i class="fas fa-shield-alt"></i> Policy áp dụng</h6>
+            <div class="fga-detail-item" style="margin-bottom: 12px;">
+                <label>Policy Name</label>
+                <span>
+                    <span class="badge @GetPolicyBadgeClass(Model.PolicyName)">@Model.PolicyName</span>
+                </span>
+            </div>
+            <div class="fga-detail-item" style="margin-bottom: 12px;">
+                <label>Mô tả</label>
+                <span>@Model.PolicyDisplayName</span>
+            </div>
+            <div class="fga-detail-item">
+                <label>Statement Type</label>
+                <span><span class="badge badge-info">@Model.StatementType</span></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SQL Statement -->
+<div class="fga-detail-section">
+    <h6><i class="fas fa-code"></i> SQL Statement</h6>
+    <div class="sql-box">@(Model.SqlText ?? "N/A")</div>
+</div>
+
+<!-- SQL Bind Variables -->
+@if (!string.IsNullOrEmpty(Model.SqlBind))
+{
+    <div class="fga-detail-section">
+        <h6><i class="fas fa-link"></i> Bind Variables</h6>
+        <div class="bind-box">@Model.SqlBind</div>
+    </div>
+}
+
+<!-- Security Alert -->
+@if (Model.PolicyName == "FGA_STUDENTS_SENSITIVE" || Model.PolicyName == "FGA_USERS_PASSWORD")
+{
+    <div class="alert-warning-custom">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span><strong>Cảnh báo:</strong> Truy cập này liên quan đến dữ liệu nhạy cảm (@Model.PolicyDisplayName). Vui lòng xác minh người dùng có quyền hợp lệ.</span>
+    </div>
+}
+
+@functions {
+    string GetPolicyBadgeClass(string policyName)
+    {
+        switch (policyName)
+        {
+            case "FGA_STUDENTS_SENSITIVE":
+            case "FGA_USERS_PASSWORD":
+                return "badge-danger";
+            case "FGA_SCORES_READ":
+                return "badge-warning";
+            case "FGA_FEEDBACKS_CONTENT":
+                return "badge-info";
+            default:
+                return "badge-secondary";
+        }
+    }
+}

@@ -150,6 +150,23 @@ namespace QuanLyDiemRenLuyen.Controllers
                 }
                 catch { /* Không fail nếu audit lỗi */ }
 
+                // ========== SECURITY CONTEXT INTEGRATION ==========
+                // Set VPD Context, OLS Session Label, and Audit Context
+                try
+                {
+                    string clientIpForContext = Request.UserHostAddress;
+                    string sessionId = Session.SessionID;
+                    
+                    // Set all security contexts (VPD, OLS, Audit)
+                    SecurityContextService.SetAllSecurityContexts(
+                        userId: mand,
+                        roleName: roleName,
+                        sessionId: sessionId,
+                        clientIp: clientIpForContext
+                    );
+                }
+                catch { /* Không fail nếu security context lỗi - VPD/OLS có thể chưa cài đặt */ }
+
                 // Redirect theo role
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
@@ -192,6 +209,14 @@ namespace QuanLyDiemRenLuyen.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Logout()
         {
+            // ========== CLEAR SECURITY CONTEXTS ==========
+            // Clear VPD Context, OLS, and Audit Context before logout
+            try
+            {
+                SecurityContextService.ClearAllSecurityContexts();
+            }
+            catch { /* Không fail nếu clear context lỗi */ }
+
             FormsAuthentication.SignOut();
             Session.Clear();
             Session.Abandon();
