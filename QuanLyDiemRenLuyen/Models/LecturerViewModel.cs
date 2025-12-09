@@ -98,10 +98,10 @@ namespace QuanLyDiemRenLuyen.Models
     }
 
     // ===== Lecturer Class Scores ViewModels =====
-    
     public class MyClassScoresViewModel
     {
         public List<AssignedClassItem> Classes { get; set; } = new List<AssignedClassItem>();
+        public List<SharedClassItem> SharedClasses { get; set; } = new List<SharedClassItem>();
         public string CurrentTermId { get; set; }
         public string CurrentTermName { get; set; }
     }
@@ -118,6 +118,25 @@ namespace QuanLyDiemRenLuyen.Models
         public DateTime AssignedAt { get; set; }
     }
 
+    /// <summary>
+    /// Danh sách lớp được chia sẻ thông qua bảng CLASS_PERMISSIONS
+    /// </summary>
+    public class SharedClassItem
+    {
+        public string ClassId { get; set; }
+        public string ClassCode { get; set; }
+        public string ClassName { get; set; }
+        public string DepartmentName { get; set; }
+        public int TotalStudents { get; set; }
+        public int StudentsWithScores { get; set; }
+        public double AverageScore { get; set; }
+        public string PermissionType { get; set; }    // VIEW, EDIT, APPROVE
+        public string GrantedByName { get; set; }     // Tên CVHT gốc
+        public string GrantedById { get; set; }       // MAND của CVHT gốc
+        public DateTime GrantedAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }      // NULL = vô thời hạn
+    }
+
     public class LecturerClassScoreDetailViewModel
     {
         public string ClassId { get; set; }
@@ -128,16 +147,24 @@ namespace QuanLyDiemRenLuyen.Models
         public string TermName { get; set; }
         public List<StudentScoreReadOnlyItem> Students { get; set; } = new List<StudentScoreReadOnlyItem>();
         public ClassScoreStatisticsReadOnly Statistics { get; set; }
+        public bool IsSharedClass { get; set; }
+        public string SharedByName { get; set; }
+        public string PermissionType { get; set; }
+        public bool CanEdit { get; set; }       // EDIT or APPROVE permission
+        public bool CanApprove { get; set; }    // APPROVE permission only
+        public bool IsSubmitted { get; set; }   // Đã chốt danh sách gửi Admin
+        public string ClassScoreStatus { get; set; } // PROVISIONAL, SUBMITTED, APPROVED, etc.
     }
 
     public class StudentScoreReadOnlyItem
     {
+        public int ScoreId { get; set; }        // ID điểm để edit/approve
         public string StudentId { get; set; }
         public string StudentCode { get; set; }
         public string StudentName { get; set; }
         public int TotalScore { get; set; }
         public string Classification { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; }      // PROVISIONAL, SUBMITTED, APPROVED, etc.
         public int ActivityCount { get; set; }
     }
 

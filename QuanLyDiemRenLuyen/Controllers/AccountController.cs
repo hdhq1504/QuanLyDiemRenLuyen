@@ -290,7 +290,8 @@ namespace QuanLyDiemRenLuyen.Controllers
             try
             {
                 // Kiểm tra mã reset
-                string checkQuery = @"SELECT ID, EMAIL, EXPIRES_AT_UTC, IS_USED
+                string checkQuery = @"SELECT ID, EMAIL, EXPIRES_AT_UTC, IS_USED,
+                                      CASE WHEN EXPIRES_AT_UTC > SYS_EXTRACT_UTC(SYSTIMESTAMP) THEN 1 ELSE 0 END AS IS_VALID
                                      FROM PASSWORD_RESET_TOKENS
                                      WHERE EMAIL = :Email
                                      AND TOKEN = :Token
@@ -315,10 +316,10 @@ namespace QuanLyDiemRenLuyen.Controllers
                 DataRow row = dt.Rows[0];
                 string resetId = row["ID"].ToString();
                 string email = row["EMAIL"].ToString();
-                DateTime expiresAtUtc = Convert.ToDateTime(row["EXPIRES_AT_UTC"]);
+                int isValid = Convert.ToInt32(row["IS_VALID"]);
 
-                // Kiểm tra mã đã hết hạn chưa
-                if (DateTime.UtcNow > expiresAtUtc)
+                // Kiểm tra mã đã hết hạn chưa (dựa trên kết quả từ Oracle)
+                if (isValid == 0)
                 {
                     ModelState.AddModelError("ResetCode", "Mã xác nhận đã hết hạn");
                     return View(model);

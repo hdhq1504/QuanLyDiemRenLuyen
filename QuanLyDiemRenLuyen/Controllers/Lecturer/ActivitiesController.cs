@@ -1082,10 +1082,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                     StudentEmail = row["STUDENT_EMAIL"].ToString(),
                     ClassName = row["CLASS_NAME"] != DBNull.Value ? row["CLASS_NAME"].ToString() : "",
                     Status = row["STATUS"].ToString(),
-                    RegisteredAt = Convert.ToDateTime(row["REGISTERED_AT"]),
-                    CheckedInAt = row["CHECKED_IN_AT"] != DBNull.Value
-                        ? (DateTime?)Convert.ToDateTime(row["CHECKED_IN_AT"])
-                        : null,
+                    RegisteredAt = DateTimeHelper.ToDateTime(row["REGISTERED_AT"]),
+                    CheckedInAt = DateTimeHelper.ToNullableDateTime(row["CHECKED_IN_AT"]),
                     HasProof = row["PROOF_ID"] != DBNull.Value,
                     ProofStatus = row["PROOF_STATUS"] != DBNull.Value ? row["PROOF_STATUS"].ToString() : "",
                     CheckedInBy = row["CHECKED_IN_BY"] != DBNull.Value ? row["CHECKED_IN_BY"].ToString() : "",
@@ -1195,8 +1193,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                     ClassName = r["CLASS_NAME"] != DBNull.Value ? r["CLASS_NAME"].ToString() : "",
                     AttendanceStatus = r["ATTENDANCE_STATUS"] != DBNull.Value ? r["ATTENDANCE_STATUS"].ToString() : "PENDING",
                     ScoreApplied = r["SCORE_APPLIED"] != DBNull.Value && Convert.ToInt32(r["SCORE_APPLIED"]) == 1,
-                    RegisteredAt = Convert.ToDateTime(r["REGISTERED_AT"]),
-                    CheckedInAt = r["CHECKED_IN_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(r["CHECKED_IN_AT"]) : null
+                    RegisteredAt = DateTimeHelper.ToDateTime(r["REGISTERED_AT"]),
+                    CheckedInAt = DateTimeHelper.ToNullableDateTime(r["CHECKED_IN_AT"])
                 });
             }
 

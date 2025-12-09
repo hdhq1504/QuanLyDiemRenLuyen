@@ -229,6 +229,7 @@
     <Compile Include="Controllers\Student\ScoresController.cs" />
     <Compile Include="Controllers\Student\StudentBaseController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Helpers\DateTimeHelper.cs" />
     <Compile Include="Helpers\EncryptionHelper.cs" />
     <Compile Include="Helpers\OracleDbHelper.cs" />
     <Compile Include="Helpers\PasswordHelper.cs" />

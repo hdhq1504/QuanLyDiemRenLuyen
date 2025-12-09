@@ -45,7 +45,6 @@
     }
 
     .class-card:hover {
-        transform: translateY(-4px);
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
     }
 
@@ -93,6 +92,64 @@
     .empty-state i { font-size: 64px; color: #e2e8f0; margin-bottom: 20px; }
     .empty-state h3 { color: #64748b; margin-bottom: 10px; }
     .empty-state p { color: #94a3b8; }
+
+    /* Shared Classes Styles */
+    .section-header {
+        margin-top: 40px;
+        margin-bottom: 20px;
+    }
+    .section-header h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 5px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .section-header h2 i { color: #a855f7; }
+    .section-header .subtitle { color: #64748b; font-size: 13px; margin: 0; }
+
+    .shared-badge {
+        background: linear-gradient(135deg, #a855f7, #7c3aed);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        margin-bottom: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .permission-info {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .permission-type {
+        background: #f3e8ff;
+        color: #7c3aed;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .expires-info {
+        color: #64748b;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .expires-info.warning { color: #f59e0b; }
+
+    .btn-purple { background: #a855f7; color: white; }
+    .btn-purple:hover { background: #9333ea; }
 </style>
 
 <div class="page-container">
@@ -146,12 +203,76 @@
             }
         </div>
     }
-    else
+    else if (Model.SharedClasses == null || Model.SharedClasses.Count == 0)
     {
         <div class="empty-state">
             <i class="fas fa-school"></i>
             <h3>Chưa được phân công lớp nào</h3>
             <p>Bạn chưa được admin phân công làm CVHT của lớp nào.</p>
+        </div>
+    }
+
+    @* Shared Classes Section *@
+    @if (Model.SharedClasses != null && Model.SharedClasses.Count > 0)
+    {
+        <div class="section-header">
+            <h2><i class="fas fa-share-alt"></i> Lớp Được Cấp Quyền</h2>
+            <p class="subtitle">Các lớp do giảng viên khác cấp quyền xem điểm</p>
+        </div>
+        <div class="classes-grid">
+            @foreach (var cls in Model.SharedClasses)
+            {
+                <div class="class-card">
+                    <div class="class-header">
+                        <div class="shared-badge">
+                            <i class="fas fa-user-friends"></i>
+                            Được cấp bởi @cls.GrantedByName
+                        </div>
+                        <div class="class-code">@cls.ClassCode</div>
+                        <h3 class="class-name">@cls.ClassName</h3>
+                        <div class="class-dept"><i class="fas fa-building"></i> @cls.DepartmentName</div>
+                        <div class="permission-info">
+                            <span class="permission-type">
+                                <i class="fas @(cls.PermissionType == "VIEW" ? "fa-eye" : cls.PermissionType == "EDIT" ? "fa-edit" : "fa-check-circle")"></i>
+                                @(cls.PermissionType == "VIEW" ? "Xem" : cls.PermissionType == "EDIT" ? "Chỉnh sửa" : "Duyệt")
+                            </span>
+                            @if (cls.ExpiresAt.HasValue)
+                            {
+                                var daysLeft = (cls.ExpiresAt.Value - DateTime.Now).TotalDays;
+                                <span class="expires-info @(daysLeft <= 7 ? "warning" : "")">
+                                    <i class="fas fa-clock"></i>
+                                    Hết hạn: @cls.ExpiresAt.Value.ToString("dd/MM/yyyy")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="expires-info">
+                                    <i class="fas fa-infinity"></i> Vô thời hạn
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="class-stats">
+                        <div class="stat">
+                            <div class="stat-value">@cls.TotalStudents</div>
+                            <div class="stat-label">Tổng SV</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value @(cls.StudentsWithScores == cls.TotalStudents ? "good" : "warning")">@cls.StudentsWithScores</div>
+                            <div class="stat-label">Có điểm</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value good">@cls.AverageScore.ToString("F1")</div>
+                            <div class="stat-label">ĐTB</div>
+                        </div>
+                    </div>
+                    <div class="class-actions">
+                        <a href="@Url.RouteUrl("LecturerScores", new { action = "ClassDetail", id = cls.ClassId })" class="btn btn-purple">
+                            <i class="fas fa-eye"></i> Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            }
         </div>
     }
 </div>

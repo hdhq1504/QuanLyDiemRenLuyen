@@ -178,7 +178,6 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
                                        nr.READ_AT,
                                        ROW_NUMBER() OVER (ORDER BY n.CREATED_AT DESC) AS RN
                                 FROM NOTIFICATIONS n
-                                FROM NOTIFICATIONS n
                                 LEFT JOIN NOTIFICATION_READS nr ON n.ID = nr.NOTIFICATION_ID AND nr.STUDENT_ID = :MAND
                                 WHERE ((n.TO_USER_ID = :MAND)
                                    OR (n.TO_USER_ID IS NULL AND n.TARGET_ROLE = 'STUDENT')

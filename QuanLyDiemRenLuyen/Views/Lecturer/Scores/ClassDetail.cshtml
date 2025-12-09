@@ -106,6 +106,97 @@
     .status-official { background: #dbeafe; color: #1e40af; }
     .status-provisional { background: #fef3c7; color: #92400e; }
     .status-na { background: #f1f5f9; color: #64748b; }
+
+    .shared-class-banner {
+        background: linear-gradient(135deg, #a855f7, #7c3aed);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .shared-class-banner i { font-size: 20px; }
+    .shared-class-banner .text { flex: 1; }
+    .shared-class-banner .main-text { font-weight: 600; font-size: 14px; }
+    .shared-class-banner .sub-text { font-size: 12px; opacity: 0.9; }
+    .permission-badge-detail {
+        background: rgba(255,255,255,0.2);
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .btn-edit {
+        background: #0ea5e9;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+    }
+    .btn-edit:hover { background: #0284c7; }
+
+    .btn-submit-class {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        border: none;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-submit-class:hover { opacity: 0.9; }
+    .btn-submit-class:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        width: 400px;
+        max-width: 90%;
+    }
+    .modal-content h3 { margin: 0 0 20px 0; color: #0f172a; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 13px; color: #64748b; margin-bottom: 5px; }
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    .btn-cancel { background: #f1f5f9; color: #64748b; }
+    .btn-cancel:hover { background: #e2e8f0; }
+    .btn-save { background: #059669; color: white; }
+    .btn-save:hover { background: #047857; }
 </style>
 
 <div class="page-container">
@@ -113,6 +204,20 @@
         <a href="@Url.RouteUrl("LecturerScores", new { action = "MyClasses" })" style="color: #64748b; text-decoration: none; font-weight: 500; display: inline-block; margin-bottom: 15px;">
             <i class="fas fa-arrow-left"></i> Quay lại
         </a>
+        @if (Model.IsSharedClass)
+        {
+            <div class="shared-class-banner">
+                <i class="fas fa-share-alt"></i>
+                <div class="text">
+                    <div class="main-text">Được cấp quyền bởi @Model.SharedByName</div>
+                    <div class="sub-text">Bạn đang xem điểm lớp này thông qua quyền được cấp</div>
+                </div>
+                <span class="permission-badge-detail">
+                    <i class="fas @(Model.PermissionType == "VIEW" ? "fa-eye" : Model.PermissionType == "EDIT" ? "fa-edit" : "fa-check-circle")"></i>
+                    @(Model.PermissionType == "VIEW" ? "Xem" : Model.PermissionType == "EDIT" ? "Chỉnh sửa" : "Duyệt")
+                </span>
+            </div>
+        }
         <h1><i class="fas fa-graduation-cap"></i> @Model.ClassName</h1>
         <div class="class-info">
             <div class="info-item">
@@ -167,9 +272,23 @@
     <div class="table-container">
         <div class="table-header">
             <h2><i class="fas fa-list"></i> Danh sách điểm sinh viên</h2>
-            <a href="@Url.RouteUrl("LecturerScores", new { action = "Export", id = Model.ClassId })" class="btn btn-success">
-                <i class="fas fa-file-csv"></i> Xuất CSV
-            </a>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                @if (Model.CanApprove && !Model.IsSubmitted)
+                {
+                    <button class="btn-submit-class" onclick="submitClassScores()" id="btnSubmit">
+                        <i class="fas fa-paper-plane"></i> Chốt và gửi Admin
+                    </button>
+                }
+                @if (Model.IsSubmitted)
+                {
+                    <span class="status-badge status-approved">
+                        <i class="fas fa-check"></i> Đã gửi Admin
+                    </span>
+                }
+                <a href="@Url.RouteUrl("LecturerScores", new { action = "Export", id = Model.ClassId })" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> Xuất CSV
+                </a>
+            </div>
         </div>
 
         @if (Model.Students != null && Model.Students.Count > 0)
@@ -184,6 +303,10 @@
                         <th>Xếp loại</th>
                         <th>Trạng thái</th>
                         <th>Hoạt động</th>
+                        @if (Model.CanEdit)
+                        {
+                            <th style="width: 80px;">Thao tác</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -202,14 +325,25 @@
                         else if (student.Status == "OFFICIAL") { statusClass = "status-official"; statusText = "Chính thức"; }
                         else if (student.Status == "PROVISIONAL" || student.Status == "DRAFT_PUBLISHED") { statusClass = "status-provisional"; statusText = "Tạm thời"; }
 
-                        <tr>
+                        <tr data-score-id="@student.ScoreId">
                             <td>@(i + 1)</td>
                             <td><strong>@student.StudentCode</strong></td>
                             <td>@student.StudentName</td>
-                            <td><strong style="font-size: 16px; color: #0ea5e9;">@student.TotalScore</strong></td>
-                            <td><span class="classification-badge @badgeClass">@student.Classification</span></td>
+                            <td><strong class="score-value" style="font-size: 16px; color: #0ea5e9;">@student.TotalScore</strong></td>
+                            <td><span class="classification-badge @badgeClass classification-value">@student.Classification</span></td>
                             <td><span class="status-badge @statusClass">@statusText</span></td>
                             <td>@student.ActivityCount</td>
+                            @if (Model.CanEdit)
+                            {
+                                <td>
+                                    @if (student.ScoreId > 0 && student.Status != "APPROVED" && student.Status != "OFFICIAL")
+                                    {
+                                        <button class="btn-edit" onclick="openEditModal(@student.ScoreId, @student.TotalScore, '@student.StudentName')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    }
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -225,3 +359,128 @@
         }
     </div>
 </div>
+
+@if (Model.CanEdit)
+{
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <h3><i class="fas fa-edit"></i> Chỉnh sửa điểm</h3>
+            <input type="hidden" id="editScoreId" />
+            <div class="form-group">
+                <label>Sinh viên</label>
+                <input type="text" id="editStudentName" readonly style="background: #f8fafc;" />
+            </div>
+            <div class="form-group">
+                <label>Điểm mới (0-100)</label>
+                <input type="number" id="editNewScore" min="0" max="100" />
+            </div>
+            <div class="form-group">
+                <label>Lý do thay đổi</label>
+                <textarea id="editReason" rows="2" placeholder="Nhập lý do (tùy chọn)"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeEditModal()">Hủy</button>
+                <button class="btn btn-save" onclick="saveScore()">
+                    <i class="fas fa-save"></i> Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        var classId = '@Model.ClassId';
+        var antiForgeryToken = '@Html.AntiForgeryToken()'.match(/value="([^"]*)"/)[1];
+
+        function openEditModal(scoreId, currentScore, studentName) {
+            document.getElementById('editScoreId').value = scoreId;
+            document.getElementById('editNewScore').value = currentScore;
+            document.getElementById('editStudentName').value = studentName;
+            document.getElementById('editReason').value = '';
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function saveScore() {
+            var scoreId = document.getElementById('editScoreId').value;
+            var newScore = parseInt(document.getElementById('editNewScore').value);
+            var reason = document.getElementById('editReason').value;
+
+            if (isNaN(newScore) || newScore < 0 || newScore > 100) {
+                alert('Điểm phải từ 0 đến 100');
+                return;
+            }
+
+            fetch('@Url.RouteUrl("LecturerScores", new { action = "UpdateScore" })', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': antiForgeryToken
+                },
+                body: 'scoreId=' + scoreId + '&newScore=' + newScore + '&reason=' + encodeURIComponent(reason)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the table row
+                    var row = document.querySelector('tr[data-score-id="' + scoreId + '"]');
+                    if (row) {
+                        row.querySelector('.score-value').textContent = newScore;
+                        row.querySelector('.classification-value').textContent = data.newClassification;
+                    }
+                    closeEditModal();
+                    alert(data.message);
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Lỗi kết nối: ' + error);
+            });
+        }
+
+        function submitClassScores() {
+            if (!confirm('Bạn có chắc chắn muốn chốt danh sách điểm và gửi cho Admin?\n\nSau khi chốt, điểm sẽ không thể chỉnh sửa cho đến khi có phản hồi.')) {
+                return;
+            }
+
+            var btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+
+            fetch('@Url.RouteUrl("LecturerScores", new { action = "SubmitClassScores" })', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': antiForgeryToken
+                },
+                body: 'classId=' + classId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Chốt và gửi Admin';
+                    alert('Lỗi: ' + data.message);
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Chốt và gửi Admin';
+                alert('Lỗi kết nối: ' + error);
+            });
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('editModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+    </script>
+}

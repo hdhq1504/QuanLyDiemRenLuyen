@@ -572,16 +572,43 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 });
             }
 
-            // Get all scores for the term
+            // Get class submission progress
+            string classProgressQuery = @"SELECT 
+                (SELECT COUNT(DISTINCT c.ID) FROM CLASSES c 
+                 INNER JOIN STUDENTS s ON s.CLASS_ID = c.ID) as TOTAL_CLASSES,
+                (SELECT COUNT(DISTINCT c.ID) FROM CLASSES c 
+                 INNER JOIN STUDENTS s ON s.CLASS_ID = c.ID
+                 WHERE NOT EXISTS (
+                     SELECT 1 FROM SCORES sc 
+                     WHERE sc.STUDENT_ID = s.USER_ID 
+                     AND sc.TERM_ID = :TermId 
+                     AND sc.STATUS = 'PROVISIONAL'
+                 ) AND EXISTS (
+                     SELECT 1 FROM SCORES sc 
+                     WHERE sc.STUDENT_ID = s.USER_ID 
+                     AND sc.TERM_ID = :TermId 
+                     AND sc.STATUS = 'SUBMITTED'
+                 )) as SUBMITTED_CLASSES
+                FROM DUAL";
+            var progressParams = new[] { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
+            DataTable progressDt = OracleDbHelper.ExecuteQuery(classProgressQuery, progressParams);
+            if (progressDt.Rows.Count > 0)
+            {
+                viewModel.TotalClasses = progressDt.Rows[0]["TOTAL_CLASSES"] != DBNull.Value ? Convert.ToInt32(progressDt.Rows[0]["TOTAL_CLASSES"]) : 0;
+                viewModel.SubmittedClasses = progressDt.Rows[0]["SUBMITTED_CLASSES"] != DBNull.Value ? Convert.ToInt32(progressDt.Rows[0]["SUBMITTED_CLASSES"]) : 0;
+            }
+
+            // Get all scores for the term (with ClassCode for sorting) - ONLY SUBMITTED scores
             string scoresQuery = @"SELECT sc.ID as SCORE_ID, sc.STUDENT_ID, st.STUDENT_CODE, u.FULL_NAME,
-                                          c.NAME as CLASS_NAME, d.NAME as DEPT_NAME,
+                                          c.CODE as CLASS_CODE, c.NAME as CLASS_NAME, d.NAME as DEPT_NAME,
                                           sc.TOTAL_SCORE, sc.CLASSIFICATION, sc.STATUS
                                    FROM SCORES sc
                                    INNER JOIN STUDENTS st ON sc.STUDENT_ID = st.USER_ID
                                    INNER JOIN USERS u ON st.USER_ID = u.MAND
                                    LEFT JOIN CLASSES c ON st.CLASS_ID = c.ID
                                    LEFT JOIN DEPARTMENTS d ON st.DEPARTMENT_ID = d.ID
-                                   WHERE sc.TERM_ID = :TermId";
+                                   WHERE sc.TERM_ID = :TermId
+                                   AND sc.STATUS IN ('SUBMITTED', 'APPROVED', 'DRAFT_PUBLISHED', 'OFFICIAL')";
 
             var parameters = new List<OracleParameter> { OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId) };
 
@@ -603,21 +630,24 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 parameters.Add(OracleDbHelper.CreateParameter("Search", OracleDbType.Varchar2, "%" + search + "%"));
             }
 
-            scoresQuery += " ORDER BY d.NAME, c.NAME, st.STUDENT_CODE";
+            // Basic sort by class code in SQL
+            scoresQuery += " ORDER BY c.CODE, st.STUDENT_CODE";
 
             DataTable scoresDt = OracleDbHelper.ExecuteQuery(scoresQuery, parameters.ToArray());
 
+            var tempStudents = new List<StudentScorePublicationItem>();
             foreach (DataRow row in scoresDt.Rows)
             {
                 int totalScore = Convert.ToInt32(row["TOTAL_SCORE"]);
                 string classificationValue = row["CLASSIFICATION"] != DBNull.Value ? row["CLASSIFICATION"].ToString() : GetClassification(totalScore);
 
-                viewModel.Students.Add(new StudentScorePublicationItem
+                tempStudents.Add(new StudentScorePublicationItem
                 {
                     ScoreId = row["SCORE_ID"].ToString(),
                     StudentId = row["STUDENT_ID"].ToString(),
                     StudentCode = row["STUDENT_CODE"].ToString(),
                     StudentName = row["FULL_NAME"].ToString(),
+                    ClassCode = row["CLASS_CODE"] != DBNull.Value ? row["CLASS_CODE"].ToString() : "",
                     ClassName = row["CLASS_NAME"] != DBNull.Value ? row["CLASS_NAME"].ToString() : "",
                     DepartmentName = row["DEPT_NAME"] != DBNull.Value ? row["DEPT_NAME"].ToString() : "",
                     TotalScore = totalScore,
@@ -633,6 +663,14 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 else viewModel.WeakCount++;
             }
 
+            // Sort by ClassCode, then by Vietnamese last name (last word), then full name, then student code
+            viewModel.Students = tempStudents
+                .OrderBy(s => s.ClassCode)
+                .ThenBy(s => GetVietnameseLastName(s.StudentName))
+                .ThenBy(s => s.StudentName)
+                .ThenBy(s => s.StudentCode)
+                .ToList();
+
             viewModel.TotalStudents = viewModel.Students.Count;
 
             // Count pending feedbacks
@@ -642,6 +680,17 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             viewModel.PendingFeedbacks = fbCount != null ? Convert.ToInt32(fbCount) : 0;
 
             return viewModel;
+        }
+
+        /// <summary>
+        /// Lấy tên riêng (từ cuối cùng) trong tên tiếng Việt để sắp xếp
+        /// Ví dụ: "Nguyễn Văn An" -> "An"
+        /// </summary>
+        private string GetVietnameseLastName(string fullName)
+        {
+            if (string.IsNullOrEmpty(fullName)) return "";
+            var parts = fullName.Trim().Split(' ');
+            return parts.Length > 0 ? parts[parts.Length - 1] : fullName;
         }
 
         #endregion

@@ -1,12 +1,5 @@
 -- ============================================================================
--- PKG_RSA: Wrapper Package cho các hàm RSA của crypto4ora
---
--- API thực tế của crypto4ora:
---   RSA_ENCRYPT(PLAIN_TEXT VARCHAR2, PRIVATE_KEY VARCHAR2) RETURN VARCHAR2
---   RSA_DECRYPT(ENCRYPTED_TEXT VARCHAR2, PUBLIC_KEY VARCHAR2) RETURN VARCHAR2
---   RSA_SIGN(HASH_MESSAGE VARCHAR2, PUBLIC_KEY VARCHAR2) RETURN VARCHAR2
---   RSA_VERIFY(PLAIN_HASH, SIGNNED_HASH, PRIVATE_KEY) RETURN BOOLEAN
---   RSA_GENERATE_KEYS(KEY_SIZE NUMBER) RETURN VARCHAR2
+-- PKG_RSA: Wrapper Package cho các hàm RSA
 -- ============================================================================
 
 CREATE OR REPLACE PACKAGE PKG_RSA AS
@@ -47,25 +40,36 @@ CREATE OR REPLACE PACKAGE BODY PKG_RSA AS
 
     -- =========================================================================
     -- Helper: Parse key pair from crypto4ora output
+    -- crypto4ora format:
+    --   ****publicKey start*****<base64>****publicKey end****
+    --   ****privateKey start****<base64>****privateKey end****
     -- =========================================================================
     PROCEDURE PARSE_KEY_PAIR(
         p_key_pair IN VARCHAR2,
         p_public_key OUT VARCHAR2,
         p_private_key OUT VARCHAR2
     ) IS
-        v_sep_pos NUMBER;
-        v_private_marker VARCHAR2(50) := '-----BEGIN RSA PRIVATE KEY-----';
+        c_pub_start CONSTANT VARCHAR2(50) := '****publicKey start*****';
+        c_pub_end CONSTANT VARCHAR2(50) := '****publicKey end****';
+        c_priv_start CONSTANT VARCHAR2(50) := '****privateKey start****';
+        c_priv_end CONSTANT VARCHAR2(50) := '****privateKey end****';
+        v_pub_end_pos NUMBER;
+        v_priv_start_pos NUMBER;
+        v_priv_end_pos NUMBER;
     BEGIN
-        v_sep_pos := INSTR(p_key_pair, v_private_marker);
-        IF v_sep_pos > 0 THEN
-            p_public_key := TRIM(SUBSTR(p_key_pair, 1, v_sep_pos - 1));
-            p_private_key := TRIM(SUBSTR(p_key_pair, v_sep_pos));
-        ELSE
-            -- Fallback
-            v_sep_pos := LENGTH(p_key_pair) / 2;
-            p_public_key := SUBSTR(p_key_pair, 1, v_sep_pos);
-            p_private_key := SUBSTR(p_key_pair, v_sep_pos + 1);
-        END IF;
+        v_pub_end_pos := INSTR(p_key_pair, c_pub_end);
+        v_priv_start_pos := INSTR(p_key_pair, c_priv_start);
+        v_priv_end_pos := INSTR(p_key_pair, c_priv_end);
+        
+        -- Extract public key
+        p_public_key := TRIM(SUBSTR(p_key_pair, 
+                                    LENGTH(c_pub_start) + 1, 
+                                    v_pub_end_pos - LENGTH(c_pub_start) - 1));
+        
+        -- Extract private key
+        p_private_key := TRIM(SUBSTR(p_key_pair, 
+                                     v_priv_start_pos + LENGTH(c_priv_start),
+                                     v_priv_end_pos - v_priv_start_pos - LENGTH(c_priv_start)));
     END PARSE_KEY_PAIR;
 
     -- =========================================================================
@@ -153,31 +157,31 @@ CREATE OR REPLACE PACKAGE BODY PKG_RSA AS
 
     -- =========================================================================
     -- RSA Operations
-    -- Note: crypto4ora uses private key for encrypt, public key for decrypt
+    -- crypto4ora API:
+    --   RSA_ENCRYPT(PLAIN_TEXT, PUBLIC_KEY) - encrypt với public key
+    --   RSA_DECRYPT(ENCRYPTED_TEXT, PRIVATE_KEY) - decrypt với private key
     -- =========================================================================
     
     FUNCTION RSA_ENCRYPT(
         p_plaintext IN VARCHAR2,
         p_key_name IN VARCHAR2 DEFAULT G_DEFAULT_KEY_NAME
     ) RETURN VARCHAR2 IS
-        v_private_key VARCHAR2(32767);
+        v_public_key VARCHAR2(32767);
     BEGIN
         IF p_plaintext IS NULL THEN RETURN NULL; END IF;
-        -- crypto4ora: RSA_ENCRYPT(PLAIN_TEXT, PRIVATE_KEY)
-        v_private_key := GET_PRIVATE_KEY(p_key_name);
-        RETURN CRYPTO.RSA_ENCRYPT(p_plaintext, v_private_key);
+        v_public_key := GET_PUBLIC_KEY(p_key_name);
+        RETURN CRYPTO.RSA_ENCRYPT(p_plaintext, v_public_key);
     END RSA_ENCRYPT;
 
     FUNCTION RSA_DECRYPT(
         p_ciphertext IN VARCHAR2,
         p_key_name IN VARCHAR2 DEFAULT G_DEFAULT_KEY_NAME
     ) RETURN VARCHAR2 IS
-        v_public_key VARCHAR2(32767);
+        v_private_key VARCHAR2(32767);
     BEGIN
         IF p_ciphertext IS NULL THEN RETURN NULL; END IF;
-        -- crypto4ora: RSA_DECRYPT(ENCRYPTED_TEXT, PUBLIC_KEY)
-        v_public_key := GET_PUBLIC_KEY(p_key_name);
-        RETURN CRYPTO.RSA_DECRYPT(p_ciphertext, v_public_key);
+        v_private_key := GET_PRIVATE_KEY(p_key_name);
+        RETURN CRYPTO.RSA_DECRYPT(p_ciphertext, v_private_key);
     END RSA_DECRYPT;
 
     FUNCTION RSA_SIGN(
@@ -187,7 +191,6 @@ CREATE OR REPLACE PACKAGE BODY PKG_RSA AS
         v_public_key VARCHAR2(32767);
     BEGIN
         IF p_data IS NULL THEN RETURN NULL; END IF;
-        -- crypto4ora: RSA_SIGN(HASH_MESSAGE, PUBLIC_KEY)
         v_public_key := GET_PUBLIC_KEY(p_key_name);
         RETURN CRYPTO.RSA_SIGN(p_data, v_public_key);
     END RSA_SIGN;
@@ -201,11 +204,9 @@ CREATE OR REPLACE PACKAGE BODY PKG_RSA AS
         v_result BOOLEAN;
     BEGIN
         IF p_data IS NULL OR p_signature IS NULL THEN RETURN 0; END IF;
-        -- crypto4ora: RSA_VERIFY(PLAIN_HASH, SIGNNED_HASH, PRIVATE_KEY) RETURN BOOLEAN
         v_private_key := GET_PRIVATE_KEY(p_key_name);
         v_result := CRYPTO.RSA_VERIFY(p_data, p_signature, v_private_key);
         
-        -- Convert BOOLEAN to NUMBER
         IF v_result THEN
             RETURN 1;
         ELSE

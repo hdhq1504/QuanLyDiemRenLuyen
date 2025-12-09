@@ -94,13 +94,15 @@ BEGIN
         p_permission_type, p_expires_at, p_notes
     );
     
-    -- Log to AUDIT_TRAIL
-    INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC, CLIENT_IP)
+    -- Log to AUDIT_EVENTS
+    INSERT INTO AUDIT_EVENTS(EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, ENTITY_TYPE, ENTITY_ID, DESCRIPTION, CLIENT_IP)
     VALUES (
+        'SECURITY',
+        'DAC_GRANT',
         p_granted_by,
-        'DAC_GRANT|PERMISSION_ID=' || v_permission_id || '|CLASS=' || p_class_id || 
-        '|TO=' || p_granted_to || '|TYPE=' || p_permission_type,
-        SYSTIMESTAMP,
+        'CLASS_SCORE_PERMISSION',
+        v_permission_id,
+        'PERMISSION_ID=' || v_permission_id || '|CLASS=' || p_class_id || '|TO=' || p_granted_to || '|TYPE=' || p_permission_type,
         SYS_CONTEXT('USERENV', 'IP_ADDRESS')
     );
     
@@ -167,13 +169,15 @@ BEGIN
         IS_ACTIVE = 0
     WHERE ID = p_permission_id;
     
-    -- Log to AUDIT_TRAIL
-    INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC)
+    -- Log to AUDIT_EVENTS
+    INSERT INTO AUDIT_EVENTS(EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, ENTITY_TYPE, ENTITY_ID, DESCRIPTION)
     VALUES (
+        'SECURITY',
+        'DAC_REVOKE',
         p_revoked_by,
-        'DAC_REVOKE|PERMISSION_ID=' || p_permission_id || '|CLASS=' || v_class_id || 
-        '|FROM=' || v_granted_to || '|TYPE=' || v_permission_type,
-        SYSTIMESTAMP
+        'CLASS_SCORE_PERMISSION',
+        p_permission_id,
+        'CLASS=' || v_class_id || '|FROM=' || v_granted_to || '|TYPE=' || v_permission_type
     );
     
     COMMIT;
@@ -223,8 +227,8 @@ BEGIN
     IF v_has_direct > 0 THEN
         v_log_action := 'SCORE_ACCESS|CVHT|' || p_access_type || '|SCORE=' || p_score_id || '|SUCCESS';
         
-        INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC)
-        VALUES (p_user_id, v_log_action, SYSTIMESTAMP);
+        INSERT INTO AUDIT_EVENTS(EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, ENTITY_TYPE, ENTITY_ID, DESCRIPTION)
+        VALUES ('BUSINESS', 'SCORE_ACCESS', p_user_id, 'SCORE', TO_CHAR(p_score_id), v_log_action);
         COMMIT;
         
         RETURN 1;
@@ -254,8 +258,8 @@ BEGIN
         END IF;
         
         -- Log access attempt
-        INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC)
-        VALUES (p_user_id, v_log_action, SYSTIMESTAMP);
+        INSERT INTO AUDIT_EVENTS(EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, ENTITY_TYPE, ENTITY_ID, DESCRIPTION)
+        VALUES ('BUSINESS', 'SCORE_ACCESS', p_user_id, 'SCORE', TO_CHAR(p_score_id), v_log_action);
         COMMIT;
         
         RETURN v_has_granted;

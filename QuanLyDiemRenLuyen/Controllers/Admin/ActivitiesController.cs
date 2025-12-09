@@ -203,17 +203,16 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                         Id = row["ID"].ToString(),
                         Title = row["TITLE"].ToString(),
                         Description = row["DESCRIPTION"] != DBNull.Value ? row["DESCRIPTION"].ToString() : "",
-                        StartAt = Convert.ToDateTime(row["START_AT"]),
-                        EndAt = Convert.ToDateTime(row["END_AT"]),
+                        StartAt = DateTimeHelper.ToDateTime(row["START_AT"]),
+                        EndAt = DateTimeHelper.ToDateTime(row["END_AT"]),
                         Location = row["LOCATION"] != DBNull.Value ? row["LOCATION"].ToString() : "",
                         Points = row["POINTS"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["POINTS"]) : null,
                         MaxSeats = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,
                         CurrentParticipants = row["CURRENT_PARTICIPANTS"] != DBNull.Value ? Convert.ToInt32(row["CURRENT_PARTICIPANTS"]) : 0,
                         Status = row["STATUS"].ToString(),
                         ApprovalStatus = row["APPROVAL_STATUS"].ToString(),
-
                         OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
-                        CreatedAt = Convert.ToDateTime(row["CREATED_AT"])
+                        CreatedAt = DateTimeHelper.ToDateTime(row["CREATED_AT"])
                     });
                 }
 
@@ -255,18 +254,17 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 Id = row["ID"].ToString(),
                 Title = row["TITLE"].ToString(),
                 Description = row["DESCRIPTION"] != DBNull.Value ? row["DESCRIPTION"].ToString() : "",
-                StartAt = Convert.ToDateTime(row["START_AT"]),
-                EndAt = Convert.ToDateTime(row["END_AT"]),
+                StartAt = DateTimeHelper.ToDateTime(row["START_AT"]),
+                EndAt = DateTimeHelper.ToDateTime(row["END_AT"]),
                 Location = row["LOCATION"] != DBNull.Value ? row["LOCATION"].ToString() : "",
                 Points = row["POINTS"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["POINTS"]) : null,
                 MaxSeats = row["MAX_SEATS"] != DBNull.Value ? Convert.ToInt32(row["MAX_SEATS"]) : 0,
                 Status = row["STATUS"].ToString(),
                 ApprovalStatus = row["APPROVAL_STATUS"].ToString(),
-
                 OrganizerName = row["ORGANIZER_NAME"] != DBNull.Value ? row["ORGANIZER_NAME"].ToString() : "",
                 OrganizerEmail = row["ORGANIZER_EMAIL"] != DBNull.Value ? row["ORGANIZER_EMAIL"].ToString() : "",
-                CreatedAt = Convert.ToDateTime(row["CREATED_AT"]),
-                ApprovedAt = row["APPROVED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["APPROVED_AT"]) : null,
+                CreatedAt = DateTimeHelper.ToDateTime(row["CREATED_AT"]),
+                ApprovedAt = DateTimeHelper.ToNullableDateTime(row["APPROVED_AT"]),
                 ApprovedBy = row["APPROVER_NAME"] != DBNull.Value ? row["APPROVER_NAME"].ToString() : "",
                 CurrentRegistrations = row["CURRENT_REGISTRATIONS"] != DBNull.Value ? Convert.ToInt32(row["CURRENT_REGISTRATIONS"]) : 0,
                 CurrentCheckIns = row["CURRENT_CHECKINS"] != DBNull.Value ? Convert.ToInt32(row["CURRENT_CHECKINS"]) : 0
@@ -299,12 +297,13 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
 
             string dataQuery = @"SELECT r.ID as REG_ID, r.STUDENT_ID, r.STATUS, r.REGISTERED_AT, r.CHECKED_IN_AT,
                                        u.FULL_NAME as STUDENT_NAME, u.EMAIL as STUDENT_EMAIL,
-                                       s.CLASS_ID,
+                                       c.NAME as CLASS_NAME,
                                        p.ID as PROOF_ID, p.STATUS as PROOF_STATUS, p.STORED_PATH as PROOF_PATH, 
                                        p.FILE_NAME as PROOF_FILE_NAME, p.CREATED_AT_UTC as PROOF_UPLOADED_AT
                                 FROM REGISTRATIONS r
                                 INNER JOIN USERS u ON r.STUDENT_ID = u.MAND
                                 LEFT JOIN STUDENTS s ON u.MAND = s.USER_ID
+                                LEFT JOIN CLASSES c ON s.CLASS_ID = c.ID
                                 LEFT JOIN (
                                     SELECT * FROM (
                                         SELECT REGISTRATION_ID, ID, STATUS, STORED_PATH, FILE_NAME, CREATED_AT_UTC,
@@ -352,15 +351,15 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     StudentId = row["STUDENT_ID"].ToString(),
                     StudentName = row["STUDENT_NAME"].ToString(),
                     StudentEmail = row["STUDENT_EMAIL"].ToString(),
-                    ClassName = row["CLASS_ID"] != DBNull.Value ? row["CLASS_ID"].ToString() : "",
+                    ClassName = row["CLASS_NAME"] != DBNull.Value ? row["CLASS_NAME"].ToString() : "",
                     Status = row["STATUS"].ToString(),
-                    RegisteredAt = Convert.ToDateTime(row["REGISTERED_AT"]),
-                    CheckedInAt = row["CHECKED_IN_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["CHECKED_IN_AT"]) : null,
+                    RegisteredAt = DateTimeHelper.ToDateTime(row["REGISTERED_AT"]),
+                    CheckedInAt = DateTimeHelper.ToNullableDateTime(row["CHECKED_IN_AT"]),
                     HasProof = row["PROOF_ID"] != DBNull.Value,
                     ProofStatus = row["PROOF_STATUS"] != DBNull.Value ? row["PROOF_STATUS"].ToString() : "",
                     ProofFilePath = row["PROOF_PATH"] != DBNull.Value ? row["PROOF_PATH"].ToString() : "",
-                    ProofFileName = row["PROOF_FILE_NAME"] != DBNull.Value ? EncryptionHelper.Decrypt(row["PROOF_FILE_NAME"].ToString()) : "", // Decrypt FileName
-                    ProofUploadedAt = row["PROOF_UPLOADED_AT"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["PROOF_UPLOADED_AT"]) : null
+                    ProofFileName = row["PROOF_FILE_NAME"] != DBNull.Value ? EncryptionHelper.Decrypt(row["PROOF_FILE_NAME"].ToString()) : "",
+                    ProofUploadedAt = DateTimeHelper.ToNullableDateTime(row["PROOF_UPLOADED_AT"])
                 });
             }
 
@@ -413,8 +412,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 bool isOutsideTime = false;
                 if (activityTime.Rows.Count > 0)
                 {
-                    DateTime startAt = Convert.ToDateTime(activityTime.Rows[0]["START_AT"]);
-                    DateTime endAt = Convert.ToDateTime(activityTime.Rows[0]["END_AT"]);
+                    DateTime startAt = DateTimeHelper.ToDateTime(activityTime.Rows[0]["START_AT"]);
+                    DateTime endAt = DateTimeHelper.ToDateTime(activityTime.Rows[0]["END_AT"]);
                     DateTime now = DateTime.Now;
                     isOutsideTime = now < startAt || now > endAt;
                 }
@@ -480,8 +479,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                 bool isOutsideTime = false;
                 if (activityTime.Rows.Count > 0)
                 {
-                    DateTime startAt = Convert.ToDateTime(activityTime.Rows[0]["START_AT"]);
-                    DateTime endAt = Convert.ToDateTime(activityTime.Rows[0]["END_AT"]);
+                    DateTime startAt = DateTimeHelper.ToDateTime(activityTime.Rows[0]["START_AT"]);
+                    DateTime endAt = DateTimeHelper.ToDateTime(activityTime.Rows[0]["END_AT"]);
                     DateTime now = DateTime.Now;
                     isOutsideTime = now < startAt || now > endAt;
                 }
@@ -646,8 +645,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
             {
                 ActivityId = activityId,
                 ActivityTitle = activityTable.Rows[0]["TITLE"].ToString(),
-                ActivityStartAt = Convert.ToDateTime(activityTable.Rows[0]["START_AT"]),
-                ActivityEndAt = Convert.ToDateTime(activityTable.Rows[0]["END_AT"]),
+                ActivityStartAt = DateTimeHelper.ToDateTime(activityTable.Rows[0]["START_AT"]),
+                ActivityEndAt = DateTimeHelper.ToDateTime(activityTable.Rows[0]["END_AT"]),
                 Participants = new List<ParticipantItem>(),
                 PageSize = pageSize
             };
@@ -719,10 +718,8 @@ namespace QuanLyDiemRenLuyen.Controllers.Admin
                     StudentEmail = row["STUDENT_EMAIL"].ToString(),
                     ClassName = row["CLASS_NAME"] != DBNull.Value ? row["CLASS_NAME"].ToString() : "",
                     Status = row["STATUS"].ToString(),
-                    RegisteredAt = Convert.ToDateTime(row["REGISTERED_AT"]),
-                    CheckedInAt = row["CHECKED_IN_AT"] != DBNull.Value
-                        ? (DateTime?)Convert.ToDateTime(row["CHECKED_IN_AT"])
-                        : null,
+                    RegisteredAt = DateTimeHelper.ToDateTime(row["REGISTERED_AT"]),
+                    CheckedInAt = DateTimeHelper.ToNullableDateTime(row["CHECKED_IN_AT"]),
                     HasProof = row["PROOF_ID"] != DBNull.Value,
                     ProofStatus = row["PROOF_STATUS"] != DBNull.Value ? row["PROOF_STATUS"].ToString() : "",
                     CheckedInBy = row["CHECKED_IN_BY"] != DBNull.Value ? row["CHECKED_IN_BY"].ToString() : "",

@@ -210,6 +210,12 @@ namespace QuanLyDiemRenLuyen.Models
         public int WeakCount { get; set; }       // < 50
         public int PendingFeedbacks { get; set; }
         
+        // Class submission progress
+        public int TotalClasses { get; set; }
+        public int SubmittedClasses { get; set; }
+        public double SubmissionProgress => TotalClasses > 0 ? (SubmittedClasses * 100.0 / TotalClasses) : 0;
+        public bool AllClassesSubmitted => TotalClasses > 0 && SubmittedClasses == TotalClasses;
+        
         // Filter
         public string FilterDepartment { get; set; }
         public string FilterClass { get; set; }
@@ -222,7 +228,7 @@ namespace QuanLyDiemRenLuyen.Models
         public List<DepartmentSelectItem> Departments { get; set; }
         
         // Helpers
-        public bool CanPublishDraft => ScoreStatus == "PROVISIONAL";
+        public bool CanPublishDraft => ScoreStatus == "PROVISIONAL" && AllClassesSubmitted;
         public bool CanPublishOfficial => ScoreStatus == "DRAFT" && FeedbackDeadline.HasValue && DateTime.Now > FeedbackDeadline.Value;
         public bool IsInFeedbackPeriod => ScoreStatus == "DRAFT" && FeedbackDeadline.HasValue && DateTime.Now <= FeedbackDeadline.Value;
         public TimeSpan? TimeRemaining => FeedbackDeadline.HasValue ? (TimeSpan?)(FeedbackDeadline.Value - DateTime.Now) : null;
@@ -234,6 +240,7 @@ namespace QuanLyDiemRenLuyen.Models
         public string StudentId { get; set; }
         public string StudentCode { get; set; }
         public string StudentName { get; set; }
+        public string ClassCode { get; set; }
         public string ClassName { get; set; }
         public string DepartmentName { get; set; }
         public int TotalScore { get; set; }

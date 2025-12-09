@@ -43,8 +43,10 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
             try
             {
                 string mand = GetCurrentUserId();
+                bool isShared;
+                string sharedByName, permissionType;
 
-                if (!IsAssignedToClass(mand, id))
+                if (!HasClassAccess(mand, id, out isShared, out sharedByName, out permissionType))
                 {
                     TempData["ErrorMessage"] = "Bạn không có quyền xem điểm lớp này";
                     return RedirectToRoute("LecturerScores", new { action = "MyClasses" });
@@ -55,6 +57,25 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 {
                     TempData["ErrorMessage"] = "Không tìm thấy lớp";
                     return RedirectToRoute("LecturerScores", new { action = "MyClasses" });
+                }
+
+                // Set shared class info
+                viewModel.IsSharedClass = isShared;
+                viewModel.SharedByName = sharedByName;
+                viewModel.PermissionType = permissionType;
+
+                // Set permission flags for edit/approve
+                // CVHT (not shared) always has full permission
+                // For shared: EDIT/APPROVE can edit, only APPROVE can approve
+                if (!isShared)
+                {
+                    viewModel.CanEdit = true;
+                    viewModel.CanApprove = true;
+                }
+                else
+                {
+                    viewModel.CanEdit = permissionType == "EDIT" || permissionType == "APPROVE";
+                    viewModel.CanApprove = permissionType == "APPROVE";
                 }
 
                 return View("~/Views/Lecturer/Scores/ClassDetail.cshtml", viewModel);
@@ -75,7 +96,9 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
             try
             {
                 string mand = GetCurrentUserId();
-                if (!IsAssignedToClass(mand, id))
+                bool isShared;
+                string sharedByName, permissionType;
+                if (!HasClassAccess(mand, id, out isShared, out sharedByName, out permissionType))
                 {
                     TempData["ErrorMessage"] = "Không có quyền";
                     return RedirectToRoute("LecturerScores", new { action = "MyClasses" });
@@ -108,18 +131,235 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
             }
         }
 
+        // POST: Lecturer/Scores/UpdateScore
+        // Cho phép CVHT hoặc người có quyền EDIT/APPROVE sửa điểm
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult UpdateScore(int scoreId, int newScore, string reason)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null)
+            {
+                return Json(new { success = false, message = "Không có quyền truy cập" });
+            }
+
+            try
+            {
+                string mand = GetCurrentUserId();
+
+                // Lấy class_id từ score để kiểm tra quyền
+                string getClassQuery = @"SELECT s.CLASS_ID FROM SCORES sc 
+                                        INNER JOIN STUDENTS s ON sc.STUDENT_ID = s.USER_ID 
+                                        WHERE sc.ID = :ScoreId";
+                var getClassParams = new[] { OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Int32, scoreId) };
+                object classIdObj = OracleDbHelper.ExecuteScalar(getClassQuery, getClassParams);
+
+                if (classIdObj == null || classIdObj == DBNull.Value)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy điểm" });
+                }
+
+                string classId = classIdObj.ToString();
+                bool isShared;
+                string sharedByName, permissionType;
+
+                if (!HasClassAccess(mand, classId, out isShared, out sharedByName, out permissionType))
+                {
+                    return Json(new { success = false, message = "Không có quyền truy cập lớp này" });
+                }
+
+                // Kiểm tra quyền EDIT (CVHT hoặc có quyền EDIT/APPROVE)
+                bool canEdit = !isShared || permissionType == "EDIT" || permissionType == "APPROVE";
+                if (!canEdit)
+                {
+                    return Json(new { success = false, message = "Bạn chỉ có quyền xem, không được chỉnh sửa" });
+                }
+
+                // Lấy điểm cũ
+                string getOldScoreQuery = "SELECT TOTAL_SCORE FROM SCORES WHERE ID = :ScoreId";
+                object oldScoreObj = OracleDbHelper.ExecuteScalar(getOldScoreQuery, getClassParams);
+                int oldScore = oldScoreObj != null && oldScoreObj != DBNull.Value ? Convert.ToInt32(oldScoreObj) : 0;
+
+                // Cập nhật điểm và classification
+                string classification = GetClassification(newScore);
+                string updateQuery = @"UPDATE SCORES
+                                      SET TOTAL_SCORE = :NewScore,
+                                          CLASSIFICATION = :Classification,
+                                          STATUS = 'PROVISIONAL'
+                                      WHERE ID = :ScoreId";
+
+                var updateParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("NewScore", OracleDbType.Int32, newScore),
+                    OracleDbHelper.CreateParameter("Classification", OracleDbType.Varchar2, classification),
+                    OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Int32, scoreId)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(updateQuery, updateParams);
+
+                if (result > 0)
+                {
+                    // Thêm vào lịch sử
+                    string historyId = "SH" + DateTime.Now.ToString("yyyyMMddHHmmss") + scoreId;
+                    string insertHistoryQuery = @"INSERT INTO SCORE_HISTORY
+                                                 (ID, SCORE_ID, ACTION, OLD_VALUE, NEW_VALUE,
+                                                  CHANGED_BY, REASON, CHANGED_AT)
+                                                 VALUES
+                                                 (:Id, :ScoreId, 'UPDATE', :OldValue, :NewValue,
+                                                  :ChangedBy, :Reason, SYSDATE)";
+
+                    var historyParams = new[]
+                    {
+                        OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, historyId),
+                        OracleDbHelper.CreateParameter("ScoreId", OracleDbType.Int32, scoreId),
+                        OracleDbHelper.CreateParameter("OldValue", OracleDbType.Varchar2, oldScore.ToString()),
+                        OracleDbHelper.CreateParameter("NewValue", OracleDbType.Varchar2, newScore.ToString()),
+                        OracleDbHelper.CreateParameter("ChangedBy", OracleDbType.Varchar2, mand),
+                        OracleDbHelper.CreateParameter("Reason", OracleDbType.Varchar2,
+                            string.IsNullOrEmpty(reason) ? (object)DBNull.Value : reason)
+                    };
+
+                    OracleDbHelper.ExecuteNonQuery(insertHistoryQuery, historyParams);
+
+                    return Json(new { success = true, message = "Cập nhật điểm thành công", newClassification = classification });
+                }
+
+                return Json(new { success = false, message = "Không thể cập nhật điểm" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
+        // POST: Lecturer/Scores/SubmitClassScores
+        // Chốt danh sách điểm lớp để gửi cho Admin
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult SubmitClassScores(string classId)
+        {
+            var authCheck = CheckAuth();
+            if (authCheck != null)
+            {
+                return Json(new { success = false, message = "Không có quyền truy cập" });
+            }
+
+            try
+            {
+                string mand = GetCurrentUserId();
+                bool isShared;
+                string sharedByName, permissionType;
+
+                if (!HasClassAccess(mand, classId, out isShared, out sharedByName, out permissionType))
+                {
+                    return Json(new { success = false, message = "Không có quyền truy cập lớp này" });
+                }
+
+                // Kiểm tra quyền APPROVE (CVHT hoặc có quyền APPROVE)
+                bool canApprove = !isShared || permissionType == "APPROVE";
+                if (!canApprove)
+                {
+                    return Json(new { success = false, message = "Bạn không có quyền chốt danh sách điểm" });
+                }
+
+                // Lấy term hiện tại
+                string termQuery = "SELECT ID FROM TERMS WHERE IS_CURRENT = 1 FETCH FIRST 1 ROWS ONLY";
+                object termIdObj = OracleDbHelper.ExecuteScalar(termQuery, null);
+                if (termIdObj == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy học kỳ hiện tại" });
+                }
+                string termId = termIdObj.ToString();
+
+                // Cập nhật status tất cả điểm trong lớp thành SUBMITTED
+                string updateQuery = @"UPDATE SCORES sc
+                                      SET sc.STATUS = 'SUBMITTED'
+                                      WHERE sc.TERM_ID = :TermId
+                                      AND sc.STATUS = 'PROVISIONAL'
+                                      AND sc.STUDENT_ID IN (SELECT USER_ID FROM STUDENTS WHERE CLASS_ID = :ClassId)";
+
+                var updateParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, termId),
+                    OracleDbHelper.CreateParameter("ClassId", OracleDbType.Varchar2, classId)
+                };
+
+                int result = OracleDbHelper.ExecuteNonQuery(updateQuery, updateParams);
+
+                // Log action
+                string historyId = "SH" + DateTime.Now.ToString("yyyyMMddHHmmss") + "SUB";
+                string insertHistoryQuery = @"INSERT INTO SCORE_HISTORY
+                                             (ID, SCORE_ID, ACTION, CHANGED_BY, REASON, CHANGED_AT)
+                                             VALUES
+                                             (:Id, 0, 'SUBMIT_CLASS', :ChangedBy, :Reason, SYSDATE)";
+
+                var historyParams = new[]
+                {
+                    OracleDbHelper.CreateParameter("Id", OracleDbType.Varchar2, historyId),
+                    OracleDbHelper.CreateParameter("ChangedBy", OracleDbType.Varchar2, mand),
+                    OracleDbHelper.CreateParameter("Reason", OracleDbType.Varchar2, "Chốt danh sách điểm lớp " + classId)
+                };
+
+                OracleDbHelper.ExecuteNonQuery(insertHistoryQuery, historyParams);
+
+                return Json(new { success = true, message = $"Đã chốt {result} điểm và gửi cho Admin xem xét" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
         #region Helper Methods
 
-        private bool IsAssignedToClass(string lecturerId, string classId)
+        /// <summary>
+        /// Check if lecturer has access to view scores for a class.
+        /// Checks both direct assignment (CVHT) and shared permissions.
+        /// </summary>
+        private bool HasClassAccess(string lecturerId, string classId, out bool isShared, out string sharedByName, out string permissionType)
         {
-            string query = @"SELECT COUNT(*) FROM CLASS_LECTURER_ASSIGNMENTS 
-                            WHERE LECTURER_ID = :LecturerId AND CLASS_ID = :ClassId AND IS_ACTIVE = 1";
-            var parameters = new[]
+            isShared = false;
+            sharedByName = null;
+            permissionType = null;
+
+            // Kiểm tra CVHT
+            string assignQuery = @"SELECT COUNT(*) FROM CLASS_LECTURER_ASSIGNMENTS 
+                                  WHERE LECTURER_ID = :LecturerId AND CLASS_ID = :ClassId AND IS_ACTIVE = 1";
+            var assignParams = new[]
             {
                 OracleDbHelper.CreateParameter("LecturerId", OracleDbType.Varchar2, lecturerId),
                 OracleDbHelper.CreateParameter("ClassId", OracleDbType.Varchar2, classId)
             };
-            return Convert.ToInt32(OracleDbHelper.ExecuteScalar(query, parameters)) > 0;
+            if (Convert.ToInt32(OracleDbHelper.ExecuteScalar(assignQuery, assignParams)) > 0)
+            {
+                return true;
+            }
+
+            // Kiểm tra quyền chia sẻ
+            string sharedQuery = @"SELECT csp.PERMISSION_TYPE, u.FULL_NAME as GRANTED_BY_NAME
+                                  FROM CLASS_SCORE_PERMISSIONS csp
+                                  INNER JOIN USERS u ON csp.GRANTED_BY = u.MAND
+                                  WHERE csp.GRANTED_TO = :LecturerId 
+                                    AND csp.CLASS_ID = :ClassId 
+                                    AND csp.IS_ACTIVE = 1 
+                                    AND csp.REVOKED_AT IS NULL
+                                    AND (csp.EXPIRES_AT IS NULL OR csp.EXPIRES_AT > SYSTIMESTAMP)
+                                  FETCH FIRST 1 ROWS ONLY";
+            var sharedParams = new[]
+            {
+                OracleDbHelper.CreateParameter("LecturerId", OracleDbType.Varchar2, lecturerId),
+                OracleDbHelper.CreateParameter("ClassId", OracleDbType.Varchar2, classId)
+            };
+            DataTable sharedDt = OracleDbHelper.ExecuteQuery(sharedQuery, sharedParams);
+            if (sharedDt.Rows.Count > 0)
+            {
+                isShared = true;
+                permissionType = sharedDt.Rows[0]["PERMISSION_TYPE"].ToString();
+                sharedByName = sharedDt.Rows[0]["GRANTED_BY_NAME"].ToString();
+                return true;
+            }
+
+            return false;
         }
 
         private MyClassScoresViewModel GetMyClassScoresViewModel(string lecturerId)
@@ -135,7 +375,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 viewModel.CurrentTermName = termDt.Rows[0]["NAME"].ToString();
             }
 
-            // Get assigned classes
+            // Get assigned classes (CVHT)
             string classQuery = @"SELECT c.ID, c.CODE, c.NAME, d.NAME as DEPT_NAME,
                                         cla.ASSIGNED_AT,
                                         (SELECT COUNT(*) FROM STUDENTS WHERE CLASS_ID = c.ID) as TOTAL_STUDENTS,
@@ -171,6 +411,54 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                     StudentsWithScores = Convert.ToInt32(row["STUDENTS_WITH_SCORES"]),
                     AverageScore = row["AVG_SCORE"] != DBNull.Value ? Convert.ToDouble(row["AVG_SCORE"]) : 0,
                     AssignedAt = Convert.ToDateTime(row["ASSIGNED_AT"])
+                });
+            }
+
+            // Get shared classes (via CLASS_SCORE_PERMISSIONS)
+            string sharedQuery = @"SELECT c.ID, c.CODE, c.NAME, d.NAME as DEPT_NAME,
+                                          csp.PERMISSION_TYPE, csp.GRANTED_AT, csp.EXPIRES_AT,
+                                          csp.GRANTED_BY, u_by.FULL_NAME as GRANTED_BY_NAME,
+                                          (SELECT COUNT(*) FROM STUDENTS WHERE CLASS_ID = c.ID) as TOTAL_STUDENTS,
+                                          (SELECT COUNT(*) FROM SCORES sc 
+                                           INNER JOIN STUDENTS s ON sc.STUDENT_ID = s.USER_ID 
+                                           WHERE s.CLASS_ID = c.ID AND sc.TERM_ID = :TermId) as STUDENTS_WITH_SCORES,
+                                          (SELECT NVL(AVG(sc.TOTAL_SCORE), 0) FROM SCORES sc 
+                                           INNER JOIN STUDENTS s ON sc.STUDENT_ID = s.USER_ID 
+                                           WHERE s.CLASS_ID = c.ID AND sc.TERM_ID = :TermId) as AVG_SCORE
+                                   FROM CLASS_SCORE_PERMISSIONS csp
+                                   INNER JOIN CLASSES c ON csp.CLASS_ID = c.ID
+                                   INNER JOIN USERS u_by ON csp.GRANTED_BY = u_by.MAND
+                                   LEFT JOIN DEPARTMENTS d ON c.DEPARTMENT_ID = d.ID
+                                   WHERE csp.GRANTED_TO = :LecturerId 
+                                     AND csp.IS_ACTIVE = 1
+                                     AND csp.REVOKED_AT IS NULL
+                                     AND (csp.EXPIRES_AT IS NULL OR csp.EXPIRES_AT > SYSTIMESTAMP)
+                                   ORDER BY csp.GRANTED_AT DESC";
+
+            var sharedParams = new[]
+            {
+                OracleDbHelper.CreateParameter("TermId", OracleDbType.Varchar2, viewModel.CurrentTermId ?? ""),
+                OracleDbHelper.CreateParameter("LecturerId", OracleDbType.Varchar2, lecturerId)
+            };
+
+            DataTable sharedDt = OracleDbHelper.ExecuteQuery(sharedQuery, sharedParams);
+
+            foreach (DataRow row in sharedDt.Rows)
+            {
+                viewModel.SharedClasses.Add(new SharedClassItem
+                {
+                    ClassId = row["ID"].ToString(),
+                    ClassCode = row["CODE"].ToString(),
+                    ClassName = row["NAME"].ToString(),
+                    DepartmentName = row["DEPT_NAME"] != DBNull.Value ? row["DEPT_NAME"].ToString() : "",
+                    TotalStudents = Convert.ToInt32(row["TOTAL_STUDENTS"]),
+                    StudentsWithScores = Convert.ToInt32(row["STUDENTS_WITH_SCORES"]),
+                    AverageScore = row["AVG_SCORE"] != DBNull.Value ? Convert.ToDouble(row["AVG_SCORE"]) : 0,
+                    PermissionType = row["PERMISSION_TYPE"].ToString(),
+                    GrantedById = row["GRANTED_BY"].ToString(),
+                    GrantedByName = row["GRANTED_BY_NAME"].ToString(),
+                    GrantedAt = Convert.ToDateTime(row["GRANTED_AT"]),
+                    ExpiresAt = row["EXPIRES_AT"] != DBNull.Value ? Convert.ToDateTime(row["EXPIRES_AT"]) : (DateTime?)null
                 });
             }
 
@@ -210,9 +498,9 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 return viewModel;
             }
 
-            // Get students and scores
+            // Get students and scores (including SCORE_ID for edit/approve)
             string studentsQuery = @"SELECT s.USER_ID, s.STUDENT_CODE, u.FULL_NAME,
-                                           sc.TOTAL_SCORE, sc.CLASSIFICATION, sc.STATUS,
+                                           sc.ID as SCORE_ID, sc.TOTAL_SCORE, sc.CLASSIFICATION, sc.STATUS,
                                            (SELECT COUNT(*) FROM REGISTRATIONS r
                                             INNER JOIN ACTIVITIES a ON r.ACTIVITY_ID = a.ID
                                             WHERE r.STUDENT_ID = s.USER_ID
@@ -234,6 +522,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
 
             int excellentCount = 0, goodCount = 0, fairCount = 0, averageCount = 0, weakCount = 0;
             int approvedCount = 0;
+            int submittedCount = 0;
 
             foreach (DataRow row in studentsDt.Rows)
             {
@@ -245,6 +534,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
 
                 viewModel.Students.Add(new StudentScoreReadOnlyItem
                 {
+                    ScoreId = row["SCORE_ID"] != DBNull.Value ? Convert.ToInt32(row["SCORE_ID"]) : 0,
                     StudentId = row["USER_ID"].ToString(),
                     StudentCode = row["STUDENT_CODE"].ToString(),
                     StudentName = row["FULL_NAME"].ToString(),
@@ -255,6 +545,7 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 });
 
                 if (status == "APPROVED" || status == "OFFICIAL") approvedCount++;
+                if (status == "SUBMITTED") submittedCount++;
 
                 if (totalScore >= 90) excellentCount++;
                 else if (totalScore >= 80) goodCount++;
@@ -262,6 +553,9 @@ namespace QuanLyDiemRenLuyen.Controllers.Lecturer
                 else if (totalScore >= 50) averageCount++;
                 else weakCount++;
             }
+
+            // Check if all scores are submitted
+            viewModel.IsSubmitted = submittedCount > 0 && submittedCount == viewModel.Students.Count;
 
             viewModel.Statistics = new ClassScoreStatisticsReadOnly
             {

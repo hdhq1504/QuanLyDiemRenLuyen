@@ -197,6 +197,33 @@
         color: white;
         border-color: #2563eb;
     }
+
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+
+    .table {
+        min-width: 1000px;
+        width: 100%;
+    }
+
+    .card {
+        overflow: hidden;
+    }
+
+    @@media (max-width: 1400px) {
+        .filter-row {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <!-- Activity Header -->
@@ -247,10 +274,13 @@
 <div class="card">
     @if (Model.Registrations.Count > 0)
     {
+        <div class="table-wrapper">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Sinh viên</th>
+                    <th>MSSV</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
                     <th>Lớp</th>
                     <th>Ngày đăng ký</th>
                     <th>Trạng thái</th>
@@ -263,14 +293,9 @@
                 @foreach (var reg in Model.Registrations)
                 {
                     <tr>
-                        <td>
-                            <div class="student-info">@reg.StudentName</div>
-                            <div class="student-meta">
-                                <i class="fas fa-id-card"></i> @reg.StudentId
-                                <br />
-                                <i class="fas fa-envelope"></i> @reg.StudentEmail
-                            </div>
-                        </td>
+                        <td><span class="student-meta">@reg.StudentId</span></td>
+                        <td><div class="student-info">@reg.StudentName</div></td>
+                        <td><span class="student-meta">@reg.StudentEmail</span></td>
                         <td>@reg.ClassName</td>
                         <td>@reg.RegisteredAt.ToString("dd/MM/yyyy HH:mm")</td>
                         <td>
@@ -342,6 +367,7 @@
                 }
             </tbody>
         </table>
+        </div>
 
         <!-- Pagination -->
         if (Model.TotalPages > 1)

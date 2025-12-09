@@ -89,7 +89,7 @@
     .btn-success { background: #27ae60; color: white; }
     .btn-warning { background: #f39c12; color: white; }
     .btn-secondary { background: #95a5a6; color: white; }
-    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn:hover { opacity: 0.9; }
 
     .table-card {
         background: white;
@@ -203,6 +203,13 @@
             <div class="value">@Model.TotalStudents</div>
             <div class="label">Tổng sinh viên</div>
         </div>
+        <div class="stat-card" style="border-left: 4px solid @(Model.AllClassesSubmitted ? "#27ae60" : "#f39c12");">
+            <div class="value" style="color: @(Model.AllClassesSubmitted ? "#27ae60" : "#f39c12");">@Model.SubmittedClasses/@Model.TotalClasses</div>
+            <div class="label">Lớp đã nộp</div>
+            <div style="margin-top: 8px; background: #eee; border-radius: 4px; height: 6px; overflow: hidden;">
+                <div style="width: @Model.SubmissionProgress.ToString("F0")%; background: @(Model.AllClassesSubmitted ? "#27ae60" : "#f39c12"); height: 100%;"></div>
+            </div>
+        </div>
         <div class="stat-card stat-excellent">
             <div class="value">@Model.ExcellentCount</div>
             <div class="label">Xuất sắc (≥90)</div>
@@ -227,7 +234,7 @@
 
     <!-- Filter -->
     <div class="filter-card">
-        <form method="get" action="@Url.Action("Index", "Scores")">
+        <form method="get" action="@Url.RouteUrl("AdminScores", new { action = "Index" })">
             <div class="filter-row">
                 <div class="filter-group">
                     <label>Học kỳ</label>
@@ -295,14 +302,23 @@
                     <i class="fas fa-file-csv"></i> Xuất CSV
                 </a>
 
-                @if (Model.CanPublishDraft)
+                @if (Model.ScoreStatus == "PROVISIONAL")
                 {
-                    using (Html.BeginForm("PublishDraft", "Scores", FormMethod.Post, new { style = "display:inline;" }))
+                    if (Model.CanPublishDraft)
                     {
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="termId" value="@Model.TermId" />
-                        <button type="submit" class="btn btn-warning" onclick="return confirm('Công bố điểm dự kiến? Sinh viên sẽ có 3 ngày để phản hồi.');">
-                            <i class="fas fa-bullhorn"></i> Công bố dự kiến
+                        using (Html.BeginForm("PublishDraft", "Scores", FormMethod.Post, new { style = "display:inline;" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="termId" value="@Model.TermId" />
+                            <button type="submit" class="btn btn-warning" onclick="return confirm('Công bố điểm dự kiến? Sinh viên sẽ có 3 ngày để phản hồi.');">
+                                <i class="fas fa-bullhorn"></i> Công bố dự kiến
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-secondary" disabled title="Cần tất cả @Model.TotalClasses lớp nộp điểm. Hiện tại: @Model.SubmittedClasses/@Model.TotalClasses">
+                            <i class="fas fa-bullhorn"></i> Công bố dự kiến (@Model.SubmittedClasses/@Model.TotalClasses lớp)
                         </button>
                     }
                 }
@@ -339,9 +355,9 @@
                 <thead>
                     <tr>
                         <th>STT</th>
+                        <th>Lớp</th>
                         <th>MSSV</th>
                         <th>Họ tên</th>
-                        <th>Lớp</th>
                         <th>Khoa</th>
                         <th>Điểm</th>
                         <th>Xếp loại</th>
@@ -357,9 +373,9 @@
                                          student.TotalScore >= 50 ? "badge-average" : "badge-weak";
                         <tr>
                             <td>@(i + 1)</td>
-                            <td><strong>@student.StudentCode</strong></td>
+                            <td><strong>@student.ClassName</strong></td>
+                            <td>@student.StudentCode</td>
                             <td>@student.StudentName</td>
-                            <td>@student.ClassName</td>
                             <td>@student.DepartmentName</td>
                             <td><strong style="font-size:16px;">@student.TotalScore</strong></td>
                             <td><span class="badge @badgeClass">@student.Classification</span></td>

@@ -135,6 +135,7 @@
         .checkbox-group {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             margin-bottom: 24px;
         }
 
@@ -147,6 +148,22 @@
             color: #64748b;
             font-size: 14px;
             font-weight: 500;
+        }
+
+        .checkbox-group .remember-me {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-group .forgot-password {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .checkbox-group .forgot-password:hover {
+            text-decoration: underline;
         }
 
         .btn-login {
@@ -292,17 +309,15 @@
                 </div>
 
                 <div class="checkbox-group">
-                    @Html.CheckBoxFor(m => m.RememberMe)
-                    @Html.LabelFor(m => m.RememberMe, "Ghi nhớ đăng nhập")
+                    <div class="remember-me">
+                        @Html.CheckBoxFor(m => m.RememberMe)
+                        @Html.LabelFor(m => m.RememberMe, "Ghi nhớ đăng nhập")
+                    </div>
+                    <a href="@Url.Action("ForgotPassword", "Account")" class="forgot-password">Quên mật khẩu?</a>
                 </div>
 
                 <button type="submit" class="btn-login">Đăng Nhập</button>
                         }
-
-                <div class="form-links">
-                    <a href="@Url.Action("ForgotPassword", "Account")">Quên mật khẩu?</a>
-                    <p>Chưa có tài khoản? <a href="@Url.Action("Register", "Account")">Đăng ký ngay</a></p>
-                </div>
             </div>
         </div>
     </div>

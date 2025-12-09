@@ -4,39 +4,229 @@
     Layout = "~/Views/Shared/_LecturerLayout.cshtml";
 }
 
+<style>
+    .page-header {
+        margin-bottom: 25px;
+    }
+
+    .page-header h2 {
+        margin: 0 0 8px 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .page-header p {
+        margin: 0;
+        color: #64748b;
+    }
+
+    .back-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .section-card {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
+
+    .section-header {
+        background: #f8fafc;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .section-header h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .record-count {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .section-body {
+        padding: 20px;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        align-items: end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .form-control {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0ea5e9;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #0ea5e9;
+        color: white;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+
+    .data-table th {
+        background: #f8fafc;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #64748b;
+        font-size: 13px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .data-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .badge-primary { background: #e0f2fe; color: #0369a1; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+    .badge-secondary { background: #f1f5f9; color: #475569; }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+
+    .legend-card {
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+    }
+
+    .legend-card h6 {
+        margin: 0 0 15px 0;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .legend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 10px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .text-muted { color: #64748b; }
+    .text-danger { color: #ef4444; }
+    .text-success { color: #22c55e; }
+</style>
+
+<!-- Page Header -->
 <div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h2><i class="fas fa-history"></i> Nhật Ký Truy Cập Điểm</h2>
-            <p class="text-muted">Lớp: <strong>@Model.ClassName</strong></p>
-        </div>
-        <a href="@Url.Action("MyClasses")" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Quay lại
-        </a>
-    </div>
+    <h2><i class="fas fa-history"></i> Nhật Ký Truy Cập Điểm</h2>
+    <p>Lớp: <strong>@Model.ClassName</strong></p>
+    <a href="@Url.Action("MyClasses")" class="back-link">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
 </div>
 
-<!-- Filter Section -->
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-filter"></i> Bộ Lọc</h5>
+<!-- Filter -->
+<div class="section-card">
+    <div class="section-header">
+        <h5><i class="fas fa-filter"></i> Bộ Lọc</h5>
     </div>
-    <div class="card-body">
-        <form method="get" class="row">
+    <div class="section-body">
+        <form method="get">
             <input type="hidden" name="classId" value="@Model.ClassId" />
-            <div class="col-md-3">
+            <div class="filter-row">
                 <div class="form-group">
                     <label>Từ ngày</label>
                     <input type="date" name="fromDate" class="form-control" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
                 </div>
-            </div>
-            <div class="col-md-3">
                 <div class="form-group">
                     <label>Đến ngày</label>
                     <input type="date" name="toDate" class="form-control" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
                 </div>
-            </div>
-            <div class="col-md-3">
                 <div class="form-group">
                     <label>Loại truy cập</label>
                     <select name="filterAccessType" class="form-control">
@@ -47,11 +237,9 @@
                         <option value="DENIED">Bị từ chối</option>
                     </select>
                 </div>
-            </div>
-            <div class="col-md-3">
                 <div class="form-group">
                     <label>&nbsp;</label>
-                    <button type="submit" class="btn btn-primary btn-block">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Lọc
                     </button>
                 </div>
@@ -60,158 +248,124 @@
     </div>
 </div>
 
-<!-- Access Log Table -->
-<div class="card">
-    <div class="card-header bg-secondary text-white">
-        <h5 class="mb-0">
-            <i class="fas fa-list"></i> Danh Sách Truy Cập
-            <span class="badge badge-light float-right">@Model.LogEntries.Count bản ghi</span>
-        </h5>
+<!-- Log Table -->
+<div class="section-card">
+    <div class="section-header">
+        <h5><i class="fas fa-list"></i> Danh Sách Truy Cập</h5>
+        <span class="record-count">@Model.LogEntries.Count bản ghi</span>
     </div>
-    <div class="card-body p-0">
-        @if (Model.LogEntries.Count == 0)
-        {
-            <div class="p-4 text-center text-muted">
-                <i class="fas fa-inbox fa-3x mb-3"></i>
-                <p>Chưa có nhật ký truy cập nào</p>
-            </div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0">
-                    <thead class="thead-light">
+    @if (Model.LogEntries.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>Chưa có nhật ký truy cập nào</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Người truy cập</th>
+                        <th>Phương thức</th>
+                        <th>Loại truy cập</th>
+                        <th>Kết quả</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model.LogEntries)
+                    {
                         <tr>
-                            <th>Thời gian</th>
-                            <th>Người truy cập</th>
-                            <th>Phương thức</th>
-                            <th>Loại truy cập</th>
-                            <th>Điểm ID</th>
-                            <th>Kết quả</th>
-                            <th>IP Address</th>
+                            <td>
+                                <small>@log.EventTime.ToString("dd/MM/yyyy HH:mm:ss")</small>
+                            </td>
+                            <td>
+                                <strong>@log.WhoName</strong><br />
+                                <small class="text-muted">@log.Who</small>
+                            </td>
+                            <td>
+                                @if (log.AccessMethod == "CVHT")
+                                {
+                                    <span class="badge badge-primary"><i class="fas fa-crown"></i> CVHT</span>
+                                }
+                                else if (log.AccessMethod == "GRANTED")
+                                {
+                                    <span class="badge badge-info"><i class="fas fa-key"></i> Được cấp quyền</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">@log.AccessMethod</span>
+                                }
+                            </td>
+                            <td>
+                                @if (log.AccessType == "VIEW")
+                                {
+                                    <span class="badge badge-primary"><i class="fas fa-eye"></i> Xem</span>
+                                }
+                                else if (log.AccessType == "EDIT")
+                                {
+                                    <span class="badge badge-warning"><i class="fas fa-edit"></i> Chỉnh sửa</span>
+                                }
+                                else if (log.AccessType == "APPROVE")
+                                {
+                                    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Phê duyệt</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">@log.AccessType</span>
+                                }
+                            </td>
+                            <td>
+                                @if (log.Result == "SUCCESS")
+                                {
+                                    <span class="text-success"><i class="fas fa-check"></i> Thành công</span>
+                                }
+                                else if (log.Result == "DENIED")
+                                {
+                                    <span class="text-danger"><i class="fas fa-times"></i> Từ chối</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">@log.Result</span>
+                                }
+                            </td>
+                            <td>
+                                <small class="text-muted">@log.IpAddress</small>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var log in Model.LogEntries)
-                        {
-                            <tr>
-                                <td>
-                                    <small>@log.EventTime.ToString("dd/MM/yyyy HH:mm:ss")</small>
-                                </td>
-                                <td>
-                                    <strong>@log.WhoName</strong><br />
-                                    <small class="text-muted">@log.Who</small>
-                                </td>
-                                <td>
-                                    @if (log.AccessMethod == "CVHT")
-                                    {
-                                        <span class="badge badge-primary">
-                                            <i class="fas fa-crown"></i> CVHT
-                                        </span>
-                                    }
-                                    else if (log.AccessMethod == "GRANTED")
-                                    {
-                                        <span class="badge badge-info">
-                                            <i class="fas fa-key"></i> Được cấp quyền
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge badge-secondary">@log.AccessMethod</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (log.AccessType == "VIEW")
-                                    {
-                                        <span class="badge badge-primary">
-                                            <i class="fas fa-eye"></i> Xem
-                                        </span>
-                                    }
-                                    else if (log.AccessType == "EDIT")
-                                    {
-                                        <span class="badge badge-warning">
-                                            <i class="fas fa-edit"></i> Chỉnh sửa
-                                        </span>
-                                    }
-                                    else if (log.AccessType == "APPROVE")
-                                    {
-                                        <span class="badge badge-success">
-                                            <i class="fas fa-check-circle"></i> Phê duyệt
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge badge-secondary">@log.AccessType</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(log.ScoreId))
-                                    {
-                                        <code>@log.ScoreId</code>
-                                    }
-                                </td>
-                                <td>
-                                    @if (log.Result == "SUCCESS")
-                                    {
-                                        <span class="text-success"><i class="fas fa-check"></i> Thành công</span>
-                                    }
-                                    else if (log.Result == "DENIED")
-                                    {
-                                        <span class="text-danger"><i class="fas fa-times"></i> Từ chối</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">@log.Result</span>
-                                    }
-                                </td>
-                                <td>
-                                    <small class="text-muted">@log.IpAddress</small>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
 
 <!-- Legend -->
-<div class="card mt-4">
-    <div class="card-body">
-        <h6><i class="fas fa-info-circle"></i> Chú Thích</h6>
-        <div class="row">
-            <div class="col-md-6">
-                <p class="mb-2">
-                    <span class="badge badge-primary"><i class="fas fa-crown"></i> CVHT</span> 
-                    Cố vấn học tập (có quyền mặc định)
-                </p>
-                <p class="mb-2">
-                    <span class="badge badge-info"><i class="fas fa-key"></i> Được cấp quyền</span> 
-                    Truy cập thông qua quyền được chia sẻ
-                </p>
-            </div>
-            <div class="col-md-6">
-                <p class="mb-2">
-                    <span class="badge badge-primary"><i class="fas fa-eye"></i> Xem</span> 
-                    Chỉ xem điểm
-                </p>
-                <p class="mb-2">
-                    <span class="badge badge-warning"><i class="fas fa-edit"></i> Chỉnh sửa</span> 
-                    Sửa điểm rèn luyện
-                </p>
-                <p class="mb-2">
-                    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Phê duyệt</span> 
-                    Duyệt điểm cuối cùng
-                </p>
-            </div>
+<div class="legend-card">
+    <h6><i class="fas fa-info-circle"></i> Chú Thích</h6>
+    <div class="legend-grid">
+        <div class="legend-item">
+            <span class="badge badge-primary"><i class="fas fa-crown"></i> CVHT</span>
+            Cố vấn học tập (có quyền mặc định)
+        </div>
+        <div class="legend-item">
+            <span class="badge badge-info"><i class="fas fa-key"></i> Được cấp quyền</span>
+            Truy cập thông qua quyền được chia sẻ
+        </div>
+        <div class="legend-item">
+            <span class="badge badge-primary"><i class="fas fa-eye"></i> Xem</span>
+            Chỉ xem điểm
+        </div>
+        <div class="legend-item">
+            <span class="badge badge-warning"><i class="fas fa-edit"></i> Chỉnh sửa</span>
+            Sửa điểm rèn luyện
+        </div>
+        <div class="legend-item">
+            <span class="badge badge-success"><i class="fas fa-check-circle"></i> Phê duyệt</span>
+            Duyệt điểm cuối cùng
         </div>
     </div>
 </div>
-
-<style>
-    .table-sm th, .table-sm td {
-        padding: 8px;
-        vertical-align: middle;
-    }
-</style>

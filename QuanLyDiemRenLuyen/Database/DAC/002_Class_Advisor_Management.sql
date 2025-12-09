@@ -31,9 +31,9 @@ CREATE OR REPLACE PROCEDURE SP_ASSIGN_CLASS_ADVISOR(
     p_result OUT VARCHAR2
 ) AS
     v_existing_lecturer VARCHAR2(50);
-    v_class_name VARCHAR2(100);
-    v_lecturer_name VARCHAR2(255);
-    v_existing_name VARCHAR2(255);
+    v_class_name NVARCHAR2(100);
+    v_lecturer_name NVARCHAR2(255);
+    v_existing_name NVARCHAR2(255);
 BEGIN
     -- Validate inputs
     IF p_class_id IS NULL OR p_lecturer_id IS NULL OR p_assigned_by IS NULL THEN
@@ -82,7 +82,7 @@ BEGIN
             REMOVED_BY = p_assigned_by
         WHERE CLASS_ID = p_class_id AND IS_ACTIVE = 1;
         
-        DBMS_OUTPUT.PUT_LINE('Changed CVHT from ' || v_existing_name || ' to ' || v_lecturer_name);
+        DBMS_OUTPUT.PUT_LINE('Changed CVHT from ' || TO_CHAR(v_existing_name) || ' to ' || TO_CHAR(v_lecturer_name));
         
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
@@ -97,19 +97,22 @@ BEGIN
         p_class_id, p_lecturer_id, p_assigned_by, p_notes, 1
     );
     
-    DBMS_OUTPUT.PUT_LINE('Assigned ' || v_lecturer_name || ' as CVHT');
+    DBMS_OUTPUT.PUT_LINE('Assigned ' || TO_CHAR(v_lecturer_name) || ' as CVHT');
     
-    -- Audit trail
-    INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC, CLIENT_IP)
+    -- Audit to AUDIT_EVENTS
+    INSERT INTO AUDIT_EVENTS(EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, ENTITY_TYPE, ENTITY_ID, DESCRIPTION, CLIENT_IP)
     VALUES (
+        'SECURITY',
+        'ASSIGN_CVHT',
         p_assigned_by,
-        'ASSIGN_CVHT|CLASS=' || p_class_id || '|LECTURER=' || p_lecturer_id || '|CLASS_NAME=' || v_class_name,
-        SYSTIMESTAMP,
+        'CLASS_LECTURER_ASSIGNMENT',
+        p_class_id,
+        N'LECTURER=' || p_lecturer_id || N'|CLASS_NAME=' || v_class_name,
         SYS_CONTEXT('USERENV', 'IP_ADDRESS')
     );
     
     COMMIT;
-    p_result := 'SUCCESS|Assigned ' || v_lecturer_name || ' as CVHT for ' || v_class_name;
+    p_result := 'SUCCESS|Assigned ' || TO_CHAR(v_lecturer_name) || ' as CVHT for ' || TO_CHAR(v_class_name);
     
 EXCEPTION
     WHEN OTHERS THEN
@@ -140,8 +143,8 @@ CREATE OR REPLACE PROCEDURE SP_REMOVE_CLASS_ADVISOR(
     p_result OUT VARCHAR2
 ) AS
     v_lecturer_id VARCHAR2(50);
-    v_lecturer_name VARCHAR2(255);
-    v_class_name VARCHAR2(100);
+    v_lecturer_name NVARCHAR2(255);
+    v_class_name NVARCHAR2(100);
 BEGIN
     -- Validate inputs
     IF p_class_id IS NULL OR p_removed_by IS NULL THEN
@@ -177,22 +180,25 @@ BEGIN
     SET IS_ACTIVE = 0,
         REMOVED_AT = SYSTIMESTAMP,
         REMOVED_BY = p_removed_by,
-        NOTES = CASE WHEN p_notes IS NOT NULL THEN p_notes ELSE NOTES END
+        NOTES = CASE WHEN p_notes IS NOT NULL THEN TO_NCHAR(p_notes) ELSE NOTES END
     WHERE CLASS_ID = p_class_id AND IS_ACTIVE = 1;
     
-    -- Audit trail
-    INSERT INTO AUDIT_TRAIL(WHO, ACTION, EVENT_AT_UTC, CLIENT_IP)
+    -- Audit to AUDIT_EVENTS
+    INSERT INTO AUDIT_EVENTS(EVENT_CATEGORY, EVENT_TYPE, PERFORMED_BY, ENTITY_TYPE, ENTITY_ID, DESCRIPTION, CLIENT_IP)
     VALUES (
+        'SECURITY',
+        'REMOVE_CVHT',
         p_removed_by,
-        'REMOVE_CVHT|CLASS=' || p_class_id || '|LECTURER=' || v_lecturer_id || '|CLASS_NAME=' || v_class_name,
-        SYSTIMESTAMP,
+        'CLASS_LECTURER_ASSIGNMENT',
+        p_class_id,
+        N'LECTURER=' || v_lecturer_id || N'|CLASS_NAME=' || v_class_name,
         SYS_CONTEXT('USERENV', 'IP_ADDRESS')
     );
     
     COMMIT;
-    p_result := 'SUCCESS|Removed ' || v_lecturer_name || ' as CVHT from ' || v_class_name;
+    p_result := 'SUCCESS|Removed ' || TO_CHAR(v_lecturer_name) || ' as CVHT from ' || TO_CHAR(v_class_name);
     
-    DBMS_OUTPUT.PUT_LINE('Removed ' || v_lecturer_name || ' from ' || v_class_name);
+    DBMS_OUTPUT.PUT_LINE('Removed ' || TO_CHAR(v_lecturer_name) || ' from ' || TO_CHAR(v_class_name));
     
 EXCEPTION
     WHEN OTHERS THEN

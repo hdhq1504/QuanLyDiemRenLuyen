@@ -4,281 +4,435 @@
     Layout = "~/Views/Shared/_LecturerLayout.cshtml";
 }
 
+<style>
+    .page-header {
+        margin-bottom: 25px;
+    }
+
+    .page-header h2 {
+        margin: 0 0 8px 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .page-header p {
+        margin: 0;
+        color: #64748b;
+    }
+
+    .back-link {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .stats-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        flex: 1;
+        min-width: 150px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+    }
+
+    .stat-icon.green { background: #22c55e; }
+    .stat-icon.yellow { background: #eab308; }
+    .stat-icon.red { background: #ef4444; }
+    .stat-icon.blue { background: #0ea5e9; }
+
+    .stat-info h4 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .stat-info p {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .section-card {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
+
+    .section-header {
+        background: #f8fafc;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .section-header h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .section-body {
+        padding: 20px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .form-group label .required {
+        color: #ef4444;
+    }
+
+    .form-control {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0ea5e9;
+    }
+
+    .form-hint {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-success {
+        background: #22c55e;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        background: #f8fafc;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #64748b;
+        font-size: 13px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .data-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .badge-primary { background: #e0f2fe; color: #0369a1; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+    .badge-secondary { background: #f1f5f9; color: #475569; }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+
+    .text-muted { color: #64748b; }
+    .text-danger { color: #ef4444; }
+    .text-success { color: #22c55e; }
+</style>
+
+<!-- Page Header -->
 <div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h2><i class="fas fa-key"></i> Quản Lý Phân Quyền</h2>
-            <p class="text-muted">Lớp: <strong>@Model.ClassName</strong> (@Model.ClassCode)</p>
-        </div>
-        <a href="@Url.Action("MyClasses")" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Quay lại
-        </a>
-    </div>
+    <h2><i class="fas fa-key"></i> Quản Lý Phân Quyền</h2>
+    <p>Lớp: <strong>@Model.ClassName</strong> (@Model.ClassCode)</p>
+    <a href="@Url.Action("MyClasses")" class="back-link">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
 </div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="info-card bg-success">
-            <div class="info-icon"><i class="fas fa-check-circle"></i></div>
-            <div class="info-content">
-                <h3>@Model.ActiveCount</h3>
-                <p>Quyền Đang Hoạt Động</p>
-            </div>
+<!-- Statistics -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h4>@Model.ActiveCount</h4>
+            <p>Đang hoạt động</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="info-card bg-warning">
-            <div class="info-icon"><i class="fas fa-clock"></i></div>
-            <div class="info-content">
-                <h3>@Model.ExpiredCount</h3>
-                <p>Quyền Hết Hạn</p>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon yellow">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+            <h4>@Model.ExpiredCount</h4>
+            <p>Đã hết hạn</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="info-card bg-danger">
-            <div class="info-icon"><i class="fas fa-ban"></i></div>
-            <div class="info-content">
-                <h3>@Model.RevokedCount</h3>
-                <p>Quyền Đã Thu Hồi</p>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon red">
+            <i class="fas fa-ban"></i>
+        </div>
+        <div class="stat-info">
+            <h4>@Model.RevokedCount</h4>
+            <p>Đã thu hồi</p>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="info-card bg-primary">
-            <div class="info-icon"><i class="fas fa-list"></i></div>
-            <div class="info-content">
-                <h3>@Model.TotalPermissions</h3>
-                <p>Tổng Số Quyền</p>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <i class="fas fa-list"></i>
+        </div>
+        <div class="stat-info">
+            <h4>@Model.TotalPermissions</h4>
+            <p>Tổng số</p>
         </div>
     </div>
 </div>
 
-<!-- Grant New Permission Form -->
-<div class="card  mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Cấp Quyền Mới</h5>
+<!-- Grant Form -->
+<div class="section-card">
+    <div class="section-header">
+        <h5><i class="fas fa-plus-circle"></i> Cấp Quyền Mới</h5>
     </div>
-    <div class="card-body">
+    <div class="section-body">
         <form id="grantForm">
             @Html.AntiForgeryToken()
             <input type="hidden" id="classId" value="@Model.ClassId" />
             
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label>Người Nhận Quyền <span class="text-danger">*</span></label>
-                        <select id="grantedTo" class="form-control" required>
-                            <option value="">-- Chọn người dùng --</option>
-                            @foreach (var grantee in Model.AvailableGrantees)
-                            {
-                                <option value="@grantee.Mand">
-                                    @grantee.FullName (@grantee.Role)
-                                </option>
-                            }
-                        </select>
-                    </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Người Nhận Quyền <span class="required">*</span></label>
+                    <select id="grantedTo" class="form-control" required>
+                        <option value="">-- Chọn người dùng --</option>
+                        @foreach (var grantee in Model.AvailableGrantees)
+                        {
+                            <option value="@grantee.Mand">@grantee.FullName (@grantee.Role)</option>
+                        }
+                    </select>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>Loại Quyền <span class="text-danger">*</span></label>
-                        <select id="permissionType" class="form-control" required>
-                            <option value="VIEW">Xem (VIEW)</option>
-                            <option value="EDIT">Chỉnh sửa (EDIT)</option>
-                            <option value="APPROVE">Phê duyệt (APPROVE)</option>
-                        </select>
-                        <small class="form-text text-muted">
-                            APPROVE bao gồm EDIT và VIEW
-                        </small>
-                    </div>
+                <div class="form-group">
+                    <label>Loại Quyền <span class="required">*</span></label>
+                    <select id="permissionType" class="form-control" required>
+                        <option value="VIEW">Xem (VIEW)</option>
+                        <option value="EDIT">Chỉnh sửa (EDIT)</option>
+                        <option value="APPROVE">Phê duyệt (APPROVE)</option>
+                    </select>
+                    <span class="form-hint">APPROVE bao gồm EDIT và VIEW</span>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>Ngày Hết Hạn</label>
-                        <input type="datetime-local" id="expiresAt" class="form-control" />
-                        <small class="form-text text-muted">Để trống = vô thời hạn</small>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-success btn-block">
-                            <i class="fas fa-key"></i> Cấp Quyền
-                        </button>
-                    </div>
+                <div class="form-group">
+                    <label>Ngày Hết Hạn</label>
+                    <input type="datetime-local" id="expiresAt" class="form-control" />
+                    <span class="form-hint">Để trống = vô thời hạn</span>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 15px;">
                 <label>Ghi Chú</label>
                 <textarea id="notes" class="form-control" rows="2" placeholder="Lý do cấp quyền..."></textarea>
             </div>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-key"></i> Cấp Quyền
+            </button>
         </form>
     </div>
 </div>
 
-<!-- Active Permissions Table -->
-<div class="card">
-    <div class="card-header bg-secondary text-white">
-        <h5 class="mb-0"><i class="fas fa-list"></i> Danh Sách Quyền Đang Hoạt Động</h5>
+<!-- Active Permissions -->
+<div class="section-card">
+    <div class="section-header">
+        <h5><i class="fas fa-list"></i> Danh Sách Quyền Đang Hoạt Động</h5>
     </div>
-    <div class="card-body p-0">
-        @if (Model.ActivePermissions.Count == 0)
-        {
-            <div class="p-4 text-center text-muted">
-                <i class="fas fa-inbox fa-3x mb-3"></i>
-                <p>Chưa có quyền nào được cấp</p>
-            </div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="thead-light">
+    @if (Model.ActivePermissions.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>Chưa có quyền nào được cấp</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Người Nhận</th>
+                        <th>Vai Trò</th>
+                        <th>Loại Quyền</th>
+                        <th>Ngày Cấp</th>
+                        <th>Hết Hạn</th>
+                        <th>Trạng Thái</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var perm in Model.ActivePermissions)
+                    {
                         <tr>
-                            <th>Người Nhận</th>
-                            <th>Vai Trò</th>
-                            <th>Loại Quyền</th>
-                            <th>Ngày Cấp</th>
-                            <th>Hết Hạn</th>
-                            <th>Trạng Thái</th>
-                            <th>Ghi Chú</th>
-                            <th>Thao Tác</th>
+                            <td>
+                                <strong>@perm.GrantedToName</strong><br />
+                                <small class="text-muted">@perm.GrantedTo</small>
+                            </td>
+                            <td>
+                                @if (perm.GranteeRole == "LECTURER")
+                                {
+                                    <span class="badge badge-info">Giảng viên</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">@perm.GranteeRole</span>
+                                }
+                            </td>
+                            <td>
+                                @if (perm.PermissionType == "VIEW")
+                                {
+                                    <span class="badge badge-primary"><i class="fas fa-eye"></i> Xem</span>
+                                }
+                                else if (perm.PermissionType == "EDIT")
+                                {
+                                    <span class="badge badge-warning"><i class="fas fa-edit"></i> Chỉnh sửa</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Phê duyệt</span>
+                                }
+                            </td>
+                            <td>@perm.GrantedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (perm.ExpiresAt.HasValue)
+                                {
+                                    if (perm.IsExpired)
+                                    {
+                                        <span class="text-danger">@perm.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        @perm.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Vô thời hạn</span>
+                                }
+                            </td>
+                            <td>
+                                @if (perm.IsRevoked)
+                                {
+                                    <span class="badge badge-danger">Đã thu hồi</span>
+                                }
+                                else if (perm.IsExpired)
+                                {
+                                    <span class="badge badge-warning">Hết hạn</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-success">Đang hoạt động</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!perm.IsRevoked && !perm.IsExpired)
+                                {
+                                    <form method="post" action="@Url.Action("Revoke")" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="permissionId" value="@perm.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm" 
+                                                onclick="return confirm('Bạn có chắc muốn thu hồi quyền này?')">
+                                            <i class="fas fa-times"></i> Thu hồi
+                                        </button>
+                                    </form>
+                                }
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var perm in Model.ActivePermissions)
-                        {
-                            <tr>
-                                <td>
-                                    <strong>@perm.GrantedToName</strong><br />
-                                    <small class="text-muted">@perm.GrantedTo</small>
-                                </td>
-                                <td>
-                                    @if (perm.GranteeRole == "LECTURER")
-                                    {
-                                        <span class="badge badge-info">Giảng viên</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge badge-secondary">@perm.GranteeRole</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (perm.PermissionType == "VIEW")
-                                    {
-                                        <span class="badge badge-primary">
-                                            <i class="fas fa-eye"></i> Xem
-                                        </span>
-                                    }
-                                    else if (perm.PermissionType == "EDIT")
-                                    {
-                                        <span class="badge badge-warning">
-                                            <i class="fas fa-edit"></i> Chỉnh sửa
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge badge-success">
-                                            <i class="fas fa-check-circle"></i> Phê duyệt
-                                        </span>
-                                    }
-                                </td>
-                                <td>@perm.GrantedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>
-                                    @if (perm.ExpiresAt.HasValue)
-                                    {
-                                        if (perm.IsExpired)
-                                        {
-                                            <span class="text-danger">
-                                                @perm.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            @perm.ExpiresAt.Value.ToString("dd/MM/yyyy HH:mm")
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Vô thời hạn</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (perm.IsRevoked)
-                                    {
-                                        <span class="badge badge-danger">Đã thu hồi</span>
-                                    }
-                                    else if (perm.IsExpired)
-                                    {
-                                        <span class="badge badge-warning">Hết hạn</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge badge-success">Đang hoạt động</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(perm.Notes))
-                                    {
-                                        <span title="@perm.Notes">@(perm.Notes.Length > 30 ? perm.Notes.Substring(0, 30) + "..." : perm.Notes)</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (!perm.IsRevoked && !perm.IsExpired)
-                                    {
-                                        <form method="post" action="@Url.Action("Revoke")" style="display:inline;">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="permissionId" value="@perm.Id" />
-                                            <button type="submit" class="btn btn-sm btn-danger" 
-                                                    onclick="return confirm('Bạn có chắc muốn thu hồi quyền này?')">
-                                                <i class="fas fa-times"></i> Thu hồi
-                                            </button>
-                                        </form>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
-
-<style>
-    .info-card {
-        padding: 20px;
-        border-radius: 10px;
-        color: white;
-        display: flex;
-        align-items: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .info-icon {
-        font-size: 40px;
-        margin-right: 20px;
-        opacity: 0.8;
-    }
-
-    .info-content h3 {
-        margin: 0;
-        font-size: 32px;
-        font-weight: bold;
-    }
-
-    .info-content p {
-        margin: 0;
-        font-size: 14px;
-        opacity: 0.9;
-    }
-
-    .table th {
-        border-top: none;
-    }
-</style>
 
 @section scripts {
 <script>
@@ -287,21 +441,18 @@
             e.preventDefault();
             
             var data = {
-                classId: $('#classId').val(),
-                grantedTo: $('#grantedTo').val(),
-                permissionType: $('#permissionType').val(),
-                expiresAt: $('#expiresAt').val() || null,
-                notes: $('#notes').val()
+                ClassId: $('#classId').val(),
+                GrantedTo: $('#grantedTo').val(),
+                PermissionType: $('#permissionType').val(),
+                ExpiresAt: $('#expiresAt').val() || null,
+                Notes: $('#notes').val(),
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
             };
 
             $.ajax({
                 url: '@Url.Action("Grant")',
                 type: 'POST',
-                data: JSON.stringify(data),
-                contentType: 'application/json',
-                headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                },
+                data: data,
                 success: function(response) {
                     if (response.success) {
                         alert('Cấp quyền thành công!');
