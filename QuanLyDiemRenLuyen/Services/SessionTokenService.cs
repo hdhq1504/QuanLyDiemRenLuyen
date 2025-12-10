@@ -5,8 +5,7 @@ using QuanLyDiemRenLuyen.Helpers;
 namespace QuanLyDiemRenLuyen.Services
 {
     /// <summary>
-    /// Service quản lý session token với mã hóa AES.
-    /// Sử dụng Oracle PKG_SESSION_TOKEN backend.
+    /// Service quản lý session token với mã hóa AES
     /// </summary>
     public class SessionTokenService
     {
@@ -18,10 +17,7 @@ namespace QuanLyDiemRenLuyen.Services
         /// <summary>
         /// Tạo session token mới cho user
         /// </summary>
-        /// <param name="userId">MAND của user</param>
-        /// <param name="expiryHours">Số giờ token hết hạn</param>
-        /// <returns>Session token ID</returns>
-        public string CreateSessionToken(string userId, int? expiryHours = null)
+        public string CreateSessionToken(string userId)
         {
             if (string.IsNullOrEmpty(userId))
                 throw new ArgumentNullException(nameof(userId));
@@ -30,12 +26,17 @@ namespace QuanLyDiemRenLuyen.Services
             {
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT PKG_SESSION_TOKEN.CREATE_SESSION(:p_user_id, :p_expiry_hours) FROM DUAL";
-                    cmd.Parameters.Add("p_user_id", OracleDbType.Varchar2).Value = userId;
-                    cmd.Parameters.Add("p_expiry_hours", OracleDbType.Int32).Value = expiryHours ?? DefaultExpiryHours;
+                    cmd.CommandText = "BEGIN :result := PKG_SESSION_TOKEN.CREATE_SESSION_TOKEN(:p_user_id); END;";
                     
-                    var result = cmd.ExecuteScalar();
-                    return result?.ToString();
+                    var resultParam = cmd.Parameters.Add("result", OracleDbType.Varchar2, 100);
+                    resultParam.Direction = System.Data.ParameterDirection.Output;
+                    
+                    cmd.Parameters.Add("p_user_id", OracleDbType.Varchar2).Value = userId;
+                    
+                    cmd.ExecuteNonQuery();
+                    
+                    var result = resultParam.Value;
+                    return result == DBNull.Value ? null : result?.ToString();
                 }
             }
         }
@@ -43,19 +44,18 @@ namespace QuanLyDiemRenLuyen.Services
         /// <summary>
         /// Xác thực session token
         /// </summary>
-        /// <param name="tokenId">Session token ID</param>
-        /// <returns>True nếu token hợp lệ</returns>
-        public bool ValidateSessionToken(string tokenId)
+        public bool ValidateSessionToken(string userId, string token)
         {
-            if (string.IsNullOrEmpty(tokenId))
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
                 return false;
 
             using (var conn = OracleDbHelper.GetConnection())
             {
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT PKG_SESSION_TOKEN.VALIDATE_SESSION(:p_token_id) FROM DUAL";
-                    cmd.Parameters.Add("p_token_id", OracleDbType.Varchar2).Value = tokenId;
+                    cmd.CommandText = "SELECT PKG_SESSION_TOKEN.VALIDATE_SESSION_TOKEN(:p_user_id, :p_token) FROM DUAL";
+                    cmd.Parameters.Add("p_user_id", OracleDbType.Varchar2).Value = userId;
+                    cmd.Parameters.Add("p_token", OracleDbType.Varchar2).Value = token;
                     
                     var result = cmd.ExecuteScalar();
                     return result != null && Convert.ToInt32(result) == 1;
@@ -64,71 +64,9 @@ namespace QuanLyDiemRenLuyen.Services
         }
 
         /// <summary>
-        /// Lấy user ID từ session token
+        /// Xóa/Vô hiệu hóa session token của user
         /// </summary>
-        public string GetUserIdFromToken(string tokenId)
-        {
-            if (string.IsNullOrEmpty(tokenId))
-                return null;
-
-            using (var conn = OracleDbHelper.GetConnection())
-            {
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT PKG_SESSION_TOKEN.GET_USER_FROM_SESSION(:p_token_id) FROM DUAL";
-                    cmd.Parameters.Add("p_token_id", OracleDbType.Varchar2).Value = tokenId;
-                    
-                    var result = cmd.ExecuteScalar();
-                    return result == DBNull.Value ? null : result?.ToString();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Vô hiệu hóa session token
-        /// </summary>
-        public void InvalidateToken(string tokenId)
-        {
-            if (string.IsNullOrEmpty(tokenId))
-                return;
-
-            using (var conn = OracleDbHelper.GetConnection())
-            {
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "BEGIN PKG_SESSION_TOKEN.INVALIDATE_SESSION(:p_token_id); END;";
-                    cmd.Parameters.Add("p_token_id", OracleDbType.Varchar2).Value = tokenId;
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Làm mới session token (gia hạn thời gian hết hạn)
-        /// </summary>
-        public bool RefreshToken(string tokenId, int? newExpiryHours = null)
-        {
-            if (string.IsNullOrEmpty(tokenId))
-                return false;
-
-            using (var conn = OracleDbHelper.GetConnection())
-            {
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT PKG_SESSION_TOKEN.REFRESH_SESSION(:p_token_id, :p_expiry_hours) FROM DUAL";
-                    cmd.Parameters.Add("p_token_id", OracleDbType.Varchar2).Value = tokenId;
-                    cmd.Parameters.Add("p_expiry_hours", OracleDbType.Int32).Value = newExpiryHours ?? DefaultExpiryHours;
-                    
-                    var result = cmd.ExecuteScalar();
-                    return result != null && Convert.ToInt32(result) == 1;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Vô hiệu hóa tất cả session của user
-        /// </summary>
-        public void InvalidateAllUserSessions(string userId)
+        public void ClearSessionToken(string userId)
         {
             if (string.IsNullOrEmpty(userId))
                 return;
@@ -137,7 +75,7 @@ namespace QuanLyDiemRenLuyen.Services
             {
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "BEGIN PKG_SESSION_TOKEN.INVALIDATE_USER_SESSIONS(:p_user_id); END;";
+                    cmd.CommandText = "BEGIN PKG_SESSION_TOKEN.CLEAR_SESSION_TOKEN(:p_user_id); END;";
                     cmd.Parameters.Add("p_user_id", OracleDbType.Varchar2).Value = userId;
                     cmd.ExecuteNonQuery();
                 }
@@ -145,16 +83,22 @@ namespace QuanLyDiemRenLuyen.Services
         }
 
         /// <summary>
-        /// Dọn dẹp session đã hết hạn
+        /// Lấy user ID từ token
         /// </summary>
-        public void CleanupExpiredSessions()
+        public string GetUserByToken(string token)
         {
+            if (string.IsNullOrEmpty(token))
+                return null;
+
             using (var conn = OracleDbHelper.GetConnection())
             {
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "BEGIN PKG_SESSION_TOKEN.CLEANUP_EXPIRED; END;";
-                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = "SELECT PKG_SESSION_TOKEN.GET_USER_BY_TOKEN(:p_token) FROM DUAL";
+                    cmd.Parameters.Add("p_token", OracleDbType.Varchar2).Value = token;
+                    
+                    var result = cmd.ExecuteScalar();
+                    return result == DBNull.Value ? null : result?.ToString();
                 }
             }
         }
@@ -164,30 +108,35 @@ namespace QuanLyDiemRenLuyen.Services
         /// <summary>
         /// Tạo session và trả về thông tin đầy đủ
         /// </summary>
-        public SessionInfo CreateSession(string userId, int? expiryHours = null)
+        public SessionInfo CreateSession(string userId)
         {
-            var tokenId = CreateSessionToken(userId, expiryHours);
-            if (string.IsNullOrEmpty(tokenId))
+            var token = CreateSessionToken(userId);
+            if (string.IsNullOrEmpty(token))
                 return null;
 
             return new SessionInfo
             {
-                TokenId = tokenId,
+                Token = token,
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddHours(expiryHours ?? DefaultExpiryHours)
+                ExpiresAt = DateTime.UtcNow.AddHours(DefaultExpiryHours)
             };
         }
 
         /// <summary>
         /// Kiểm tra và lấy user từ token
         /// </summary>
-        public string ValidateAndGetUser(string tokenId)
+        public string ValidateAndGetUser(string token)
         {
-            if (!ValidateSessionToken(tokenId))
+            var userId = GetUserByToken(token);
+            if (string.IsNullOrEmpty(userId))
                 return null;
-
-            return GetUserIdFromToken(tokenId);
+            
+            // Validate the token belongs to this user
+            if (ValidateSessionToken(userId, token))
+                return userId;
+            
+            return null;
         }
 
         #endregion
@@ -198,7 +147,7 @@ namespace QuanLyDiemRenLuyen.Services
     /// </summary>
     public class SessionInfo
     {
-        public string TokenId { get; set; }
+        public string Token { get; set; }
         public string UserId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ExpiresAt { get; set; }

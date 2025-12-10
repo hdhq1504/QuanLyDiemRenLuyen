@@ -150,6 +150,18 @@ namespace QuanLyDiemRenLuyen.Controllers
                 }
                 catch { /* Không fail nếu audit lỗi */ }
 
+                // ========== SESSION TOKEN (lưu vào database) ==========
+                try
+                {
+                    var sessionTokenService = new SessionTokenService();
+                    var sessionInfo = sessionTokenService.CreateSession(mand);
+                    if (sessionInfo != null)
+                    {
+                        Session["SessionToken"] = sessionInfo.Token;
+                    }
+                }
+                catch { /* Không fail nếu session token lỗi */ }
+
                 // ========== SECURITY CONTEXT INTEGRATION ==========
                 // Set VPD Context, OLS Session Label, and Audit Context
                 try
@@ -209,6 +221,19 @@ namespace QuanLyDiemRenLuyen.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Logout()
         {
+            // ========== CLEAR SESSION TOKEN ==========
+            // Clear session token from database before logout
+            try
+            {
+                var mand = Session["MAND"]?.ToString();
+                if (!string.IsNullOrEmpty(mand))
+                {
+                    var sessionTokenService = new SessionTokenService();
+                    sessionTokenService.ClearSessionToken(mand);
+                }
+            }
+            catch { /* Không fail nếu clear session token lỗi */ }
+
             // ========== CLEAR SECURITY CONTEXTS ==========
             // Clear VPD Context, OLS, and Audit Context before logout
             try

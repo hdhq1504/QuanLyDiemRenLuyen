@@ -123,7 +123,7 @@
                                     <span style="background: #d1fae5; color: #065f46; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
                                         <i class="fas fa-check-circle"></i> Đã điểm danh
                                     </span>
-                                    @if (participant.CheckedInAt.HasValue)
+                                    if (participant.CheckedInAt.HasValue)
                                     {
                                         <div style="color: #64748b; font-size: 12px; margin-top: 4px;">
                                             @participant.CheckedInAt.Value.ToString("dd/MM HH:mm")
@@ -208,7 +208,7 @@
         </div>
 
         <!-- Pagination -->
-        @if (Model.TotalPages > 1)
+        if (Model.TotalPages > 1)
         {
             <div style="margin-top: 24px; display: flex; justify-content: center; gap: 8px;">
                 @for (int i = 1; i <= Model.TotalPages; i++)
