@@ -8,6 +8,7 @@ using System.Web.Mvc;
 using Oracle.ManagedDataAccess.Client;
 using QuanLyDiemRenLuyen.Helpers;
 using QuanLyDiemRenLuyen.Models;
+using QuanLyDiemRenLuyen.Services;
 
 namespace QuanLyDiemRenLuyen.Controllers.Student
 {
@@ -383,6 +384,25 @@ namespace QuanLyDiemRenLuyen.Controllers.Student
 
                 if (result > 0)
                 {
+                    // Mã hóa đường dẫn minh chứng bằng AES
+                    try
+                    {
+                        string getProofIdQuery = @"SELECT ID FROM PROOFS 
+                                                   WHERE REGISTRATION_ID = :RegistrationId 
+                                                   ORDER BY CREATED_AT_UTC DESC FETCH FIRST 1 ROWS ONLY";
+                        var proofIdParams = new[] { 
+                            OracleDbHelper.CreateParameter("RegistrationId", OracleDbType.Varchar2, registrationId) 
+                        };
+                        string proofId = OracleDbHelper.ExecuteScalar(getProofIdQuery, proofIdParams)?.ToString();
+                        
+                        if (!string.IsNullOrEmpty(proofId))
+                        {
+                            var cryptoService = new FilePathCryptoService();
+                            cryptoService.EncryptProofPath(proofId, relativePath);
+                        }
+                    }
+                    catch { /* Không fail nếu mã hóa lỗi */ }
+
                     TempData["SuccessMessage"] = "Upload minh chứng thành công!";
                     return RedirectToAction("Detail", new { id = activityId });
                 }

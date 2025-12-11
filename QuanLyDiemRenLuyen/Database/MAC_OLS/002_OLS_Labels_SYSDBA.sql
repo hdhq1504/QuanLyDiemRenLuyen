@@ -15,12 +15,11 @@ PROMPT 'Đang thực thi với: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================
--- STEP 1: SET USER LABELS FOR QLDIEMRENLUYEN FIRST
--- (So schema owner can access tables after policy is applied)
+-- BƯỚC 1: SET LABELS CHO QLDIEMRENLUYEN
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Setting user labels for QLDiemRenLuyen...';
+PROMPT 'Setting labels for QLDiemRenLuyen...';
 
 BEGIN
     SA_USER_ADMIN.SET_LEVELS(
@@ -62,11 +61,11 @@ END;
 /
 
 -- =========================================================
--- STEP 2: APPLY POLICY TO TABLES
+-- BƯỚC 2: ÁP DỤNG POLICY VÀO CÁC BẢNG
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Applying policy to tables...';
+PROMPT 'Áp dụng policy lên các bảng...';
 
 BEGIN
     SA_POLICY_ADMIN.APPLY_TABLE_POLICY(
@@ -111,11 +110,11 @@ END;
 /
 
 -- =========================================================
--- STEP 3: UPDATE EXISTING DATA WITH DEFAULT LABELS
+-- BƯỚC 3: CẬP NHẬT DỮ LIỆU CÓ SẴN VỚI LABEL
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Updating existing data with labels...';
+PROMPT 'Cập nhật dữ liệu có sẵn với label...';
 
 -- Update FEEDBACKS
 BEGIN
@@ -171,11 +170,11 @@ END;
 /
 
 -- =========================================================
--- STEP 4: CREATE TRIGGERS FOR AUTO-LABELING (in schema)
+-- BƯỚC 4: TẠO TRIGGER TỰ ĐIỀU CHỈNH LABEL (trong schema)
 -- =========================================================
 
 PROMPT '';
-PROMPT 'Creating auto-labeling triggers...';
+PROMPT 'Tạo trigger tự điều chỉnh label...';
 
 -- Trigger for FEEDBACKS
 BEGIN

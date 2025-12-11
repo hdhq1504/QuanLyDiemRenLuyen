@@ -3,7 +3,7 @@
 -- Chạy TOÀN BỘ script này với quyền SYSDBA
 -- ============================================
 
--- ==================== CREATE VIEWS IN SYS SCHEMA ====================
+-- ==================== TẠO VIEWS VÀ PROCEDURES ====================
 
 -- 1. Tablespace Usage View
 CREATE OR REPLACE VIEW SYS.V_TABLESPACE_USAGE AS
@@ -58,17 +58,13 @@ GRANT SELECT ON SYS.V_TABLESPACE_USAGE TO QLDiemRenLuyen;
 GRANT SELECT ON SYS.V_USER_PROFILES TO QLDiemRenLuyen;
 GRANT SELECT ON SYS.V_ACTIVE_SESSIONS TO QLDiemRenLuyen;
 
--- ==================== CREATE SYNONYMS FOR CONVENIENCE ====================
--- This allows QLDiemRenLuyen to use "V_TABLESPACE_USAGE" instead of "SYS.V_TABLESPACE_USAGE"
+-- ==================== TẠO SYNONYM ====================
 
 CREATE OR REPLACE PUBLIC SYNONYM V_TABLESPACE_USAGE FOR SYS.V_TABLESPACE_USAGE;
 CREATE OR REPLACE PUBLIC SYNONYM V_USER_PROFILES FOR SYS.V_USER_PROFILES;
 CREATE OR REPLACE PUBLIC SYNONYM V_ACTIVE_SESSIONS FOR SYS.V_ACTIVE_SESSIONS;
 
--- ==================== CREATE STORED PROCEDURES IN QLDiemRenLuyen SCHEMA ====================
-
--- Switch to QLDiemRenLuyen schema for procedures
--- Note: These will be created in QLDiemRenLuyen's schema
+-- ==================== TẠO STORED PROCEDURE ====================
 
 -- 1. Create Profile Procedure
 CREATE OR REPLACE PROCEDURE QLDiemRenLuyen.SP_CREATE_USER_PROFILE(

@@ -13,7 +13,7 @@ PROMPT 'Đang thực thi với: SYSDBA';
 PROMPT '========================================';
 
 -- =========================================================
--- STEP 1: GRANT PRIVILEGES TO QLDiemRenLuyen
+-- BƯỚC 1: GRANT PRIVILEGES TO QLDiemRenLuyen
 -- =========================================================
 
 -- Grant EXECUTE on DBMS_RLS (required for VPD policies)
